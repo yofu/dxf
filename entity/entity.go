@@ -18,9 +18,10 @@ type entity struct {
 	Layer  *table.Layer     // 8
 }
 
-func NewEntity() entity {
+func NewEntity() *entity {
 	e := new(entity)
-	return *e
+	e.Layer = table.LY_0
+	return e
 }
 
 func (e *entity) String() string {

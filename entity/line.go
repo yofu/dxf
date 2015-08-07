@@ -6,7 +6,7 @@ import (
 )
 
 type Line struct {
-	entity
+	*entity
 	Start     []float64 // 10, 20, 30
 	End       []float64 // 11, 21, 31
 }
