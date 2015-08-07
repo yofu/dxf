@@ -14,7 +14,7 @@ type Header struct {
 
 func New() *Header {
 	h := new(Header)
-	h.version = "AC1027"
+	h.version = "AC1006"
 	h.insbase = make([]float64, 3)
 	h.extmin = make([]float64, 3)
 	h.extmax = make([]float64, 3)
