@@ -30,7 +30,6 @@ func (e *entity) String() string {
 	otp.WriteString(fmt.Sprintf("5\n%x\n", e.handle))
 	otp.WriteString("100\nAcDbEntity\n")
 	otp.WriteString(fmt.Sprintf("8\n%s\n", e.Layer.Name))
-	otp.WriteString("370\n0\n")
 	return otp.String()
 }
 
