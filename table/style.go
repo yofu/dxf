@@ -41,9 +41,6 @@ func (st *Style) String() string {
 	otp.WriteString("42\n0.2\n")
 	otp.WriteString(fmt.Sprintf("3\n%s\n", st.FontName))
 	otp.WriteString(fmt.Sprintf("4\n%s\n", st.BigFontName))
-	otp.WriteString("1001\nACAD\n")
-	otp.WriteString("1000\nArial\n")
-	otp.WriteString("1071\n34\n")
 	return otp.String()
 }
 
