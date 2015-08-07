@@ -11,14 +11,16 @@ type Tables struct {
 
 func New() *Tables {
 	t := new(Tables)
-	t.values = make([]*Table, 2)
-	t.size = 2
+	t.values = make([]*Table, 3)
+	t.size = 3
 	t.values[0] = NewTable("LTYPE")
 	t.values[0].Add(LT_BYLAYER)
 	t.values[0].Add(LT_BYBLOCK)
 	t.values[0].Add(LT_CONTINUOUS)
 	t.values[1] = NewTable("LAYER")
 	t.values[1].Add(LY_0)
+	t.values[2] = NewTable("STYLE")
+	t.values[2].Add(ST_STANDARD)
 	return t
 }
 
