@@ -60,3 +60,11 @@ func (d *Drawing) setHandle() {
 		s.SetHandle(&h)
 	}
 }
+
+func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
+	l := entity.NewLine()
+	l.Start = []float64{x1, y1, z1}
+	l.End = []float64{x2, y2, z2}
+	d.sections[4].(*entity.Entities).Add(l)
+	return l, nil
+}
