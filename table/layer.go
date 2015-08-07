@@ -38,7 +38,7 @@ func (l *Layer) String() string {
 	otp.WriteString("70\n0\n")
 	otp.WriteString(fmt.Sprintf("62\n%d\n", l.Color))
 	otp.WriteString(fmt.Sprintf("6\n%s\n", l.LineType.Name))
-	otp.WriteString("370\n-3\n")
+	// otp.WriteString("370\n-3\n")
 	return otp.String()
 }
 
