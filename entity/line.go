@@ -17,7 +17,7 @@ func (l *Line) IsEntity() bool {
 
 func NewLine() *Line {
 	l := &Line{
-		NewEntity(),
+		NewEntity(LINE),
 		[]float64{0.0, 0.0, 0.0},
 		[]float64{0.0, 0.0, 0.0},
 	}

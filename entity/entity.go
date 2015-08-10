@@ -18,8 +18,9 @@ type entity struct {
 	Layer  *table.Layer     // 8
 }
 
-func NewEntity() *entity {
+func NewEntity(t EntityType) *entity {
 	e := new(entity)
+	e.Type = t
 	e.Layer = table.LY_0
 	return e
 }
