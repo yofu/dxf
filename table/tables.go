@@ -6,7 +6,7 @@ import (
 
 type Tables struct {
 	values []*Table
-	size int
+	size   int
 }
 
 func New() *Tables {
@@ -27,7 +27,7 @@ func New() *Tables {
 
 func (ts *Tables) WriteTo(b *bytes.Buffer) error {
 	b.WriteString("0\nSECTION\n2\nTABLES\n")
-	for i:=0; i<ts.size; i++ {
+	for i := 0; i < ts.size; i++ {
 		b.WriteString(ts.values[i].String())
 	}
 	b.WriteString("0\nENDSEC\n")

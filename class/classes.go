@@ -35,4 +35,3 @@ func (cs *Classes) WriteTo(b *bytes.Buffer) error {
 func (cs *Classes) SetHandle(v *int) {
 	return
 }
-

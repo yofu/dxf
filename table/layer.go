@@ -11,9 +11,9 @@ var (
 )
 
 type Layer struct {
-	handle int
-	Name string
-	Color color.ColorNumber
+	handle   int
+	Name     string
+	Color    color.ColorNumber
 	LineType *LineType
 }
 

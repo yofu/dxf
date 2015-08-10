@@ -6,7 +6,7 @@ import (
 
 type Entities struct {
 	values []Entity
-	size int
+	size   int
 }
 
 func New() *Entities {
@@ -31,7 +31,7 @@ func (es *Entities) Add(e Entity) error {
 }
 
 func (es *Entities) SetHandle(v *int) {
-	for i:=0; i<es.size; i++ {
+	for i := 0; i < es.size; i++ {
 		es.values[i].SetHandle(v)
 	}
 }

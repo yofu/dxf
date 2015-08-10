@@ -7,13 +7,13 @@ import (
 
 var (
 	LT_CONTINUOUS = NewLineType("Continuous", "Solid Line")
-	LT_BYLAYER = NewLineType("ByLayer", "")
-	LT_BYBLOCK = NewLineType("ByBlock", "")
+	LT_BYLAYER    = NewLineType("ByLayer", "")
+	LT_BYBLOCK    = NewLineType("ByBlock", "")
 )
 
 type LineType struct {
-	handle int
-	Name string // 2
+	handle      int
+	Name        string // 2
 	Description string // 3
 }
 

@@ -4,26 +4,26 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"os"
-	"github.com/yofu/dxf/header"
+	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/table"
-	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/object"
+	"github.com/yofu/dxf/table"
+	"os"
 )
 
 var (
-	DefaultColor = color.White
+	DefaultColor    = color.White
 	DefaultLineType = table.LT_CONTINUOUS
 )
 
 type Drawing struct {
-	FileName string
-	Layers map[string]*table.Layer
+	FileName     string
+	Layers       map[string]*table.Layer
 	CurrentLayer *table.Layer
-	sections []Section
+	sections     []Section
 }
 
 func NewDrawing() *Drawing {
@@ -114,7 +114,7 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	if len(points) < 3 {
 		return nil, errors.New("3DFace needs 3 or more points")
 	}
-	for i:=0; i<3; i++ {
+	for i := 0; i < 3; i++ {
 		f.Points[i] = points[i]
 	}
 	if len(points) >= 4 {

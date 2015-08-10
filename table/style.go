@@ -10,9 +10,9 @@ var (
 )
 
 type Style struct {
-	handle int
-	Name string // 2
-	FontName string // 3
+	handle      int
+	Name        string // 2
+	FontName    string // 3
 	BigFontName string // 4
 }
 
@@ -51,4 +51,3 @@ func (st *Style) SetHandle(v *int) {
 	st.handle = *v
 	(*v)++
 }
-

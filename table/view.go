@@ -7,7 +7,7 @@ import (
 
 type View struct {
 	handle int
-	Name string // 2
+	Name   string // 2
 }
 
 func NewView(name string) *View {
@@ -36,5 +36,3 @@ func (v *View) SetHandle(h *int) {
 	v.handle = *h
 	(*h)++
 }
-
-

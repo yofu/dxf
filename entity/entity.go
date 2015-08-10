@@ -15,9 +15,9 @@ type Entity interface {
 }
 
 type entity struct {
-	Type   EntityType // 0
-	handle int        // 5
-	layer  *table.Layer     // 8
+	Type   EntityType   // 0
+	handle int          // 5
+	layer  *table.Layer // 8
 }
 
 func NewEntity(t EntityType) *entity {
