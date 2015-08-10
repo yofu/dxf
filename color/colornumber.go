@@ -1,6 +1,6 @@
 package color
 
-type ColorNumber int
+type ColorNumber uint8
 
 // 1 - 9
 const (
