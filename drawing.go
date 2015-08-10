@@ -127,3 +127,26 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	d.sections[4].(*entity.Entities).Add(f)
 	return f, nil
 }
+
+func ColorIndex(cl []int) color.ColorNumber {
+	minind := 0
+	minval := 1000000
+	for i, c := range color.ColorRGB {
+		tmpval := 0
+		for j := 0; j < 3; j++ {
+			tmpval += (cl[j] - int(c[j])) * (cl[j] - int(c[j]))
+		}
+		if tmpval < minval {
+			minind = i
+			minval = tmpval
+			if minval == 0 {
+				break
+			}
+		}
+	}
+	return color.ColorNumber(minind)
+}
+
+func IndexColor(index uint8) []uint8 {
+	return color.ColorRGB[index]
+}
