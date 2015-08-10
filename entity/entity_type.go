@@ -5,6 +5,7 @@ type EntityType int
 const (
 	LINE EntityType = iota
 	THREEDFACE
+	LWPOLYLINE
 	ARC
 	CIRCLE
 	POLYLINE
@@ -17,6 +18,8 @@ func EntityTypeString(t EntityType) string {
 		return "LINE"
 	case THREEDFACE:
 		return "3DFACE"
+	case LWPOLYLINE:
+		return "LWPOLYLINE"
 	case ARC:
 		return "ARC"
 	case CIRCLE:
