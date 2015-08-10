@@ -110,6 +110,29 @@ func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	return l, nil
 }
 
+func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
+	c := entity.NewCircle()
+	c.Center = []float64{x, y, z}
+	c.Radius = r
+	c.SetLayer(d.CurrentLayer)
+	d.sections[4].(*entity.Entities).Add(c)
+	return c, nil
+}
+
+func (d *Drawing) LwPolyline(closed bool, vertices ...[]float64) (*entity.LwPolyline, error) {
+	size := len(vertices)
+	l := entity.NewLwPolyline(size)
+	for i := 0; i < size; i++ {
+		l.Vertices[i] = vertices[i]
+	}
+	if closed {
+		l.Close()
+	}
+	l.SetLayer(d.CurrentLayer)
+	d.sections[4].(*entity.Entities).Add(l)
+	return l, nil
+}
+
 func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	f := entity.New3DFace()
 	if len(points) < 3 {
