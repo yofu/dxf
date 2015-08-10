@@ -2,6 +2,25 @@ package color
 
 type ColorNumber int
 
+// 1 - 9
 const (
-	White ColorNumber = 7
+	Red ColorNumber = iota + 1
+	Yellow
+	Green
+	Cyan
+	Blue
+	Magenta
+	White
+	Grey128
+	Grey192
+)
+
+// 250 - 255
+const (
+	Grey51 = iota + 250
+	Grey91
+	Grey132
+	Grey173
+	Grey214
+	Grey255
 )
