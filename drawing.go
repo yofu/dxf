@@ -86,6 +86,7 @@ func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, s
 	}
 	l := table.NewLayer(name, cl, lt)
 	d.Layers[name] = l
+	d.sections[2].(*table.Tables).AddLayer(l)
 	if setcurrent {
 		d.CurrentLayer = l
 	}

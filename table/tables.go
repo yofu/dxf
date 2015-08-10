@@ -44,3 +44,7 @@ func (ts *Tables) SetHandle(h *int) {
 		t.SetHandle(h)
 	}
 }
+
+func (ts *Tables) AddLayer(l *Layer) {
+	ts.values[1].Add(l)
+}
