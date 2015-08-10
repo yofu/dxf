@@ -72,3 +72,20 @@ func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	d.sections[4].(*entity.Entities).Add(l)
 	return l, nil
 }
+
+func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
+	f := entity.New3DFace()
+	if len(points) < 3 {
+		return nil, errors.New("3DFace needs 3 or more points")
+	}
+	for i:=0; i<3; i++ {
+		f.Points[i] = points[i]
+	}
+	if len(points) >= 4 {
+		f.Points[3] = points[3]
+	} else {
+		f.Points[3] = points[2]
+	}
+	d.sections[4].(*entity.Entities).Add(f)
+	return f, nil
+}
