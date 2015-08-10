@@ -7,8 +7,9 @@ const (
 	THREEDFACE
 	LWPOLYLINE
 	CIRCLE
-	ARC
 	POLYLINE
+	VERTEX
+	ARC
 	TEXT
 )
 
@@ -22,10 +23,12 @@ func EntityTypeString(t EntityType) string {
 		return "LWPOLYLINE"
 	case CIRCLE:
 		return "CIRCLE"
-	case ARC:
-		return "ARC"
 	case POLYLINE:
 		return "POLYLINE"
+	case VERTEX:
+		return "VERTEX"
+	case ARC:
+		return "ARC"
 	case TEXT:
 		return "TEXT"
 	default:

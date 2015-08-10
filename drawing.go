@@ -119,6 +119,19 @@ func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
 	return c, nil
 }
 
+func (d *Drawing) Polyline(closed bool, vertices ...[]float64) (*entity.Polyline, error) {
+	p := entity.NewPolyline()
+	p.SetLayer(d.CurrentLayer)
+	for _, v := range vertices {
+		p.AddVertex(v[0], v[1], v[2])
+	}
+	if closed {
+		p.Close()
+	}
+	d.sections[4].(*entity.Entities).Add(p)
+	return p, nil
+}
+
 func (d *Drawing) LwPolyline(closed bool, vertices ...[]float64) (*entity.LwPolyline, error) {
 	size := len(vertices)
 	l := entity.NewLwPolyline(size)
