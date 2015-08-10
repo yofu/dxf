@@ -2,6 +2,7 @@ package dxf
 
 import (
 	"bytes"
+	"errors"
 	"os"
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/class"
@@ -46,6 +47,9 @@ func (d *Drawing) saveFile(filename string) error {
 }
 
 func (d *Drawing) Save() error {
+	if d.FileName == "" {
+		return errors.New("filename is blank, use SaveAs(filename)")
+	}
 	return d.saveFile(d.FileName)
 }
 
