@@ -3,22 +3,34 @@ package dxf
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"os"
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/class"
+	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/table"
 	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/object"
 )
 
+var (
+	DefaultColor = color.White
+	DefaultLineType = table.LT_CONTINUOUS
+)
+
 type Drawing struct {
 	FileName string
+	Layers map[string]*table.Layer
+	CurrentLayer *table.Layer
 	sections []Section
 }
 
 func NewDrawing() *Drawing {
 	d := new(Drawing)
+	d.Layers = make(map[string]*table.Layer)
+	d.Layers["0"] = table.LY_0
+	d.CurrentLayer = d.Layers["0"]
 	d.sections = []Section{
 		header.New(),
 		class.New(),
@@ -65,10 +77,34 @@ func (d *Drawing) setHandle() {
 	}
 }
 
+func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, setcurrent bool) (*table.Layer, error) {
+	if l, exist := d.Layers[name]; exist {
+		if setcurrent {
+			d.CurrentLayer = l
+		}
+		return l, errors.New(fmt.Sprintf("layer %s already exists", name))
+	}
+	l := table.NewLayer(name, cl, lt)
+	d.Layers[name] = l
+	if setcurrent {
+		d.CurrentLayer = l
+	}
+	return l, nil
+}
+
+func (d *Drawing) ChangeLayer(name string) error {
+	if l, exist := d.Layers[name]; exist {
+		d.CurrentLayer = l
+		return nil
+	}
+	return errors.New(fmt.Sprintf("layer %s doesn't exist", name))
+}
+
 func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	l := entity.NewLine()
 	l.Start = []float64{x1, y1, z1}
 	l.End = []float64{x2, y2, z2}
+	l.SetLayer(d.CurrentLayer)
 	d.sections[4].(*entity.Entities).Add(l)
 	return l, nil
 }
@@ -86,6 +122,7 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	} else {
 		f.Points[3] = points[2]
 	}
+	f.SetLayer(d.CurrentLayer)
 	d.sections[4].(*entity.Entities).Add(f)
 	return f, nil
 }
