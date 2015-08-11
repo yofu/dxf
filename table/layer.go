@@ -14,6 +14,7 @@ var (
 type Layer struct {
 	handle    int
 	Name      string
+	flag      int
 	Color     color.ColorNumber
 	LineType  *LineType
 	LineWidth int
@@ -39,7 +40,7 @@ func (l *Layer) String() string {
 	otp.WriteString(fmt.Sprintf("5\n%X\n", l.handle))
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", l.Name))
-	otp.WriteString("70\n0\n")
+	otp.WriteString(fmt.Sprintf("70\n%d\n", l.flag))
 	otp.WriteString(fmt.Sprintf("62\n%d\n", l.Color))
 	otp.WriteString(fmt.Sprintf("6\n%s\n", l.LineType.Name))
 	otp.WriteString(fmt.Sprintf("370\n%d\n", l.LineWidth))
