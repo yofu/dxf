@@ -16,6 +16,7 @@ type Layer struct {
 	Name      string
 	Color     color.ColorNumber
 	LineType  *LineType
+	LineWidth int
 	PlotStyle handle.Handler
 }
 
@@ -24,6 +25,7 @@ func NewLayer(name string, color color.ColorNumber, lt *LineType) *Layer {
 	l.Name = name
 	l.Color = color
 	l.LineType = lt
+	l.LineWidth = -3
 	return l
 }
 
@@ -40,8 +42,8 @@ func (l *Layer) String() string {
 	otp.WriteString("70\n0\n")
 	otp.WriteString(fmt.Sprintf("62\n%d\n", l.Color))
 	otp.WriteString(fmt.Sprintf("6\n%s\n", l.LineType.Name))
+	otp.WriteString(fmt.Sprintf("370\n%d\n", l.LineWidth))
 	otp.WriteString(fmt.Sprintf("390\n%X\n", l.PlotStyle.Handle()))
-	// otp.WriteString("370\n-3\n")
 	return otp.String()
 }
 
