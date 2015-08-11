@@ -59,3 +59,17 @@ func (l *Layer) SetHandle(v *int) {
 func (l *Layer) SetPlotStyle(ps handle.Handler) {
 	l.PlotStyle = ps
 }
+
+func (l *Layer) Freeze() {
+	l.flag |= 1
+}
+func (l *Layer) UnFreeze() {
+	l.flag &= ^1
+}
+
+func (l *Layer) Lock() {
+	l.flag |= 4
+}
+func (l *Layer) UnLock() {
+	l.flag &= ^4
+}
