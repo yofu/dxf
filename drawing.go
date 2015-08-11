@@ -86,7 +86,7 @@ func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, s
 	}
 	l := table.NewLayer(name, cl, lt)
 	d.Layers[name] = l
-	d.sections[2].(*table.Tables).AddLayer(l)
+	d.sections[2].(table.Tables).AddLayer(l)
 	if setcurrent {
 		d.CurrentLayer = l
 	}
@@ -101,11 +101,15 @@ func (d *Drawing) ChangeLayer(name string) error {
 	return errors.New(fmt.Sprintf("layer %s doesn't exist", name))
 }
 
+func (d *Drawing) addEntity(e entity.Entity) {
+	d.sections[4] = d.sections[4].(entity.Entities).Add(e)
+}
+
 func (d *Drawing) Point(x, y, z float64) (*entity.Point, error) {
 	p := entity.NewPoint()
 	p.Coord = []float64{x, y, z}
 	p.SetLayer(d.CurrentLayer)
-	d.sections[4].(*entity.Entities).Add(p)
+	d.addEntity(p)
 	return p, nil
 }
 
@@ -114,7 +118,7 @@ func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	l.Start = []float64{x1, y1, z1}
 	l.End = []float64{x2, y2, z2}
 	l.SetLayer(d.CurrentLayer)
-	d.sections[4].(*entity.Entities).Add(l)
+	d.addEntity(l)
 	return l, nil
 }
 
@@ -123,7 +127,7 @@ func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
 	c.Center = []float64{x, y, z}
 	c.Radius = r
 	c.SetLayer(d.CurrentLayer)
-	d.sections[4].(*entity.Entities).Add(c)
+	d.addEntity(c)
 	return c, nil
 }
 
@@ -136,7 +140,7 @@ func (d *Drawing) Polyline(closed bool, vertices ...[]float64) (*entity.Polyline
 	if closed {
 		p.Close()
 	}
-	d.sections[4].(*entity.Entities).Add(p)
+	d.addEntity(p)
 	return p, nil
 }
 
@@ -150,7 +154,7 @@ func (d *Drawing) LwPolyline(closed bool, vertices ...[]float64) (*entity.LwPoly
 		l.Close()
 	}
 	l.SetLayer(d.CurrentLayer)
-	d.sections[4].(*entity.Entities).Add(l)
+	d.addEntity(l)
 	return l, nil
 }
 
@@ -168,7 +172,7 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 		f.Points[3] = points[2]
 	}
 	f.SetLayer(d.CurrentLayer)
-	d.sections[4].(*entity.Entities).Add(f)
+	d.addEntity(f)
 	return f, nil
 }
 

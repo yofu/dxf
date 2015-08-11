@@ -13,25 +13,22 @@ func (c *Class) String() string {
 	return otp.String()
 }
 
-type Classes struct {
-	values []*Class
-}
+type Classes []*Class
 
-func New() *Classes {
-	c := new(Classes)
-	c.values = make([]*Class, 0)
+func New() Classes {
+	c := make([]*Class, 0)
 	return c
 }
 
-func (cs *Classes) WriteTo(b *bytes.Buffer) error {
+func (cs Classes) WriteTo(b *bytes.Buffer) error {
 	b.WriteString("0\nSECTION\n2\nCLASSES\n")
-	for _, c := range cs.values {
+	for _, c := range cs {
 		b.WriteString(c.String())
 	}
 	b.WriteString("0\nENDSEC\n")
 	return nil
 }
 
-func (cs *Classes) SetHandle(v *int) {
+func (cs Classes) SetHandle(v *int) {
 	return
 }

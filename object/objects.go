@@ -4,20 +4,22 @@ import (
 	"bytes"
 )
 
-type Objects struct {
+type Object struct {
 }
 
-func New() *Objects {
-	o := new(Objects)
+type Objects []Object
+
+func New() Objects {
+	o := make([]Object, 0)
 	return o
 }
 
-func (o *Objects) WriteTo(b *bytes.Buffer) error {
+func (o Objects) WriteTo(b *bytes.Buffer) error {
 	b.WriteString("0\nSECTION\n2\nOBJECTS\n")
 	b.WriteString("0\nENDSEC\n")
 	return nil
 }
 
-func (os *Objects) SetHandle(v *int) {
+func (os Objects) SetHandle(v *int) {
 	return
 }
