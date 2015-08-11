@@ -13,16 +13,18 @@ func ArbitraryAxis(d []float64) ([]float64, []float64, error) {
 	ax := make([]float64, 3)
 	ay := make([]float64, 3)
 	if math.Abs(d[0]) < thres && math.Abs(d[1]) < thres {
-		ax[0] = d[2]
+		sum := math.Sqrt(d[1]*d[1] + d[2]*d[2])
+		ax[0] = d[2] / sum
 		ax[1] = 0.0
-		ax[2] = -d[1]
+		ax[2] = -d[1] / sum
 	} else {
-		ax[0] = -d[1]
-		ax[1] = d[0]
+		sum := math.Sqrt(d[0]*d[0] + d[1]*d[1])
+		ax[0] = -d[1] / sum
+		ax[1] = d[0] / sum
 		ax[2] = 0.0
 	}
-	ay[0] = d[1]*ax[2] - d[2] * ax[1]
-	ay[1] = d[2]*ax[0] - d[0] * ax[2]
-	ay[2] = d[0]*ax[1] - d[1] * ax[0]
+	ay[0] = d[1]*ax[2] - d[2]*ax[1]
+	ay[1] = d[2]*ax[0] - d[0]*ax[2]
+	ay[2] = d[0]*ax[1] - d[1]*ax[0]
 	return ax, ay, nil
 }
