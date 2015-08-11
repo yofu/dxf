@@ -38,7 +38,7 @@ func (p *Polyline) String() string {
 	for _, v := range p.Vertices {
 		otp.WriteString(v.String())
 	}
-	otp.WriteString(fmt.Sprintf("0\nSEQEND\n5\n%x\n100\nAcDbEntity\n8\n%s\n", p.endhandle, p.Layer().Name))
+	otp.WriteString(fmt.Sprintf("0\nSEQEND\n5\n%X\n100\nAcDbEntity\n8\n%s\n", p.endhandle, p.Layer().Name))
 	return otp.String()
 }
 

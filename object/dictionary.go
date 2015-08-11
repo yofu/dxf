@@ -28,12 +28,12 @@ func NewDictionary() *Dictionary {
 func (d *Dictionary) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nDICTIONARY\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", d.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", d.handle))
 	otp.WriteString("100\nAcDbDictionary\n")
 	otp.WriteString("281\n1\n")
 	for k, v := range d.item {
 		otp.WriteString(fmt.Sprintf("3\n%s\n", k))
-		otp.WriteString(fmt.Sprintf("350\n%x\n", v.Handle()))
+		otp.WriteString(fmt.Sprintf("350\n%X\n", v.Handle()))
 	}
 	return otp.String()
 }

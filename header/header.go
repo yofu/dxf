@@ -37,7 +37,7 @@ func (h *Header) WriteTo(b *bytes.Buffer) error {
 	for i := 0; i < 3; i++ {
 		b.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10, h.extmax[i]))
 	}
-	b.WriteString(fmt.Sprintf("9\n$HANDSEED\n5\n%x\n", h.handseed))
+	b.WriteString(fmt.Sprintf("9\n$HANDSEED\n5\n%X\n", h.handseed))
 	b.WriteString("0\nENDSEC\n")
 	return nil
 }

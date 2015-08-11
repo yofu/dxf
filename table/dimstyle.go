@@ -23,7 +23,7 @@ func (d *DimStyle) IsSymbolTable() bool {
 func (d *DimStyle) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nDIMSTYLE\n")
-	otp.WriteString(fmt.Sprintf("105\n%x\n", d.handle))
+	otp.WriteString(fmt.Sprintf("105\n%X\n", d.handle))
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbDimStyleTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", d.Name))
 	otp.WriteString("70\n0\n")

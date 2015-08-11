@@ -40,9 +40,9 @@ func (g *Group) SetOwner(d *Dictionary) {
 func (g *Group) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nGROUP\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", g.handle))
-	otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%x\n102\n}\n", g.owner.Handle()))
-	otp.WriteString(fmt.Sprintf("330\n%x\n", g.owner.Handle()))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", g.handle))
+	otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", g.owner.Handle()))
+	otp.WriteString(fmt.Sprintf("330\n%X\n", g.owner.Handle()))
 	otp.WriteString("100\nAcDbGroup\n")
 	otp.WriteString(fmt.Sprintf("300\n%s\n", g.Description))
 	otp.WriteString("70\n0\n")
@@ -52,7 +52,7 @@ func (g *Group) String() string {
 		otp.WriteString("71\n0\n")
 	}
 	for _, e := range g.entities {
-		otp.WriteString(fmt.Sprintf("340\n%x\n", e.Handle()))
+		otp.WriteString(fmt.Sprintf("340\n%X\n", e.Handle()))
 	}
 	return otp.String()
 }

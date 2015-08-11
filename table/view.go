@@ -23,7 +23,7 @@ func (v *View) IsSymbolTable() bool {
 func (v *View) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nVIEW\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", v.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", v.handle))
 	otp.WriteString("100\nAcDbSymbostableRecord\n100\nAcDbViewTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", v.Name))
 	return otp.String()

@@ -31,7 +31,7 @@ func NewBlock(name, desc string) *Block {
 func (b *Block) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nBLOCK\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", b.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", b.handle))
 	otp.WriteString("100\nAcDbEntity\n")
 	otp.WriteString(fmt.Sprintf("8\n%s\n", b.layer.Name))
 	otp.WriteString("100\nAcDbBlockBegin\n")
@@ -43,7 +43,7 @@ func (b *Block) String() string {
 	otp.WriteString(fmt.Sprintf("3\n%s\n", b.Name))
 	otp.WriteString(fmt.Sprintf("1\n%s\n", b.Description))
 	otp.WriteString("0\nENDBLK\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", b.endhandle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", b.endhandle))
 	otp.WriteString("100\nAcDbEntity\n")
 	otp.WriteString(fmt.Sprintf("8\n%s\n", b.layer.Name))
 	otp.WriteString("100\nAcDbBlockEnd\n")

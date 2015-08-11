@@ -26,10 +26,10 @@ func NewAcDbPlaceHolder() *AcDbPlaceHolder {
 func (p *AcDbPlaceHolder) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nACDBPLACEHOLDER\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", p.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", p.handle))
 	if p.owner != nil {
-		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%x\n102\n}\n", p.owner.Handle()))
-		otp.WriteString(fmt.Sprintf("330\n%x\n", p.owner.Handle()))
+		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", p.owner.Handle()))
+		otp.WriteString(fmt.Sprintf("330\n%X\n", p.owner.Handle()))
 	}
 	return otp.String()
 }

@@ -34,9 +34,9 @@ func NewEntity(t EntityType) *entity {
 func (e *entity) String() string {
 	var otp bytes.Buffer
 	otp.WriteString(fmt.Sprintf("0\n%s\n", EntityTypeString(e.Type)))
-	otp.WriteString(fmt.Sprintf("5\n%x\n", e.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", e.handle))
 	if e.blockRecord != nil {
-		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%x\n102\n}\n", e.blockRecord.Handle()))
+		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", e.blockRecord.Handle()))
 	}
 	otp.WriteString("100\nAcDbEntity\n")
 	otp.WriteString(fmt.Sprintf("8\n%s\n", e.layer.Name))

@@ -22,14 +22,14 @@ func (t *Table) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nTABLE\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", t.name))
-	otp.WriteString(fmt.Sprintf("5\n%x\n", t.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", t.handle))
 	otp.WriteString("100\nAcDbSymbolTable\n")
 	otp.WriteString(fmt.Sprintf("70\n%d\n", t.size))
 	if t.name == "DIMSTYLE" {
 		otp.WriteString("100\nAcDbDimStyleTable\n")
 		otp.WriteString(fmt.Sprintf("71\n%d\n", t.size))
 		for i := 0; i < t.size; i++ {
-			otp.WriteString(fmt.Sprintf("340\n%x\n", t.tables[i].Handle()))
+			otp.WriteString(fmt.Sprintf("340\n%X\n", t.tables[i].Handle()))
 		}
 	}
 	for i := 0; i < t.size; i++ {

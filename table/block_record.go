@@ -23,7 +23,7 @@ func (b *BlockRecord) IsSymbolTable() bool {
 func (b *BlockRecord) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nBLOCK_RECORD\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", b.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", b.handle))
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbBlockTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", b.Name))
 	otp.WriteString("70\n0\n")

@@ -35,19 +35,19 @@ func NewAcDbDictionaryWDFLT(owner handle.Handler) (*AcDbDictionaryWDFLT, *AcDbPl
 func (d *AcDbDictionaryWDFLT) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nACDBDICTIONARYWDFLT\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", d.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", d.handle))
 	if d.owner != nil {
-		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%x\n102\n}\n", d.owner.Handle()))
-		otp.WriteString(fmt.Sprintf("330\n%x\n", d.owner.Handle()))
+		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", d.owner.Handle()))
+		otp.WriteString(fmt.Sprintf("330\n%X\n", d.owner.Handle()))
 	}
 	otp.WriteString("100\nAcDbDictionary\n")
 	otp.WriteString("281\n1\n")
 	for k, v := range d.item {
 		otp.WriteString(fmt.Sprintf("3\n%s\n", k))
-		otp.WriteString(fmt.Sprintf("350\n%x\n", v.Handle()))
+		otp.WriteString(fmt.Sprintf("350\n%X\n", v.Handle()))
 	}
 	otp.WriteString("100\nAcDbDictionaryWithDefault\n")
-	otp.WriteString(fmt.Sprintf("340\n%x\n", d.defaulthandle))
+	otp.WriteString(fmt.Sprintf("340\n%X\n", d.defaulthandle))
 	return otp.String()
 }
 

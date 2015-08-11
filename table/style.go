@@ -30,7 +30,7 @@ func (st *Style) IsSymbolTable() bool {
 func (st *Style) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nSTYLE\n")
-	otp.WriteString(fmt.Sprintf("5\n%x\n", st.handle))
+	otp.WriteString(fmt.Sprintf("5\n%X\n", st.handle))
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbTextStyleTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", st.Name))
 	otp.WriteString("70\n0\n")
