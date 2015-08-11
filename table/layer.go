@@ -17,7 +17,7 @@ type Layer struct {
 	flag      int
 	Color     color.ColorNumber
 	LineType  *LineType
-	LineWidth int
+	lineWidth int
 	PlotStyle handle.Handler
 }
 
@@ -26,7 +26,7 @@ func NewLayer(name string, color color.ColorNumber, lt *LineType) *Layer {
 	l.Name = name
 	l.Color = color
 	l.LineType = lt
-	l.LineWidth = -3
+	l.lineWidth = -3
 	return l
 }
 
@@ -43,7 +43,7 @@ func (l *Layer) String() string {
 	otp.WriteString(fmt.Sprintf("70\n%d\n", l.flag))
 	otp.WriteString(fmt.Sprintf("62\n%d\n", l.Color))
 	otp.WriteString(fmt.Sprintf("6\n%s\n", l.LineType.Name))
-	otp.WriteString(fmt.Sprintf("370\n%d\n", l.LineWidth))
+	otp.WriteString(fmt.Sprintf("370\n%d\n", l.lineWidth))
 	otp.WriteString(fmt.Sprintf("390\n%X\n", l.PlotStyle.Handle()))
 	return otp.String()
 }
@@ -54,6 +54,32 @@ func (l *Layer) Handle() int {
 func (l *Layer) SetHandle(v *int) {
 	l.handle = *v
 	(*v)++
+}
+
+func (l *Layer) SetLineWidth(w int) int {
+	if _, ok := LineWidth[w]; ok {
+		l.lineWidth = w
+		return w
+	}
+	if w > 211 {
+		l.lineWidth = 211
+		return 211
+	}
+	if w < 0 {
+		l.lineWidth = -3
+		return -3
+	}
+	minkey := -3
+	minval := 211
+	for k, _ := range LineWidth {
+		tmp := k-w
+		if tmp > 0 && tmp < minval {
+			minkey = k
+			minval = tmp
+		}
+	}
+	l.lineWidth = minkey
+	return minkey
 }
 
 func (l *Layer) SetPlotStyle(ps handle.Handler) {
