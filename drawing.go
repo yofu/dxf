@@ -8,6 +8,7 @@ import (
 	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/object"
 	"github.com/yofu/dxf/table"
@@ -25,6 +26,9 @@ type Drawing struct {
 	Groups       map[string]*object.Group
 	CurrentLayer *table.Layer
 	sections     []Section
+	dictionary   *object.Dictionary
+	groupdict    *object.Dictionary
+	plotstyle    handle.Handler
 }
 
 func NewDrawing() *Drawing {
@@ -41,6 +45,12 @@ func NewDrawing() *Drawing {
 		entity.New(),
 		object.New(),
 	}
+	d.dictionary = object.NewDictionary()
+	d.addObject(d.dictionary)
+	wd, ph := object.NewAcDbDictionaryWDFLT(d.dictionary)
+	d.dictionary.AddItem("ACAD_PLOTSTYLENAME", wd)
+	d.plotstyle = ph
+	d.Layers["0"].SetPlotStyle(d.plotstyle)
 	return d
 }
 
@@ -73,10 +83,11 @@ func (d *Drawing) SaveAs(filename string) error {
 }
 
 func (d *Drawing) setHandle() {
-	h := 0
-	for _, s := range d.sections {
+	h := 1
+	for _, s := range d.sections[1:] {
 		s.SetHandle(&h)
 	}
+	d.sections[0].SetHandle(&h)
 }
 
 func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, setcurrent bool) (*table.Layer, error) {
@@ -87,6 +98,7 @@ func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, s
 		return l, errors.New(fmt.Sprintf("layer %s already exists", name))
 	}
 	l := table.NewLayer(name, cl, lt)
+	l.SetPlotStyle(d.plotstyle)
 	d.Layers[name] = l
 	d.sections[2].(table.Tables).AddLayer(l)
 	if setcurrent {
@@ -187,10 +199,15 @@ func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, 
 		g.AddEntity(es...)
 		return g, errors.New(fmt.Sprintf("group %s already exists", name))
 	}
-	g, dict := object.NewGroup(name, desc, es...)
+	g := object.NewGroup(name, desc, es...)
 	d.Groups[name] = g
+	if d.groupdict == nil {
+		d.groupdict = object.NewDictionary()
+		d.addObject(d.groupdict)
+		d.dictionary.AddItem("ACAD_GROUP", d.groupdict)
+	}
+	g.SetOwner(d.groupdict)
 	d.addObject(g)
-	d.addObject(dict)
 	return g, nil
 }
 

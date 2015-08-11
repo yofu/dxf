@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/yofu/dxf/color"
+	"github.com/yofu/dxf/handle"
 )
 
 var (
@@ -11,10 +12,11 @@ var (
 )
 
 type Layer struct {
-	handle   int
-	Name     string
-	Color    color.ColorNumber
-	LineType *LineType
+	handle    int
+	Name      string
+	Color     color.ColorNumber
+	LineType  *LineType
+	PlotStyle handle.Handler
 }
 
 func NewLayer(name string, color color.ColorNumber, lt *LineType) *Layer {
@@ -33,11 +35,12 @@ func (l *Layer) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nLAYER\n")
 	otp.WriteString(fmt.Sprintf("5\n%x\n", l.handle))
-	otp.WriteString("100\nAcDbSymbolableRecord\n100\nAcDbLayerTableRecord\n")
+	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", l.Name))
 	otp.WriteString("70\n0\n")
 	otp.WriteString(fmt.Sprintf("62\n%d\n", l.Color))
 	otp.WriteString(fmt.Sprintf("6\n%s\n", l.LineType.Name))
+	otp.WriteString(fmt.Sprintf("390\n%x\n", l.PlotStyle.Handle()))
 	// otp.WriteString("370\n-3\n")
 	return otp.String()
 }
@@ -48,4 +51,8 @@ func (l *Layer) Handle() int {
 func (l *Layer) SetHandle(v *int) {
 	l.handle = *v
 	(*v)++
+}
+
+func (l *Layer) SetPlotStyle(ps handle.Handler) {
+	l.PlotStyle = ps
 }

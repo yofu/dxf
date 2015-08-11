@@ -13,23 +13,28 @@ type Group struct {
 	handle      int
 	owner       handle.Handler
 	entities    []entity.Entity
+	selectable  bool
 }
 
 func (g *Group) IsObject() bool {
 	return true
 }
 
-func NewGroup(name, desc string, es ...entity.Entity) (*Group, *Dictionary) {
-	d := NewDictionary()
+func NewGroup(name, desc string, es ...entity.Entity) *Group {
 	g := &Group{
 		Name:        name,
 		Description: desc,
 		handle:      0,
-		owner:       d,
+		owner:       nil,
 		entities:    es,
+		selectable:  true,
 	}
-	d.AddItem(name, g)
-	return g, d
+	return g
+}
+
+func (g *Group) SetOwner(d *Dictionary) {
+	g.owner = d
+	d.AddItem(g.Name, g)
 }
 
 func (g *Group) String() string {
@@ -41,7 +46,11 @@ func (g *Group) String() string {
 	otp.WriteString("100\nAcDbGroup\n")
 	otp.WriteString(fmt.Sprintf("300\n%s\n", g.Description))
 	otp.WriteString("70\n0\n")
-	otp.WriteString("71\n1\n")
+	if g.selectable {
+		otp.WriteString("71\n1\n")
+	} else {
+		otp.WriteString("71\n0\n")
+	}
 	for _, e := range g.entities {
 		otp.WriteString(fmt.Sprintf("340\n%x\n", e.Handle()))
 	}

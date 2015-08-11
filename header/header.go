@@ -6,15 +6,16 @@ import (
 )
 
 type Header struct {
-	version string
-	insbase []float64
-	extmin  []float64
-	extmax  []float64
+	version  string
+	insbase  []float64
+	extmin   []float64
+	extmax   []float64
+	handseed int
 }
 
 func New() *Header {
 	h := new(Header)
-	h.version = "AC1006"
+	h.version = "AC1015"
 	h.insbase = make([]float64, 3)
 	h.extmin = make([]float64, 3)
 	h.extmax = make([]float64, 3)
@@ -36,10 +37,11 @@ func (h *Header) WriteTo(b *bytes.Buffer) error {
 	for i := 0; i < 3; i++ {
 		b.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10, h.extmax[i]))
 	}
+	b.WriteString(fmt.Sprintf("9\n$HANDSEED\n5\n%x\n", h.handseed))
 	b.WriteString("0\nENDSEC\n")
 	return nil
 }
 
 func (h *Header) SetHandle(v *int) {
-	return
+	h.handseed = *v
 }
