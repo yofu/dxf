@@ -1,4 +1,4 @@
-package dxf
+package handle
 
 type Handler interface {
 	Handle() int
