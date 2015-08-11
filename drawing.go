@@ -22,6 +22,7 @@ var (
 type Drawing struct {
 	FileName     string
 	Layers       map[string]*table.Layer
+	Groups       map[string]*object.Group
 	CurrentLayer *table.Layer
 	sections     []Section
 }
@@ -30,6 +31,7 @@ func NewDrawing() *Drawing {
 	d := new(Drawing)
 	d.Layers = make(map[string]*table.Layer)
 	d.Layers["0"] = table.LY_0
+	d.Groups = make(map[string]*object.Group)
 	d.CurrentLayer = d.Layers["0"]
 	d.sections = []Section{
 		header.New(),
@@ -174,6 +176,29 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	f.SetLayer(d.CurrentLayer)
 	d.addEntity(f)
 	return f, nil
+}
+
+func (d *Drawing) addObject(o object.Object) {
+	d.sections[5] = d.sections[5].(object.Objects).Add(o)
+}
+
+func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, error) {
+	if g, exist := d.Groups[name]; exist {
+		g.AddEntity(es...)
+		return g, errors.New(fmt.Sprintf("group %s already exists", name))
+	}
+	g, dict := object.NewGroup(name, desc, es...)
+	d.Groups[name] = g
+	d.addObject(g)
+	d.addObject(dict)
+	return g, nil
+}
+
+func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
+	if g, exist := d.Groups[name]; exist {
+		g.AddEntity(es...)
+	}
+	return errors.New(fmt.Sprintf("group %s doesn't exist", name))
 }
 
 func ColorIndex(cl []int) color.ColorNumber {
