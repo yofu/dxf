@@ -101,6 +101,14 @@ func (d *Drawing) ChangeLayer(name string) error {
 	return errors.New(fmt.Sprintf("layer %s doesn't exist", name))
 }
 
+func (d *Drawing) Point(x, y, z float64) (*entity.Point, error) {
+	p := entity.NewPoint()
+	p.Coord = []float64{x, y, z}
+	p.SetLayer(d.CurrentLayer)
+	d.sections[4].(*entity.Entities).Add(p)
+	return p, nil
+}
+
 func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	l := entity.NewLine()
 	l.Start = []float64{x1, y1, z1}

@@ -9,6 +9,7 @@ const (
 	CIRCLE
 	POLYLINE
 	VERTEX
+	POINT
 	ARC
 	TEXT
 )
@@ -27,6 +28,8 @@ func EntityTypeString(t EntityType) string {
 		return "POLYLINE"
 	case VERTEX:
 		return "VERTEX"
+	case POINT:
+		return "POINT"
 	case ARC:
 		return "ARC"
 	case TEXT:
