@@ -13,6 +13,8 @@ func New() Tables {
 	t[1].Add(LT_BYLAYER)
 	t[1].Add(LT_BYBLOCK)
 	t[1].Add(LT_CONTINUOUS)
+	t[1].Add(LT_HIDDEN)
+	t[1].Add(LT_DASHDOT)
 	t[2] = NewTable("LAYER")
 	t[2].Add(LY_0)
 	t[3] = NewTable("STYLE")
