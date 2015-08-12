@@ -55,8 +55,7 @@ func (p *Polyline) AddVertex(x, y, z float64) *Vertex {
 }
 
 func (p *Polyline) SetHandle(h *int) {
-	p.handle = *h
-	(*h)++
+	p.entity.SetHandle(h)
 	for _, v := range p.Vertices {
 		v.SetHandle(h)
 	}
