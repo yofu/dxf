@@ -13,6 +13,7 @@ var (
 
 type Layer struct {
 	handle    int
+	owner     handle.Handler
 	Name      string
 	flag      int
 	Color     color.ColorNumber
@@ -38,6 +39,9 @@ func (l *Layer) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nLAYER\n")
 	otp.WriteString(fmt.Sprintf("5\n%X\n", l.handle))
+	if l.owner != nil {
+		otp.WriteString(fmt.Sprintf("330\n%X\n", l.owner.Handle()))
+	}
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", l.Name))
 	otp.WriteString(fmt.Sprintf("70\n%d\n", l.flag))
@@ -54,6 +58,10 @@ func (l *Layer) Handle() int {
 func (l *Layer) SetHandle(v *int) {
 	l.handle = *v
 	(*v)++
+}
+
+func (l *Layer) SetOwner(h handle.Handler) {
+	l.owner = h
 }
 
 func (l *Layer) SetLineWidth(w int) int {

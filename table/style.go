@@ -3,6 +3,7 @@ package table
 import (
 	"bytes"
 	"fmt"
+	"github.com/yofu/dxf/handle"
 )
 
 var (
@@ -11,6 +12,7 @@ var (
 
 type Style struct {
 	handle      int
+	owner       handle.Handler
 	Name        string // 2
 	FontName    string // 3
 	BigFontName string // 4
@@ -31,6 +33,9 @@ func (st *Style) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nSTYLE\n")
 	otp.WriteString(fmt.Sprintf("5\n%X\n", st.handle))
+	if st.owner != nil {
+		otp.WriteString(fmt.Sprintf("330\n%X\n", st.owner.Handle()))
+	}
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbTextStyleTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", st.Name))
 	otp.WriteString("70\n0\n")
@@ -50,4 +55,8 @@ func (st *Style) Handle() int {
 func (st *Style) SetHandle(v *int) {
 	st.handle = *v
 	(*v)++
+}
+
+func (st *Style) SetOwner(h handle.Handler) {
+	st.owner = h
 }

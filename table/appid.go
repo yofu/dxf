@@ -3,10 +3,12 @@ package table
 import (
 	"bytes"
 	"fmt"
+	"github.com/yofu/dxf/handle"
 )
 
 type AppID struct {
 	handle   int
+	owner    handle.Handler
 	Name     string
 }
 
@@ -24,6 +26,9 @@ func (a *AppID) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nAPPID\n")
 	otp.WriteString(fmt.Sprintf("5\n%X\n", a.handle))
+	if a.owner != nil {
+		otp.WriteString(fmt.Sprintf("330\n%X\n", a.owner.Handle()))
+	}
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbRegAppTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", a.Name))
 	otp.WriteString("70\n0\n")
@@ -36,4 +41,8 @@ func (a *AppID) Handle() int {
 func (a *AppID) SetHandle(v *int) {
 	a.handle = *v
 	(*v)++
+}
+
+func (a *AppID) SetOwner(h handle.Handler) {
+	a.owner = h
 }

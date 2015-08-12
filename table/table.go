@@ -52,5 +52,6 @@ func (t *Table) SetHandle(v *int) {
 
 func (t *Table) Add(st SymbolTable) {
 	t.tables = append(t.tables, st)
+	st.SetOwner(t)
 	t.size++
 }

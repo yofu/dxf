@@ -13,6 +13,7 @@ var (
 
 type LineType struct {
 	handle      int
+	owner       handle.Handler
 	Name        string // 2
 	Description string // 3
 }
@@ -32,6 +33,9 @@ func (lt *LineType) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nLTYPE\n")
 	otp.WriteString(fmt.Sprintf("5\n%X\n", lt.handle))
+	if lt.owner != nil {
+		otp.WriteString(fmt.Sprintf("330\n%X\n", lt.owner.Handle()))
+	}
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbLinetypeTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", lt.Name))
 	otp.WriteString("70\n0\n")

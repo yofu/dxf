@@ -3,10 +3,12 @@ package table
 import (
 	"bytes"
 	"fmt"
+	"github.com/yofu/dxf/handle"
 )
 
 type BlockRecord struct {
 	handle   int
+	owner    handle.Handler
 	Name     string
 }
 
@@ -24,6 +26,9 @@ func (b *BlockRecord) String() string {
 	var otp bytes.Buffer
 	otp.WriteString("0\nBLOCK_RECORD\n")
 	otp.WriteString(fmt.Sprintf("5\n%X\n", b.handle))
+	if b.owner != nil {
+		otp.WriteString(fmt.Sprintf("330\n%X\n", b.owner.Handle()))
+	}
 	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbBlockTableRecord\n")
 	otp.WriteString(fmt.Sprintf("2\n%s\n", b.Name))
 	otp.WriteString("70\n0\n")
@@ -38,4 +43,8 @@ func (b *BlockRecord) Handle() int {
 func (b *BlockRecord) SetHandle(v *int) {
 	b.handle = *v
 	(*v)++
+}
+
+func (b *BlockRecord) SetOwner(h handle.Handler) {
+	b.owner = h
 }
