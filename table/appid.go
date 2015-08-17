@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -22,17 +21,26 @@ func (a *AppID) IsSymbolTable() bool {
 	return true
 }
 
-func (a *AppID) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nAPPID\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", a.handle))
+func (a *AppID) Format(f *format.Formatter) {
+	f.WriteString(0, "APPID")
+	f.WriteHex(5, a.handle)
 	if a.owner != nil {
-		otp.WriteString(fmt.Sprintf("330\n%X\n", a.owner.Handle()))
+		f.WriteHex(330, a.owner.Handle())
 	}
-	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbRegAppTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", a.Name))
-	otp.WriteString("70\n0\n")
-	return otp.String()
+	f.WriteString(100, "AcDbSymbolTableRecord")
+	f.WriteString(100, "AcDbRegAppTableRecord")
+	f.WriteString(2, a.Name)
+	f.WriteInt(70, 0)
+}
+
+func (a *AppID) String() string {
+	f := format.New()
+	return a.FormatString(f)
+}
+
+func (a *AppID) FormatString(f *format.Formatter) string {
+	a.Format(f)
+	return f.Output()
 }
 
 func (a *AppID) Handle() int {

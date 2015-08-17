@@ -1,10 +1,10 @@
 package dxf
 
 import (
-	"bytes"
+	"github.com/yofu/dxf/format"
 )
 
 type Section interface {
-	WriteTo(*bytes.Buffer) error
+	WriteTo(*format.Formatter)
 	SetHandle(*int)
 }

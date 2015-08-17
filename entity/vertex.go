@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type Vertex struct {
@@ -24,13 +23,22 @@ func NewVertex(x, y, z float64) *Vertex {
 	return v
 }
 
-func (v *Vertex) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(v.entity.String())
-	otp.WriteString("100\nAcDbVertex\n100\nAcDb3DPolylineVertex\n")
-	otp.WriteString(fmt.Sprintf("70\n%d\n", v.Flag))
+func (v *Vertex) Format(f *format.Formatter) {
+	v.entity.Format(f)
+	f.WriteString(100, "AcDbVertex")
+	f.WriteString(100, "AcDb3DPolylineVertex")
+	f.WriteInt(70, v.Flag)
 	for i := 0; i < 3; i++ {
-		otp.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10, v.Coord[i]))
+		f.WriteFloat((i+1)*10, v.Coord[i])
 	}
-	return otp.String()
+}
+
+func (v *Vertex) String() string {
+	f := format.New()
+	return v.FormatString(f)
+}
+
+func (v *Vertex) FormatString(f *format.Formatter) string {
+	v.Format(f)
+	return f.Output()
 }

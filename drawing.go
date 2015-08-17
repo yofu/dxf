@@ -1,13 +1,13 @@
 package dxf
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/object"
@@ -25,6 +25,7 @@ type Drawing struct {
 	Layers       map[string]*table.Layer
 	Groups       map[string]*object.Group
 	CurrentLayer *table.Layer
+	formatter    *format.Formatter
 	sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
@@ -37,6 +38,8 @@ func NewDrawing() *Drawing {
 	d.Layers["0"] = table.LY_0
 	d.Groups = make(map[string]*object.Group)
 	d.CurrentLayer = d.Layers["0"]
+	d.formatter = format.New()
+	d.formatter.SetPrecision(16)
 	d.sections = []Section{
 		header.New(),
 		class.New(),
@@ -56,17 +59,17 @@ func NewDrawing() *Drawing {
 
 func (d *Drawing) saveFile(filename string) error {
 	d.setHandle()
-	var otp bytes.Buffer
+	d.formatter.Reset()
 	for _, s := range d.sections {
-		s.WriteTo(&otp)
+		s.WriteTo(d.formatter)
 	}
-	otp.WriteString("0\nEOF\n")
+	d.formatter.WriteString(0, "EOF")
 	w, err := os.Create(filename)
 	defer w.Close()
 	if err != nil {
 		return err
 	}
-	otp.WriteTo(w)
+	d.formatter.WriteTo(w)
 	return nil
 }
 

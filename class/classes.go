@@ -1,16 +1,24 @@
 package class
 
 import (
-	"bytes"
+	"github.com/yofu/dxf/format"
 )
 
 type Class struct {
 }
 
+func (c *Class) Format(f *format.Formatter) {
+	f.WriteString(0, "CLASS")
+}
+
 func (c *Class) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nCLASS\n")
-	return otp.String()
+	f := format.New()
+	return c.FormatString(f)
+}
+
+func (c *Class) FormatString(f *format.Formatter) string {
+	c.Format(f)
+	return f.Output()
 }
 
 type Classes []*Class
@@ -20,13 +28,13 @@ func New() Classes {
 	return c
 }
 
-func (cs Classes) WriteTo(b *bytes.Buffer) error {
-	b.WriteString("0\nSECTION\n2\nCLASSES\n")
+func (cs Classes) WriteTo(f *format.Formatter) {
+	f.WriteString(0, "SECTION")
+	f.WriteString(2, "CLASSES")
 	for _, c := range cs {
-		b.WriteString(c.String())
+		c.Format(f)
 	}
-	b.WriteString("0\nENDSEC\n")
-	return nil
+	f.WriteString(0, "ENDSEC")
 }
 
 func (cs Classes) SetHandle(v *int) {

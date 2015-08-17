@@ -1,8 +1,7 @@
 package block
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/table"
 )
 
@@ -28,26 +27,34 @@ func NewBlock(name, desc string) *Block {
 	return b
 }
 
-func (b *Block) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nBLOCK\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", b.handle))
-	otp.WriteString("100\nAcDbEntity\n")
-	otp.WriteString(fmt.Sprintf("8\n%s\n", b.layer.Name))
-	otp.WriteString("100\nAcDbBlockBegin\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", b.Name))
-	otp.WriteString(fmt.Sprintf("70\n%d\n", b.Flag))
+func (b *Block) Format(f *format.Formatter) {
+	f.WriteString(0, "BLOCK")
+	f.WriteHex(5, b.handle)
+	f.WriteString(100, "AcDbEntity")
+	f.WriteString(8, b.layer.Name)
+	f.WriteString(100, "AcDbBlockBegin")
+	f.WriteString(2, b.Name)
+	f.WriteInt(70, b.Flag)
 	for i := 0; i < 3; i++ {
-		otp.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10, b.Coord[i]))
+		f.WriteFloat((i+1)*10, b.Coord[i])
 	}
-	otp.WriteString(fmt.Sprintf("3\n%s\n", b.Name))
-	otp.WriteString(fmt.Sprintf("1\n%s\n", b.Description))
-	otp.WriteString("0\nENDBLK\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", b.endhandle))
-	otp.WriteString("100\nAcDbEntity\n")
-	otp.WriteString(fmt.Sprintf("8\n%s\n", b.layer.Name))
-	otp.WriteString("100\nAcDbBlockEnd\n")
-	return otp.String()
+	f.WriteString(3, b.Name)
+	f.WriteString(1, b.Description)
+	f.WriteString(0, "ENDBLK")
+	f.WriteHex(5, b.endhandle)
+	f.WriteString(100, "AcDbEntity")
+	f.WriteString(8, b.layer.Name)
+	f.WriteString(100, "AcDbBlockEnd")
+}
+
+func (b *Block) String() string {
+	f := format.New()
+	return b.FormatString(f)
+}
+
+func (b *Block) FormatString(f *format.Formatter) string {
+	b.Format(f)
+	return f.Output()
 }
 
 func (b *Block) Handle() int {

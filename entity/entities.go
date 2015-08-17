@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"bytes"
+	"github.com/yofu/dxf/format"
 )
 
 type Entities []Entity
@@ -11,13 +11,13 @@ func New() Entities {
 	return e
 }
 
-func (es Entities) WriteTo(b *bytes.Buffer) error {
-	b.WriteString("0\nSECTION\n2\nENTITIES\n")
+func (es Entities) WriteTo(f *format.Formatter) {
+	f.WriteString(0, "SECTION")
+	f.WriteString(2, "ENTITIES")
 	for _, e := range es {
-		b.WriteString(e.String())
+		e.Format(f)
 	}
-	b.WriteString("0\nENDSEC\n")
-	return nil
+	f.WriteString(0, "ENDSEC")
 }
 
 func (es Entities) Add(e Entity) Entities {

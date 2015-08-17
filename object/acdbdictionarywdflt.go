@@ -1,9 +1,9 @@
 package object
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -32,23 +32,33 @@ func NewAcDbDictionaryWDFLT(owner handle.Handler) (*AcDbDictionaryWDFLT, *AcDbPl
 	return d, p
 }
 
-func (d *AcDbDictionaryWDFLT) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nACDBDICTIONARYWDFLT\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", d.handle))
+func (d *AcDbDictionaryWDFLT) Format(f *format.Formatter) {
+	f.WriteString(0, "ACDBDICTIONARYWDFLT")
+	f.WriteHex(5, d.handle)
 	if d.owner != nil {
-		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", d.owner.Handle()))
-		otp.WriteString(fmt.Sprintf("330\n%X\n", d.owner.Handle()))
+		f.WriteString(102, "{ACAD_REACTORS")
+		f.WriteHex(330, d.owner.Handle())
+		f.WriteString(102, "}")
+		f.WriteHex(330, d.owner.Handle())
 	}
-	otp.WriteString("100\nAcDbDictionary\n")
-	otp.WriteString("281\n1\n")
+	f.WriteString(100, "AcDbDictionary")
+	f.WriteInt(281, 1)
 	for k, v := range d.item {
-		otp.WriteString(fmt.Sprintf("3\n%s\n", k))
-		otp.WriteString(fmt.Sprintf("350\n%X\n", v.Handle()))
+		f.WriteString(3, k)
+		f.WriteHex(350, v.Handle())
 	}
-	otp.WriteString("100\nAcDbDictionaryWithDefault\n")
-	otp.WriteString(fmt.Sprintf("340\n%X\n", d.defaulthandle))
-	return otp.String()
+	f.WriteString(100, "AcDbDictionaryWithDefault")
+	f.WriteHex(340, d.defaulthandle.Handle())
+}
+
+func (d *AcDbDictionaryWDFLT) String() string {
+	f := format.New()
+	return d.FormatString(f)
+}
+
+func (d *AcDbDictionaryWDFLT) FormatString(f *format.Formatter) string {
+	d.Format(f)
+	return f.Output()
 }
 
 func (d *AcDbDictionaryWDFLT) Handle() int {

@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 	"math"
 )
@@ -39,25 +38,34 @@ func (lt *LineType) IsSymbolTable() bool {
 	return true
 }
 
-func (lt *LineType) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nLTYPE\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", lt.handle))
+func (lt *LineType) Format(f *format.Formatter) {
+	f.WriteString(0, "LTYPE")
+	f.WriteHex(5, lt.handle)
 	if lt.owner != nil {
-		otp.WriteString(fmt.Sprintf("330\n%X\n", lt.owner.Handle()))
+		f.WriteHex(330, lt.owner.Handle())
 	}
-	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbLinetypeTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", lt.Name))
-	otp.WriteString("70\n0\n")
-	otp.WriteString(fmt.Sprintf("3\n%s\n", lt.Description))
-	otp.WriteString("72\n65\n")
-	otp.WriteString(fmt.Sprintf("73\n%d\n", len(lt.lengths)))
-	otp.WriteString(fmt.Sprintf("40\n%f\n", lt.TotalLength()))
+	f.WriteString(100, "AcDbSymbolTableRecord")
+	f.WriteString(100, "AcDbLinetypeTableRecord")
+	f.WriteString(2, lt.Name)
+	f.WriteInt(70, 0)
+	f.WriteString(3, lt.Description)
+	f.WriteInt(72, 65)
+	f.WriteInt(73, len(lt.lengths))
+	f.WriteFloat(40, lt.TotalLength())
 	for _, l := range lt.lengths {
-		otp.WriteString(fmt.Sprintf("49\n%f\n", l))
-		otp.WriteString("74\n0\n")
+		f.WriteFloat(49, l)
+		f.WriteInt(74, 0)
 	}
-	return otp.String()
+}
+
+func (lt *LineType) String() string {
+	f := format.New()
+	return lt.FormatString(f)
+}
+
+func (lt *LineType) FormatString(f *format.Formatter) string {
+	lt.Format(f)
+	return f.Output()
 }
 
 func (lt *LineType) Handle() int {

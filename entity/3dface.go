@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type ThreeDFace struct {
@@ -28,18 +27,25 @@ func New3DFace() *ThreeDFace {
 	return f
 }
 
-func (f *ThreeDFace) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(f.entity.String())
-	otp.WriteString("100\nAcDbFace\n")
+func (f *ThreeDFace) Format(fm *format.Formatter) {
+	f.entity.Format(fm)
+	fm.WriteString(100, "AcDbFace")
 	for i := 0; i < 4; i++ {
 		for j := 0; j < 3; j++ {
-			otp.WriteString(fmt.Sprintf("%d\n%f\n", (j+1)*10+i, f.Points[i][j]))
+			fm.WriteFloat((j+1)*10+i, f.Points[i][j])
 		}
 	}
 	if f.Flag != 0 {
-		otp.WriteString(fmt.Sprintf("70\n%d\n", f.Flag))
+		fm.WriteInt(70, f.Flag)
 	}
-	return otp.String()
 }
 
+func (f *ThreeDFace) String() string {
+	fm := format.New()
+	return f.FormatString(fm)
+}
+
+func (f *ThreeDFace) FormatString(fm *format.Formatter) string {
+	f.Format(fm)
+	return fm.Output()
+}

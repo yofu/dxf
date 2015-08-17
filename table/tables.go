@@ -1,7 +1,7 @@
 package table
 
 import (
-	"bytes"
+	"github.com/yofu/dxf/format"
 )
 
 type Tables []*Table
@@ -31,13 +31,13 @@ func New() Tables {
 	return t
 }
 
-func (ts Tables) WriteTo(b *bytes.Buffer) error {
-	b.WriteString("0\nSECTION\n2\nTABLES\n")
+func (ts Tables) WriteTo(f *format.Formatter) {
+	f.WriteString(0, "SECTION")
+	f.WriteString(2, "TABLES")
 	for _, t := range ts {
-		b.WriteString(t.String())
+		t.Format(f)
 	}
-	b.WriteString("0\nENDSEC\n")
-	return nil
+	f.WriteString(0, "ENDSEC")
 }
 
 func (ts Tables) Add(t *Table) Tables {

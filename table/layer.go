@@ -1,9 +1,8 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
 	"github.com/yofu/dxf/color"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -35,21 +34,30 @@ func (l *Layer) IsSymbolTable() bool {
 	return true
 }
 
-func (l *Layer) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nLAYER\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", l.handle))
+func (l *Layer) Format(f *format.Formatter) {
+	f.WriteString(0, "LAYER")
+	f.WriteHex(5, l.handle)
 	if l.owner != nil {
-		otp.WriteString(fmt.Sprintf("330\n%X\n", l.owner.Handle()))
+		f.WriteHex(330, l.owner.Handle())
 	}
-	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbLayerTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", l.Name))
-	otp.WriteString(fmt.Sprintf("70\n%d\n", l.flag))
-	otp.WriteString(fmt.Sprintf("62\n%d\n", l.Color))
-	otp.WriteString(fmt.Sprintf("6\n%s\n", l.LineType.Name))
-	otp.WriteString(fmt.Sprintf("370\n%d\n", l.lineWidth))
-	otp.WriteString(fmt.Sprintf("390\n%X\n", l.PlotStyle.Handle()))
-	return otp.String()
+	f.WriteString(100, "AcDbSymbolTableRecord")
+	f.WriteString(100, "AcDbLayerTableRecord")
+	f.WriteString(2, l.Name)
+	f.WriteInt(70, l.flag)
+	f.WriteInt(62, int(l.Color))
+	f.WriteString(6, l.LineType.Name)
+	f.WriteInt(370, l.lineWidth)
+	f.WriteHex(390, l.PlotStyle.Handle())
+}
+
+func (l *Layer) String() string {
+	f := format.New()
+	return l.FormatString(f)
+}
+
+func (l *Layer) FormatString(f *format.Formatter) string {
+	l.Format(f)
+	return f.Output()
 }
 
 func (l *Layer) Handle() int {

@@ -1,9 +1,9 @@
 package object
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -25,17 +25,25 @@ func NewDictionary() *Dictionary {
 	return d
 }
 
-func (d *Dictionary) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nDICTIONARY\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", d.handle))
-	otp.WriteString("100\nAcDbDictionary\n")
-	otp.WriteString("281\n1\n")
+func (d *Dictionary) Format(f *format.Formatter) {
+	f.WriteString(0, "DICTIONARY")
+	f.WriteHex(5, d.handle)
+	f.WriteString(100, "AcDbDictionary")
+	f.WriteInt(281, 1)
 	for k, v := range d.item {
-		otp.WriteString(fmt.Sprintf("3\n%s\n", k))
-		otp.WriteString(fmt.Sprintf("350\n%X\n", v.Handle()))
+		f.WriteString(3, k)
+		f.WriteHex(350, v.Handle())
 	}
-	return otp.String()
+}
+
+func (d *Dictionary) String() string {
+	f := format.New()
+	return d.FormatString(f)
+}
+
+func (d *Dictionary) FormatString(f *format.Formatter) string {
+	d.Format(f)
+	return f.Output()
 }
 
 func (d *Dictionary) Handle() int {

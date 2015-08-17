@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -22,19 +21,28 @@ func (b *BlockRecord) IsSymbolTable() bool {
 	return true
 }
 
-func (b *BlockRecord) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nBLOCK_RECORD\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", b.handle))
+func (b *BlockRecord) Format(f *format.Formatter) {
+	f.WriteString(0, "BLOCK_RECORD")
+	f.WriteHex(5, b.handle)
 	if b.owner != nil {
-		otp.WriteString(fmt.Sprintf("330\n%X\n", b.owner.Handle()))
+		f.WriteHex(330, b.owner.Handle())
 	}
-	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbBlockTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", b.Name))
-	otp.WriteString("70\n0\n")
-	otp.WriteString("280\n1\n")
-	otp.WriteString("281\n0\n")
-	return otp.String()
+	f.WriteString(100, "AcDbSymbolTableRecord")
+	f.WriteString(100, "AcDbBlockTableRecord")
+	f.WriteString(2, b.Name)
+	f.WriteInt(70, 0)
+	f.WriteInt(280, 1)
+	f.WriteInt(281, 0)
+}
+
+func (b *BlockRecord) String() string {
+	f := format.New()
+	return b.FormatString(f)
+}
+
+func (b *BlockRecord) FormatString(f *format.Formatter) string {
+	b.Format(f)
+	return f.Output()
 }
 
 func (b *BlockRecord) Handle() int {

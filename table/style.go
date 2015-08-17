@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -29,24 +28,33 @@ func (st *Style) IsSymbolTable() bool {
 	return true
 }
 
-func (st *Style) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nSTYLE\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", st.handle))
+func (st *Style) Format(f *format.Formatter) {
+	f.WriteString(0, "STYLE")
+	f.WriteHex(5, st.handle)
 	if st.owner != nil {
-		otp.WriteString(fmt.Sprintf("330\n%X\n", st.owner.Handle()))
+		f.WriteHex(330, st.owner.Handle())
 	}
-	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbTextStyleTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", st.Name))
-	otp.WriteString("70\n0\n")
-	otp.WriteString("40\n0.0\n")
-	otp.WriteString("41\n1.0\n")
-	otp.WriteString("50\n0.0\n")
-	otp.WriteString("71\n0\n")
-	otp.WriteString("42\n0.2\n")
-	otp.WriteString(fmt.Sprintf("3\n%s\n", st.FontName))
-	otp.WriteString(fmt.Sprintf("4\n%s\n", st.BigFontName))
-	return otp.String()
+	f.WriteString(100, "AcDbSymbolTableRecord")
+	f.WriteString(100, "AcDbTextStyleTableRecord")
+	f.WriteString(2, st.Name)
+	f.WriteInt(70, 0)
+	f.WriteString(40, "0.0")
+	f.WriteString(41, "1.0")
+	f.WriteString(50, "0.0")
+	f.WriteInt(71, 0)
+	f.WriteString(42, "0.2")
+	f.WriteString(3, st.FontName)
+	f.WriteString(4, st.BigFontName)
+}
+
+func (st *Style) String() string {
+	f := format.New()
+	return st.FormatString(f)
+}
+
+func (st *Style) FormatString(f *format.Formatter) string {
+	st.Format(f)
+	return f.Output()
 }
 
 func (st *Style) Handle() int {

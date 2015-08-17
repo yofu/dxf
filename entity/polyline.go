@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type Polyline struct {
@@ -29,17 +28,31 @@ func NewPolyline() *Polyline {
 	return p
 }
 
-func (p *Polyline) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(p.entity.String())
-	otp.WriteString("100\nAcDb3dPolyline\n")
-	otp.WriteString("66\n1\n10\n0.0\n20\n0.0\n30\n0.0\n")
-	otp.WriteString(fmt.Sprintf("70\n%d\n", p.Flag))
+func (p *Polyline) Format(f *format.Formatter) {
+	p.entity.Format(f)
+	f.WriteString(100, "AcDb3dPolyline")
+	f.WriteInt(66, 1)
+	f.WriteString(10, "0.0")
+	f.WriteString(20, "0.0")
+	f.WriteString(30, "0.0")
+	f.WriteInt(70, p.Flag)
 	for _, v := range p.Vertices {
-		otp.WriteString(v.String())
+		v.Format(f)
 	}
-	otp.WriteString(fmt.Sprintf("0\nSEQEND\n5\n%X\n100\nAcDbEntity\n8\n%s\n", p.endhandle, p.Layer().Name))
-	return otp.String()
+	f.WriteString(0, "SEQEND")
+	f.WriteHex(5, p.endhandle)
+	f.WriteString(100, "AcDbEntity")
+	f.WriteString(8, p.Layer().Name)
+}
+
+func (p *Polyline) String() string {
+	f := format.New()
+	return p.FormatString(f)
+}
+
+func (p *Polyline) FormatString(f *format.Formatter) string {
+	p.Format(f)
+	return f.Output()
 }
 
 func (p *Polyline) Close() {

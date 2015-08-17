@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type View struct {
@@ -20,13 +19,22 @@ func (v *View) IsSymbolTable() bool {
 	return true
 }
 
+func (v *View) Format(f *format.Formatter) {
+	f.WriteString(0, "VIEW")
+	f.WriteHex(5, v.handle)
+	f.WriteString(100, "AcDbSymbostableRecord")
+	f.WriteString(100, "AcDbViewTableRecord")
+	f.WriteString(2, v.Name)
+}
+
 func (v *View) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nVIEW\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", v.handle))
-	otp.WriteString("100\nAcDbSymbostableRecord\n100\nAcDbViewTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", v.Name))
-	return otp.String()
+	f := format.New()
+	return v.FormatString(f)
+}
+
+func (v *View) FormatString(f *format.Formatter) string {
+	v.Format(f)
+	return f.Output()
 }
 
 func (v *View) Handle() int {

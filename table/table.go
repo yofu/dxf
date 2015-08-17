@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type Table struct {
@@ -18,25 +17,33 @@ func NewTable(name string) *Table {
 	return t
 }
 
-func (t *Table) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nTABLE\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", t.name))
-	otp.WriteString(fmt.Sprintf("5\n%X\n", t.handle))
-	otp.WriteString("100\nAcDbSymbolTable\n")
-	otp.WriteString(fmt.Sprintf("70\n%d\n", t.size))
+func (t *Table) Format(f *format.Formatter) {
+	f.WriteString(0, "TABLE")
+	f.WriteString(2, t.name)
+	f.WriteHex(5, t.handle)
+	f.WriteString(100, "AcDbSymbolTable")
+	f.WriteInt(70, t.size)
 	if t.name == "DIMSTYLE" {
-		otp.WriteString("100\nAcDbDimStyleTable\n")
-		otp.WriteString(fmt.Sprintf("71\n%d\n", t.size))
+		f.WriteString(100, "AcDbDimStyleTable")
+		f.WriteInt(71, t.size)
 		for i := 0; i < t.size; i++ {
-			otp.WriteString(fmt.Sprintf("340\n%X\n", t.tables[i].Handle()))
+			f.WriteHex(340, t.tables[i].Handle())
 		}
 	}
 	for i := 0; i < t.size; i++ {
-		otp.WriteString(t.tables[i].String())
+		t.tables[i].Format(f)
 	}
-	otp.WriteString("0\nENDTAB\n")
-	return otp.String()
+	f.WriteString(0, "ENDTAB")
+}
+
+func (t *Table) String() string {
+	f := format.New()
+	return t.FormatString(f)
+}
+
+func (t *Table) FormatString(f *format.Formatter) string {
+	t.Format(f)
+	return f.Output()
 }
 
 func (t *Table) Handle() int {

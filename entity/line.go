@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type Line struct {
@@ -24,15 +23,23 @@ func NewLine() *Line {
 	return l
 }
 
+func (l *Line) Format(f *format.Formatter) {
+	l.entity.Format(f)
+	f.WriteString(100, "AcDbLine")
+	for i := 0; i < 3; i++ {
+		f.WriteFloat((i+1)*10, l.Start[i])
+	}
+	for i := 0; i < 3; i++ {
+		f.WriteFloat((i+1)*10+1, l.End[i])
+	}
+}
+
 func (l *Line) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(l.entity.String())
-	otp.WriteString("100\nAcDbLine\n")
-	for i := 0; i < 3; i++ {
-		otp.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10, l.Start[i]))
-	}
-	for i := 0; i < 3; i++ {
-		otp.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10+1, l.End[i]))
-	}
-	return otp.String()
+	f := format.New()
+	return l.FormatString(f)
+}
+
+func (l *Line) FormatString(f *format.Formatter) string {
+	l.Format(f)
+	return f.Output()
 }

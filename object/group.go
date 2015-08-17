@@ -1,9 +1,8 @@
 package object
 
 import (
-	"bytes"
-	"fmt"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -37,24 +36,34 @@ func (g *Group) SetOwner(d *Dictionary) {
 	d.AddItem(g.Name, g)
 }
 
-func (g *Group) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nGROUP\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", g.handle))
-	otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", g.owner.Handle()))
-	otp.WriteString(fmt.Sprintf("330\n%X\n", g.owner.Handle()))
-	otp.WriteString("100\nAcDbGroup\n")
-	otp.WriteString(fmt.Sprintf("300\n%s\n", g.Description))
-	otp.WriteString("70\n0\n")
+func (g *Group) Format(f *format.Formatter) {
+	f.WriteString(0, "GROUP")
+	f.WriteHex(5, g.handle)
+	f.WriteString(102, "{ACAD_REACTORS")
+	f.WriteHex(330, g.owner.Handle())
+	f.WriteString(102, "}")
+	f.WriteHex(330, g.owner.Handle())
+	f.WriteString(100, "AcDbGroup")
+	f.WriteString(300, g.Description)
+	f.WriteInt(70, 0)
 	if g.selectable {
-		otp.WriteString("71\n1\n")
+		f.WriteInt(71, 1)
 	} else {
-		otp.WriteString("71\n0\n")
+		f.WriteInt(71, 0)
 	}
 	for _, e := range g.entities {
-		otp.WriteString(fmt.Sprintf("340\n%X\n", e.Handle()))
+		f.WriteHex(340, e.Handle())
 	}
-	return otp.String()
+}
+
+func (g *Group) String() string {
+	f := format.New()
+	return g.FormatString(f)
+}
+
+func (g *Group) FormatString(f *format.Formatter) string {
+	g.Format(f)
+	return f.Output()
 }
 
 func (g *Group) Handle() int {

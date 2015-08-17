@@ -1,7 +1,7 @@
 package block
 
 import (
-	"bytes"
+	"github.com/yofu/dxf/format"
 )
 
 type Blocks []*Block
@@ -14,13 +14,13 @@ func New() Blocks {
 	return b
 }
 
-func (bs Blocks) WriteTo(otp *bytes.Buffer) error {
-	otp.WriteString("0\nSECTION\n2\nBLOCKS\n")
+func (bs Blocks) WriteTo(f *format.Formatter) {
+	f.WriteString(0, "SECTION")
+	f.WriteString(2, "BLOCKS")
 	for _, b := range bs {
-		otp.WriteString(b.String())
+		b.Format(f)
 	}
-	otp.WriteString("0\nENDSEC\n")
-	return nil
+	f.WriteString(0, "ENDSEC")
 }
 
 func (bs Blocks) Add(b *Block) Blocks {

@@ -1,15 +1,14 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
 )
 
 type Entity interface {
 	IsEntity() bool
-	String() string
+	Format(*format.Formatter)
 	Handle() int
 	SetHandle(*int)
 	SetBlockRecord(handle.Handler)
@@ -31,16 +30,26 @@ func NewEntity(t EntityType) *entity {
 	return e
 }
 
-func (e *entity) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(fmt.Sprintf("0\n%s\n", EntityTypeString(e.Type)))
-	otp.WriteString(fmt.Sprintf("5\n%X\n", e.handle))
+func (e *entity) Format(f *format.Formatter) {
+	f.WriteString(0, EntityTypeString(e.Type))
+	f.WriteHex(5, e.handle)
 	if e.blockRecord != nil {
-		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", e.blockRecord.Handle()))
+		f.WriteString(102, "{ACAD_REACTORS")
+		f.WriteHex(330, e.blockRecord.Handle())
+		f.WriteString(102, "}")
 	}
-	otp.WriteString("100\nAcDbEntity\n")
-	otp.WriteString(fmt.Sprintf("8\n%s\n", e.layer.Name))
-	return otp.String()
+	f.WriteString(100, "AcDbEntity")
+	f.WriteString(8, e.layer.Name)
+}
+
+func (e *entity) String() string {
+	f := format.New()
+	return e.FormatString(f)
+}
+
+func (e *entity) FormatString(f *format.Formatter) string {
+	e.Format(f)
+	return f.Output()
 }
 
 func (e *entity) Handle() int {

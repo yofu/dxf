@@ -1,8 +1,7 @@
 package table
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type DimStyle struct {
@@ -20,14 +19,23 @@ func (d *DimStyle) IsSymbolTable() bool {
 	return true
 }
 
+func (d *DimStyle) Format(f *format.Formatter) {
+	f.WriteString(0, "DIMSTYLE")
+	f.WriteHex(105, d.handle)
+	f.WriteString(100, "AcDbSymbolTableRecord")
+	f.WriteString(100, "AcDbDimStyleTableRecord")
+	f.WriteString(2, d.Name)
+	f.WriteInt(70, 0)
+}
+
 func (d *DimStyle) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nDIMSTYLE\n")
-	otp.WriteString(fmt.Sprintf("105\n%X\n", d.handle))
-	otp.WriteString("100\nAcDbSymbolTableRecord\n100\nAcDbDimStyleTableRecord\n")
-	otp.WriteString(fmt.Sprintf("2\n%s\n", d.Name))
-	otp.WriteString("70\n0\n")
-	return otp.String()
+	f := format.New()
+	return d.FormatString(f)
+}
+
+func (d *DimStyle) FormatString(f *format.Formatter) string {
+	d.Format(f)
+	return f.Output()
 }
 
 func (d *DimStyle) Handle() int {

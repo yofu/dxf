@@ -1,12 +1,12 @@
 package object
 
 import (
-	"bytes"
+	"github.com/yofu/dxf/format"
 )
 
 type Object interface {
 	IsObject() bool
-	String() string
+	Format(f *format.Formatter)
 	Handle() int
 	SetHandle(*int)
 }
@@ -18,13 +18,13 @@ func New() Objects {
 	return o
 }
 
-func (os Objects) WriteTo(b *bytes.Buffer) error {
-	b.WriteString("0\nSECTION\n2\nOBJECTS\n")
+func (os Objects) WriteTo(f *format.Formatter) {
+	f.WriteString(0, "SECTION")
+	f.WriteString(2, "OBJECTS")
 	for _, o := range os {
-		b.WriteString(o.String())
+		o.Format(f)
 	}
-	b.WriteString("0\nENDSEC\n")
-	return nil
+	f.WriteString(0, "ENDSEC")
 }
 
 func (os Objects) Add(o Object) Objects {

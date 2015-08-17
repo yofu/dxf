@@ -1,8 +1,7 @@
 package object
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 )
 
@@ -23,15 +22,25 @@ func NewAcDbPlaceHolder() *AcDbPlaceHolder {
 	return p
 }
 
-func (p *AcDbPlaceHolder) String() string {
-	var otp bytes.Buffer
-	otp.WriteString("0\nACDBPLACEHOLDER\n")
-	otp.WriteString(fmt.Sprintf("5\n%X\n", p.handle))
+func (p *AcDbPlaceHolder) Format(f *format.Formatter) {
+	f.WriteString(0, "ACDBPLACEHOLDER")
+	f.WriteHex(5, p.handle)
 	if p.owner != nil {
-		otp.WriteString(fmt.Sprintf("102\n{ACAD_REACTORS\n330\n%X\n102\n}\n", p.owner.Handle()))
-		otp.WriteString(fmt.Sprintf("330\n%X\n", p.owner.Handle()))
+		f.WriteString(102, "{ACAD_REACTORS")
+		f.WriteHex(330, p.owner.Handle())
+		f.WriteString(102, "}")
+		f.WriteHex(330, p.owner.Handle())
 	}
-	return otp.String()
+}
+
+func (p *AcDbPlaceHolder) String() string {
+	f := format.New()
+	return p.FormatString(f)
+}
+
+func (p *AcDbPlaceHolder) FormatString(f *format.Formatter) string {
+	p.Format(f)
+	return f.Output()
 }
 
 func (p *AcDbPlaceHolder) Handle() int {

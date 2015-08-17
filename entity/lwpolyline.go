@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type LwPolyline struct {
@@ -30,22 +29,30 @@ func NewLwPolyline(size int) *LwPolyline {
 	return l
 }
 
-func (l *LwPolyline) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(l.entity.String())
-	otp.WriteString("100\nAcDbPolyline\n")
-	otp.WriteString(fmt.Sprintf("90\n%d\n", l.Num))
+func (l *LwPolyline) Format(f *format.Formatter) {
+	l.entity.Format(f)
+	f.WriteString(100, "AcDbPolyline")
+	f.WriteInt(90, l.Num)
 	if l.Closed {
-		otp.WriteString("70\n1\n")
+		f.WriteInt(70, 1)
 	} else {
-		otp.WriteString("70\n0\n")
+		f.WriteInt(70, 0)
 	}
 	for i := 0; i < l.Num; i++ {
 		for j := 0; j < 2; j++ {
-			otp.WriteString(fmt.Sprintf("%d\n%f\n", (j+1)*10, l.Vertices[i][j]))
+			f.WriteFloat((j+1)*10, l.Vertices[i][j])
 		}
 	}
-	return otp.String()
+}
+
+func (l *LwPolyline) String() string {
+	f := format.New()
+	return l.FormatString(f)
+}
+
+func (l *LwPolyline) FormatString(f *format.Formatter) string {
+	l.Format(f)
+	return f.Output()
 }
 
 func (l *LwPolyline) Close() {

@@ -1,8 +1,7 @@
 package entity
 
 import (
-	"bytes"
-	"fmt"
+	"github.com/yofu/dxf/format"
 )
 
 type Point struct {
@@ -22,13 +21,20 @@ func NewPoint() *Point {
 	return p
 }
 
-func (p *Point) String() string {
-	var otp bytes.Buffer
-	otp.WriteString(p.entity.String())
-	otp.WriteString("100\nAcDbPoint\n")
+func (p *Point) Format(f *format.Formatter) {
+	p.entity.Format(f)
+	f.WriteString(100, "AcDbPoint")
 	for i := 0; i < 3; i++ {
-		otp.WriteString(fmt.Sprintf("%d\n%f\n", (i+1)*10, p.Coord[i]))
+		f.WriteFloat((i+1)*10, p.Coord[i])
 	}
-	return otp.String()
 }
 
+func (p *Point) String() string {
+	f := format.New()
+	return p.FormatString(f)
+}
+
+func (p *Point) FormatString(f *format.Formatter) string {
+	p.Format(f)
+	return f.Output()
+}
