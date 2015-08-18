@@ -24,7 +24,9 @@ type Drawing struct {
 	FileName     string
 	Layers       map[string]*table.Layer
 	Groups       map[string]*object.Group
+	Styles       map[string]*table.Style
 	CurrentLayer *table.Layer
+	CurrentStyle *table.Style
 	formatter    *format.Formatter
 	sections     []Section
 	dictionary   *object.Dictionary
@@ -38,6 +40,9 @@ func NewDrawing() *Drawing {
 	d.Layers["0"] = table.LY_0
 	d.Groups = make(map[string]*object.Group)
 	d.CurrentLayer = d.Layers["0"]
+	d.Styles = make(map[string]*table.Style)
+	d.Styles["STANDARD"] = table.ST_STANDARD
+	d.CurrentStyle = d.Styles["STANDARD"]
 	d.formatter = format.New()
 	d.formatter.SetPrecision(16)
 	d.sections = []Section{
@@ -196,6 +201,17 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	f.SetLayer(d.CurrentLayer)
 	d.addEntity(f)
 	return f, nil
+}
+
+func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error) {
+	t := entity.NewText()
+	t.Coord1 = []float64{x, y, z}
+	t.Height = height
+	t.Value = str
+	t.SetLayer(d.CurrentLayer)
+	t.Style = d.CurrentStyle
+	d.addEntity(t)
+	return t, nil
 }
 
 func (d *Drawing) addObject(o object.Object) {
