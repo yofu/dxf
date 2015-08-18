@@ -64,6 +64,7 @@ func (p *Polyline) AddVertex(x, y, z float64) *Vertex {
 	p.Vertices = append(p.Vertices, v)
 	p.size++
 	v.SetLayer(p.Layer())
+	v.SetOwner(p)
 	return v
 }
 

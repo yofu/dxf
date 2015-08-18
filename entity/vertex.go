@@ -26,11 +26,11 @@ func NewVertex(x, y, z float64) *Vertex {
 func (v *Vertex) Format(f *format.Formatter) {
 	v.entity.Format(f)
 	f.WriteString(100, "AcDbVertex")
-	f.WriteString(100, "AcDb3DPolylineVertex")
-	f.WriteInt(70, v.Flag)
+	f.WriteString(100, "AcDb3dPolylineVertex")
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, v.Coord[i])
 	}
+	f.WriteInt(70, v.Flag)
 }
 
 func (v *Vertex) String() string {
