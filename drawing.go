@@ -54,6 +54,9 @@ func NewDrawing() *Drawing {
 	d.dictionary.AddItem("ACAD_PLOTSTYLENAME", wd)
 	d.addObject(wd)
 	d.addObject(ph)
+	d.groupdict = object.NewDictionary()
+	d.addObject(d.groupdict)
+	d.dictionary.AddItem("ACAD_GROUP", d.groupdict)
 	d.plotstyle = ph
 	d.Layers["0"].SetPlotStyle(d.plotstyle)
 	return d
@@ -206,11 +209,6 @@ func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, 
 	}
 	g := object.NewGroup(name, desc, es...)
 	d.Groups[name] = g
-	if d.groupdict == nil {
-		d.groupdict = object.NewDictionary()
-		d.addObject(d.groupdict)
-		d.dictionary.AddItem("ACAD_GROUP", d.groupdict)
-	}
 	g.SetOwner(d.groupdict)
 	d.addObject(g)
 	return g, nil
