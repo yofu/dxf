@@ -17,10 +17,10 @@ func (c *Circle) IsEntity() bool {
 
 func NewCircle() *Circle {
 	c := &Circle{
-		NewEntity(CIRCLE),
-		[]float64{0.0, 0.0, 0.0},
-		0.0,
-		[]float64{0.0, 0.0, 1.0},
+		entity:    NewEntity(CIRCLE),
+		Center:    []float64{0.0, 0.0, 0.0},
+		Radius:    0.0,
+		Direction: []float64{0.0, 0.0, 1.0},
 	}
 	return c
 }

@@ -16,9 +16,9 @@ func (p *Vertex) IsEntity() bool {
 
 func NewVertex(x, y, z float64) *Vertex {
 	v := &Vertex{
-		NewEntity(VERTEX),
-		32,
-		[]float64{x, y, z},
+		entity: NewEntity(VERTEX),
+		Flag:   32,
+		Coord:  []float64{x, y, z},
 	}
 	return v
 }

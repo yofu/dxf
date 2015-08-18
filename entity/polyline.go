@@ -19,11 +19,11 @@ func (p *Polyline) IsEntity() bool {
 func NewPolyline() *Polyline {
 	vs := make([]*Vertex, 0)
 	p := &Polyline{
-		NewEntity(POLYLINE),
-		8,
-		0,
-		vs,
-		0,
+		entity:    NewEntity(POLYLINE),
+		Flag:      8,
+		size:      0,
+		Vertices:  vs,
+		endhandle: 0,
 	}
 	return p
 }

@@ -21,10 +21,10 @@ func NewLwPolyline(size int) *LwPolyline {
 		vs[i] = make([]float64, 2)
 	}
 	l := &LwPolyline{
-		NewEntity(LWPOLYLINE),
-		size,
-		false,
-		vs,
+		entity:   NewEntity(LWPOLYLINE),
+		Num:      size,
+		Closed:   false,
+		Vertices: vs,
 	}
 	return l
 }

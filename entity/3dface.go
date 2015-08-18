@@ -6,8 +6,8 @@ import (
 
 type ThreeDFace struct {
 	*entity
-	Points    [][]float64
-	Flag      int // 70
+	Points [][]float64
+	Flag   int // 70
 }
 
 func (f *ThreeDFace) IsEntity() bool {
@@ -16,13 +16,13 @@ func (f *ThreeDFace) IsEntity() bool {
 
 func New3DFace() *ThreeDFace {
 	f := &ThreeDFace{
-		NewEntity(THREEDFACE),
-		[][]float64{[]float64{0.0, 0.0, 0.0},
+		entity: NewEntity(THREEDFACE),
+		Points: [][]float64{[]float64{0.0, 0.0, 0.0},
 			[]float64{0.0, 0.0, 0.0},
 			[]float64{0.0, 0.0, 0.0},
 			[]float64{0.0, 0.0, 0.0},
 		},
-		0,
+		Flag: 0,
 	}
 	return f
 }

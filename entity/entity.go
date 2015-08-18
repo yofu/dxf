@@ -25,9 +25,13 @@ type entity struct {
 }
 
 func NewEntity(t EntityType) *entity {
-	e := new(entity)
-	e.Type = t
-	e.layer = table.LY_0
+	e := &entity{
+		Type:        t,
+		handle:      0,
+		blockRecord: nil,
+		owner:       nil,
+		layer:       table.LY_0,
+	}
 	return e
 }
 

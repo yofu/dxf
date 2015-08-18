@@ -15,8 +15,8 @@ func (p *Point) IsEntity() bool {
 
 func NewPoint() *Point {
 	p := &Point{
-		NewEntity(POINT),
-		[]float64{0.0, 0.0, 0.0},
+		entity: NewEntity(POINT),
+		Coord:  []float64{0.0, 0.0, 0.0},
 	}
 	return p
 }
