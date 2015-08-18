@@ -19,7 +19,8 @@ type Entity interface {
 type entity struct {
 	Type        EntityType     // 0
 	handle      int            // 5
-	blockRecord handle.Handler // 330
+	blockRecord handle.Handler // 102 330
+	owner       handle.Handler // 330
 	layer       *table.Layer   // 8
 }
 
@@ -37,6 +38,9 @@ func (e *entity) Format(f *format.Formatter) {
 		f.WriteString(102, "{ACAD_REACTORS")
 		f.WriteHex(330, e.blockRecord.Handle())
 		f.WriteString(102, "}")
+	}
+	if e.owner != nil {
+		f.WriteHex(330, e.owner.Handle())
 	}
 	f.WriteString(100, "AcDbEntity")
 	f.WriteString(8, e.layer.Name)
@@ -62,6 +66,10 @@ func (e *entity) SetHandle(v *int) {
 
 func (e *entity) SetBlockRecord(h handle.Handler) {
 	e.blockRecord = h
+}
+
+func (e *entity) SetOwner(h handle.Handler) {
+	e.owner = h
 }
 
 func (e *entity) Layer() *table.Layer {
