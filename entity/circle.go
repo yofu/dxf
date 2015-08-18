@@ -2,7 +2,6 @@ package entity
 
 import (
 	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/geometry"
 )
 
 type Circle struct {
@@ -48,27 +47,15 @@ func (c *Circle) FormatString(f *format.Formatter) string {
 	return f.Output()
 }
 
+func (c *Circle) CurrentDirection() []float64 {
+	return c.Direction
+}
 func (c *Circle) SetDirection(d []float64) {
-	dx, dy, err := geometry.ArbitraryAxis(d)
-	if err != nil {
-		return
-	}
-	b := make([]float64, 3)
-	n := make([]float64, 3)
-	for i := 0; i < 3; i++ {
-		b[i] = c.Direction[i]
-		c.Direction[i] = d[i]
-		n[i] = c.Center[i]
-	}
-	bx, by, _ := geometry.ArbitraryAxis(b)
-	before := [][]float64{bx, by, b}
-	after := [][]float64{dx, dy, d}
-	for i := 0; i < 3; i++ {
-		c.Center[i] = 0.0
-		for j := 0; j < 3; j++ {
-			for k := 0; k < 3; k++ {
-				c.Center[i] += n[j] * before[j][k] * after[i][k]
-			}
-		}
-	}
+	c.Direction = d
+}
+func (c *Circle) CurrentCoord() []float64 {
+	return c.Center
+}
+func (c *Circle) SetCoord(co []float64) {
+	c.Center = co
 }
