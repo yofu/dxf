@@ -52,6 +52,8 @@ func NewDrawing() *Drawing {
 	d.addObject(d.dictionary)
 	wd, ph := object.NewAcDbDictionaryWDFLT(d.dictionary)
 	d.dictionary.AddItem("ACAD_PLOTSTYLENAME", wd)
+	d.addObject(wd)
+	d.addObject(ph)
 	d.plotstyle = ph
 	d.Layers["0"].SetPlotStyle(d.plotstyle)
 	return d

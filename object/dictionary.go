@@ -52,6 +52,9 @@ func (d *Dictionary) Handle() int {
 func (d *Dictionary) SetHandle(v *int) {
 	d.handle = *v
 	(*v)++
+	for _, val := range d.item {
+		val.SetHandle(v)
+	}
 }
 
 func (d *Dictionary) AddItem(key string, value handle.Handler) error {
