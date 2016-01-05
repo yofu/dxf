@@ -7,7 +7,6 @@ import (
 type Section interface {
 	WriteTo(*format.Formatter)
 	SetHandle(*int)
-	Read(int, [][2]string) error
 }
 
 type SectionType int

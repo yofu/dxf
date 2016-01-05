@@ -23,11 +23,6 @@ func NewVertex(x, y, z float64) *Vertex {
 	return v
 }
 
-func ParseVertex(data [][2]string) (Entity, error) {
-	v := NewVertex(0.0, 0.0, 0.0)
-	return v, nil
-}
-
 func (v *Vertex) Format(f *format.Formatter) {
 	v.entity.Format(f)
 	f.WriteString(100, "AcDbVertex")

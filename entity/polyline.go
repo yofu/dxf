@@ -28,11 +28,6 @@ func NewPolyline() *Polyline {
 	return p
 }
 
-func ParsePolyline(data [][2]string) (Entity, error) {
-	p := NewPolyline()
-	return p, nil
-}
-
 func (p *Polyline) Format(f *format.Formatter) {
 	p.entity.Format(f)
 	f.WriteString(100, "AcDb3dPolyline")

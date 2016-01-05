@@ -46,7 +46,3 @@ func (h *Header) WriteTo(f *format.Formatter) {
 func (h *Header) SetHandle(v *int) {
 	h.handseed = *v
 }
-
-func (h *Header) Read(line int, data [][2]string) error {
-	return nil
-}

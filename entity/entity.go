@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"fmt"
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
@@ -34,20 +33,6 @@ func NewEntity(t EntityType) *entity {
 		layer:       table.LY_0,
 	}
 	return e
-}
-
-func Parse(data [][2]string) (Entity, error) {
-	if len(data) < 1 {
-		return nil, fmt.Errorf("no data")
-	}
-	if data[0][0] != "0" {
-		return nil, fmt.Errorf("invalid group code: %d", data[0][0])
-	}
-	f, err := ParseEntityFunc(data[0][1])
-	if err != nil {
-		return nil, err
-	}
-	return f(data)
 }
 
 func (e *entity) Format(f *format.Formatter) {

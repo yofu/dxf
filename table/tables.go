@@ -54,7 +54,3 @@ func (ts Tables) SetHandle(h *int) {
 func (ts Tables) AddLayer(l *Layer) {
 	ts[2].Add(l)
 }
-
-func (ts Tables) Read(line int, data [][2]string) error {
-	return nil
-}

@@ -28,9 +28,17 @@ func Open(filename string) (*drawing.Drawing, error) {
 	scanner := bufio.NewScanner(f)
 	d := NewDrawing()
 	var code, value string
-	var reader drawing.Section
+	parsers := []func(d *drawing.Drawing, line int, data [][2]string) (error) {
+		ParseHeader,
+		ParseClasses,
+		ParseTables,
+		ParseBlocks,
+		ParseEntities,
+		ParseObjects,
+	}
 	data := make([][2]string, 0)
-	setreader := false
+	setparser := false
+	var parser func(d *drawing.Drawing, line int, data [][2]string) (error)
 	line := 0
 	startline := 0
 	for scanner.Scan() {
@@ -42,7 +50,7 @@ func Open(filename string) (*drawing.Drawing, error) {
 			}
 		} else {
 			value = scanner.Text()
-			if setreader {
+			if setparser {
 				if code != "2" {
 					return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
 				}
@@ -50,18 +58,18 @@ func Open(filename string) (*drawing.Drawing, error) {
 				if ind < 0 {
 					return d, fmt.Errorf("line %d: unknown section name: %s", line, value)
 				}
-				reader = d.Sections[ind]
+				parser = parsers[ind]
 				startline = line + 1
-				setreader = false
+				setparser = false
 			} else {
 				if code == "0" {
 					switch strings.ToUpper(value) {
 					case "EOF":
 						return d, nil
 					case "SECTION":
-						setreader = true
+						setparser = true
 					case "ENDSEC":
-						err := reader.Read(startline, data)
+						err := parser(d, startline, data)
 						if err != nil {
 							return d, err
 						}
@@ -80,7 +88,7 @@ func Open(filename string) (*drawing.Drawing, error) {
 		return d, err
 	}
 	if len(data) > 0 {
-		err := reader.Read(startline, data)
+		err := parser(d, startline, data)
 		if err != nil {
 			return d, err
 		}

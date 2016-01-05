@@ -1,9 +1,5 @@
 package entity
 
-import (
-	"errors"
-)
-
 type EntityType int
 
 const (
@@ -65,28 +61,5 @@ func EntityTypeValue(t string) EntityType {
 		return TEXT
 	default:
 		return -1
-	}
-}
-
-func ParseEntityFunc(t string) (func([][2]string)(Entity, error), error) {
-	switch t {
-	case "LINE":
-		return ParseLine, nil
-	case "3DFACE":
-		return Parse3DFace, nil
-	case "LWPOLYLINE":
-		return ParseLwPolyline, nil
-	case "CIRCLE":
-		return ParseCircle, nil
-	case "POLYLINE":
-		return ParsePolyline, nil
-	case "VERTEX":
-		return ParseVertex, nil
-	case "POINT":
-		return ParsePoint, nil
-	case "TEXT":
-		return ParseText, nil
-	default:
-		return nil, errors.New("unknown entity type")
 	}
 }
