@@ -94,7 +94,7 @@ func Open(filename string) (*Drawing, error) {
 			value = scanner.Text()
 			if setreader {
 				if code != "2" {
-					return d, fmt.Errorf("line %d: invalid groupe code: %s", line, code)
+					return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
 				}
 				ind := SectionTypeValue(strings.ToUpper(value))
 				if ind < 0 {
