@@ -1,7 +1,6 @@
-package dxf
+package drawing
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"github.com/yofu/dxf/block"
@@ -14,12 +13,6 @@ import (
 	"github.com/yofu/dxf/object"
 	"github.com/yofu/dxf/table"
 	"os"
-	"strings"
-)
-
-var (
-	DefaultColor    = color.White
-	DefaultLineType = table.LT_CONTINUOUS
 )
 
 type Drawing struct {
@@ -30,13 +23,13 @@ type Drawing struct {
 	CurrentLayer *table.Layer
 	CurrentStyle *table.Style
 	formatter    *format.Formatter
-	sections     []Section
+	Sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
 	plotstyle    handle.Handler
 }
 
-func NewDrawing() *Drawing {
+func New() *Drawing {
 	d := new(Drawing)
 	d.Layers = make(map[string]*table.Layer)
 	d.Layers["0"] = table.LY_0
@@ -47,7 +40,7 @@ func NewDrawing() *Drawing {
 	d.CurrentStyle = d.Styles["STANDARD"]
 	d.formatter = format.New()
 	d.formatter.SetPrecision(16)
-	d.sections = []Section{
+	d.Sections = []Section{
 		header.New(),
 		class.New(),
 		table.New(),
@@ -69,79 +62,10 @@ func NewDrawing() *Drawing {
 	return d
 }
 
-func Open(filename string) (*Drawing, error) {
-	var err error
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	scanner := bufio.NewScanner(f)
-	d := NewDrawing()
-	var code, value string
-	var reader Section
-	data := make([][2]string, 0)
-	setreader := false
-	line := 0
-	startline := 0
-	for scanner.Scan() {
-		line++
-		if line%2 == 1 {
-			code = strings.TrimSpace(scanner.Text())
-			if err != nil {
-				return d, err
-			}
-		} else {
-			value = scanner.Text()
-			if setreader {
-				if code != "2" {
-					return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
-				}
-				ind := SectionTypeValue(strings.ToUpper(value))
-				if ind < 0 {
-					return d, fmt.Errorf("line %d: unknown section name: %s", line, value)
-				}
-				reader = d.sections[ind]
-				startline = line + 1
-				setreader = false
-			} else {
-				if code == "0" {
-					switch strings.ToUpper(value) {
-					case "EOF":
-						return d, nil
-					case "SECTION":
-						setreader = true
-					case "ENDSEC":
-						err := reader.Read(startline, data)
-						if err != nil {
-							return d, err
-						}
-						data = make([][2]string, 0)
-						startline = line + 1
-					default:
-						data = append(data, [2]string{code, scanner.Text()})
-					}
-				} else {
-					data = append(data, [2]string{code, scanner.Text()})
-				}
-			}
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return d, err
-	}
-	if len(data) > 0 {
-		err := reader.Read(startline, data)
-		if err != nil {
-			return d, err
-		}
-	}
-	return d, nil
-}
-
 func (d *Drawing) saveFile(filename string) error {
 	d.setHandle()
 	d.formatter.Reset()
-	for _, s := range d.sections {
+	for _, s := range d.Sections {
 		s.WriteTo(d.formatter)
 	}
 	d.formatter.WriteString(0, "EOF")
@@ -168,10 +92,10 @@ func (d *Drawing) SaveAs(filename string) error {
 
 func (d *Drawing) setHandle() {
 	h := 1
-	for _, s := range d.sections[1:] {
+	for _, s := range d.Sections[1:] {
 		s.SetHandle(&h)
 	}
-	d.sections[0].SetHandle(&h)
+	d.Sections[0].SetHandle(&h)
 }
 
 func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, setcurrent bool) (*table.Layer, error) {
@@ -184,7 +108,7 @@ func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, s
 	l := table.NewLayer(name, cl, lt)
 	l.SetPlotStyle(d.plotstyle)
 	d.Layers[name] = l
-	d.sections[2].(table.Tables).AddLayer(l)
+	d.Sections[2].(table.Tables).AddLayer(l)
 	if setcurrent {
 		d.CurrentLayer = l
 	}
@@ -200,7 +124,7 @@ func (d *Drawing) ChangeLayer(name string) error {
 }
 
 func (d *Drawing) addEntity(e entity.Entity) {
-	d.sections[4] = d.sections[4].(entity.Entities).Add(e)
+	d.Sections[4] = d.Sections[4].(entity.Entities).Add(e)
 }
 
 func (d *Drawing) Point(x, y, z float64) (*entity.Point, error) {
@@ -286,7 +210,7 @@ func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error
 }
 
 func (d *Drawing) addObject(o object.Object) {
-	d.sections[5] = d.sections[5].(object.Objects).Add(o)
+	d.Sections[5] = d.Sections[5].(object.Objects).Add(o)
 }
 
 func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, error) {
@@ -306,27 +230,4 @@ func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 		g.AddEntity(es...)
 	}
 	return errors.New(fmt.Sprintf("group %s doesn't exist", name))
-}
-
-func ColorIndex(cl []int) color.ColorNumber {
-	minind := 0
-	minval := 1000000
-	for i, c := range color.ColorRGB {
-		tmpval := 0
-		for j := 0; j < 3; j++ {
-			tmpval += (cl[j] - int(c[j])) * (cl[j] - int(c[j]))
-		}
-		if tmpval < minval {
-			minind = i
-			minval = tmpval
-			if minval == 0 {
-				break
-			}
-		}
-	}
-	return color.ColorNumber(minind)
-}
-
-func IndexColor(index uint8) []uint8 {
-	return color.ColorRGB[index]
 }

@@ -1,4 +1,4 @@
-package dxf
+package drawing
 
 import (
 	"github.com/yofu/dxf/format"
