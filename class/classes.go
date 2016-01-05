@@ -40,3 +40,7 @@ func (cs Classes) WriteTo(f *format.Formatter) {
 func (cs Classes) SetHandle(v *int) {
 	return
 }
+
+func (cs Classes) Read(line int, data [][2]string) error {
+	return nil
+}

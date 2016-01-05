@@ -37,3 +37,7 @@ func (os Objects) SetHandle(v *int) {
 		o.SetHandle(v)
 	}
 }
+
+func (os Objects) Read(line int, data [][2]string) error {
+	return nil
+}

@@ -33,3 +33,7 @@ func (bs Blocks) SetHandle(v *int) {
 		b.SetHandle(v)
 	}
 }
+
+func (bs Blocks) Read(line int, data [][2]string) error {
+	return nil
+}

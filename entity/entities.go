@@ -30,3 +30,7 @@ func (es Entities) SetHandle(v *int) {
 		e.SetHandle(v)
 	}
 }
+
+func (es Entities) Read(line int, data [][2]string) error {
+	return nil
+}
