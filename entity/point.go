@@ -21,6 +21,11 @@ func NewPoint() *Point {
 	return p
 }
 
+func ParsePoint(data [][2]string) (Entity, error) {
+	p := NewPoint()
+	return p, nil
+}
+
 func (p *Point) Format(f *format.Formatter) {
 	p.entity.Format(f)
 	f.WriteString(100, "AcDbPoint")

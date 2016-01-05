@@ -51,6 +51,11 @@ func NewText() *Text {
 	return t
 }
 
+func ParseText(data [][2]string) (Entity, error) {
+	t := NewText()
+	return t, nil
+}
+
 func (t *Text) Format(f *format.Formatter) {
 	t.entity.Format(f)
 	f.WriteString(100, "AcDbText")

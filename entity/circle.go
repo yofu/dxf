@@ -25,6 +25,11 @@ func NewCircle() *Circle {
 	return c
 }
 
+func ParseCircle(data [][2]string) (Entity, error) {
+	c := NewCircle()
+	return c, nil
+}
+
 func (c *Circle) Format(f *format.Formatter) {
 	c.entity.Format(f)
 	f.WriteString(100, "AcDbCircle")

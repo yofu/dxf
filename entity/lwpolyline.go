@@ -29,6 +29,11 @@ func NewLwPolyline(size int) *LwPolyline {
 	return l
 }
 
+func ParseLwPolyline(data [][2]string) (Entity, error) {
+	l := NewLwPolyline(0)
+	return l, nil
+}
+
 func (l *LwPolyline) Format(f *format.Formatter) {
 	l.entity.Format(f)
 	f.WriteString(100, "AcDbPolyline")

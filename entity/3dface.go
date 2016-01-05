@@ -27,6 +27,11 @@ func New3DFace() *ThreeDFace {
 	return f
 }
 
+func Parse3DFace(data [][2]string) (Entity, error) {
+	f := New3DFace()
+	return f, nil
+}
+
 func (f *ThreeDFace) Format(fm *format.Formatter) {
 	f.entity.Format(fm)
 	fm.WriteString(100, "AcDbFace")
