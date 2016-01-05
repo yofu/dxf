@@ -5,11 +5,65 @@ import (
 	"fmt"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/header"
 	"strconv"
 )
 
+func SetFloat(data [2]string, f func(float64)) error {
+	val, err := strconv.ParseFloat(data[1], 64)
+	if err != nil {
+		return fmt.Errorf("code %s: %s", data[0], err.Error())
+	}
+	f(val)
+	return nil
+}
+
 // HEADER
 func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
+	h := d.Sections[drawing.HEADER].(*header.Header)
+	var name string
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		case "9":
+			name = dt[1]
+		case "1":
+			switch name {
+			case "$ACADVER":
+				h.Version = dt[1]
+			}
+		case "10":
+			switch name {
+			case "$INSBASE":
+				err = SetFloat(dt, func(val float64) { h.InsBase[0] = val })
+			case "$EXTMIN":
+				err = SetFloat(dt, func(val float64) { h.ExtMin[0] = val })
+			case "$EXTMAX":
+				err = SetFloat(dt, func(val float64) { h.ExtMax[0] = val })
+			}
+		case "20":
+			switch name {
+			case "$INSBASE":
+				err = SetFloat(dt, func(val float64) { h.InsBase[1] = val })
+			case "$EXTMIN":
+				err = SetFloat(dt, func(val float64) { h.ExtMin[1] = val })
+			case "$EXTMAX":
+				err = SetFloat(dt, func(val float64) { h.ExtMax[1] = val })
+			}
+		case "30":
+			switch name {
+			case "$INSBASE":
+				err = SetFloat(dt, func(val float64) { h.InsBase[2] = val })
+			case "$EXTMIN":
+				err = SetFloat(dt, func(val float64) { h.ExtMin[2] = val })
+			case "$EXTMAX":
+				err = SetFloat(dt, func(val float64) { h.ExtMax[2] = val })
+			}
+		}
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
