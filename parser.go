@@ -298,7 +298,15 @@ func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 }
 
 func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	return nil, nil
+	var name string
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		}
+	}
+	b := table.NewBlockRecord(name)
+	return b, nil
 }
 
 // BLOCKS
