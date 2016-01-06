@@ -2,10 +2,12 @@ package table
 
 import (
 	"github.com/yofu/dxf/format"
+	"github.com/yofu/dxf/handle"
 )
 
 type DimStyle struct {
 	handle   int
+	owner    handle.Handler
 	name     string
 }
 
@@ -22,6 +24,9 @@ func (d *DimStyle) IsSymbolTable() bool {
 func (d *DimStyle) Format(f *format.Formatter) {
 	f.WriteString(0, "DIMSTYLE")
 	f.WriteHex(105, d.handle)
+	if d.owner != nil {
+		f.WriteHex(330, d.owner.Handle())
+	}
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbDimStyleTableRecord")
 	f.WriteString(2, d.name)
@@ -44,6 +49,10 @@ func (d *DimStyle) Handle() int {
 func (d *DimStyle) SetHandle(v *int) {
 	d.handle = *v
 	(*v)++
+}
+
+func (d *DimStyle) SetOwner(h handle.Handler) {
+	d.owner = h
 }
 
 func (d *DimStyle) Name() string {
