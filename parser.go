@@ -248,7 +248,21 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 }
 
 func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	return nil, nil
+	var name, font, bigfont string
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		case "3":
+			font = dt[1]
+		case "4":
+			bigfont = dt[1]
+		}
+	}
+	s := table.NewStyle(name)
+	s.FontName = font
+	s.BigFontName = bigfont
+	return s, nil
 }
 
 func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
