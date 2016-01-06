@@ -12,7 +12,7 @@ import (
 )
 
 func SetFloat(data [2]string, f func(float64)) error {
-	val, err := strconv.ParseFloat(data[1], 64)
+	val, err := strconv.ParseFloat(strings.TrimSpace(data[1]), 64)
 	if err != nil {
 		return fmt.Errorf("code %s: %s", data[0], err.Error())
 	}
