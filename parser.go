@@ -146,7 +146,9 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 				if err != nil {
 					return err
 				}
-				t.Add(st)
+				if st != nil {
+					t.Add(st)
+				}
 				tmpdata = make([][2]string, 0)
 			}
 		default:
@@ -158,7 +160,9 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 		if err != nil {
 			return err
 		}
-		t.Add(st)
+		if st != nil {
+			t.Add(st)
+		}
 		tmpdata = make([][2]string, 0)
 	}
 	return nil
