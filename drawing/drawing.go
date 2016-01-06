@@ -98,7 +98,17 @@ func (d *Drawing) setHandle() {
 	d.Sections[0].SetHandle(&h)
 }
 
-func (d *Drawing) Layer(name string, cl color.ColorNumber, lt *table.LineType, setcurrent bool) (*table.Layer, error) {
+func (d *Drawing) Layer(name string, setcurrent bool) (*table.Layer, error) {
+	if l, exist := d.Layers[name]; exist {
+		if setcurrent {
+			d.CurrentLayer = l
+		}
+		return l, nil
+	}
+	return nil, fmt.Errorf("layer %s doesn't exist", name)
+}
+
+func (d *Drawing) AddLayer(name string, cl color.ColorNumber, lt *table.LineType, setcurrent bool) (*table.Layer, error) {
 	if l, exist := d.Layers[name]; exist {
 		if setcurrent {
 			d.CurrentLayer = l
