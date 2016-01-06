@@ -135,6 +135,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 
 func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func([][2]string)(table.SymbolTable, error)) error {
 	t := d.Sections[drawing.TABLES].(table.Tables)[index]
+	t.Clear()
 	tmpdata := make([][2]string, 0)
 	for _, dt := range data {
 		switch dt[0] {

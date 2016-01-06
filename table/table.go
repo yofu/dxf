@@ -62,3 +62,8 @@ func (t *Table) Add(st SymbolTable) {
 	st.SetOwner(t)
 	t.size++
 }
+
+func (t *Table) Clear() {
+	t.tables = make([]SymbolTable, 0)
+	t.size = 0
+}
