@@ -131,6 +131,10 @@ func (d *Drawing) LineType(name string) (*table.LineType, error) {
 	return lt.(*table.LineType), nil
 }
 
+func (d *Drawing) Entities() (entity.Entities) {
+	return d.Sections[ENTITIES].(entity.Entities)
+}
+
 func (d *Drawing) AddEntity(e entity.Entity) {
 	d.Sections[4] = d.Sections[4].(entity.Entities).Add(e)
 }
