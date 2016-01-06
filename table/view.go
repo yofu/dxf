@@ -2,10 +2,12 @@ package table
 
 import (
 	"github.com/yofu/dxf/format"
+	"github.com/yofu/dxf/handle"
 )
 
 type View struct {
 	handle int
+	owner  handle.Handler
 	name   string // 2
 }
 
@@ -22,6 +24,9 @@ func (v *View) IsSymbolTable() bool {
 func (v *View) Format(f *format.Formatter) {
 	f.WriteString(0, "VIEW")
 	f.WriteHex(5, v.handle)
+	if v.owner != nil {
+		f.WriteHex(330, v.owner.Handle())
+	}
 	f.WriteString(100, "AcDbSymbostableRecord")
 	f.WriteString(100, "AcDbViewTableRecord")
 	f.WriteString(2, v.name)
@@ -43,6 +48,10 @@ func (v *View) Handle() int {
 func (v *View) SetHandle(h *int) {
 	v.handle = *h
 	(*h)++
+}
+
+func (v *View) SetOwner(h handle.Handler) {
+	v.owner = h
 }
 
 func (v *View) Name() string {

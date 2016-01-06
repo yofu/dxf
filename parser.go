@@ -266,7 +266,15 @@ func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 }
 
 func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	return nil, nil
+	var name string
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		}
+	}
+	v := table.NewView(name)
+	return v, nil
 }
 
 func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
