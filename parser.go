@@ -3,6 +3,7 @@ package dxf
 import (
 	"errors"
 	"fmt"
+	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/header"
@@ -76,7 +77,7 @@ func ParseClasses(d *drawing.Drawing, line int, data [][2]string) error {
 
 // TABLES
 func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
-	parsers := []func([][2]string) (table.SymbolTable, error) {
+	parsers := []func(*drawing.Drawing, [][2]string) (table.SymbolTable, error) {
 		ParseVport,
 		ParseLtype,
 		ParseLayer,
@@ -89,7 +90,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	}
 	tmpdata := make([][2]string, 0)
 	setparser := false
-	var parser func([][2]string) (table.SymbolTable, error)
+	var parser func(*drawing.Drawing, [][2]string) (table.SymbolTable, error)
 	var ind int
 	for i, dt := range data {
 		if setparser {
@@ -133,7 +134,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
 }
 
-func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func([][2]string)(table.SymbolTable, error)) error {
+func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*drawing.Drawing, [][2]string)(table.SymbolTable, error)) error {
 	t := d.Sections[drawing.TABLES].(table.Tables)[index]
 	t.Clear()
 	tmpdata := make([][2]string, 0)
@@ -141,7 +142,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func([][
 		switch dt[0] {
 		case "0":
 			if len(tmpdata) > 0 {
-				st, err := parser(tmpdata)
+				st, err := parser(d, tmpdata)
 				if err != nil {
 					return err
 				}
@@ -153,7 +154,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func([][
 		}
 	}
 	if len(tmpdata) > 0 {
-		st, err := parser(tmpdata)
+		st, err := parser(d, tmpdata)
 		if err != nil {
 			return err
 		}
@@ -163,11 +164,11 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func([][
 	return nil
 }
 
-func ParseVport(data [][2]string) (table.SymbolTable, error) {
+func ParseVport(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 
-func ParseLtype(data [][2]string) (table.SymbolTable, error) {
+func ParseLtype(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name, desc string
 	var lengths []float64
 	ind := 0
@@ -178,7 +179,7 @@ func ParseLtype(data [][2]string) (table.SymbolTable, error) {
 		case "3":
 			desc = dt[1]
 		case "73":
-			l, err := strconv.ParseInt(dt[1], 10, 64)
+			l, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
 			if err != nil {
 				return nil, err
 			}
@@ -198,31 +199,71 @@ func ParseLtype(data [][2]string) (table.SymbolTable, error) {
 	return table.NewLineType(name, desc, lengths...), nil
 }
 
-func ParseLayer(data [][2]string) (table.SymbolTable, error) {
+func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
+	var name string
+	var flag int
+	var col color.ColorNumber
+	var lt *table.LineType
+	var lw int
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		case "70":
+			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			flag = int(val)
+		case "62":
+			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			col = color.ColorNumber(val)
+		case "6":
+			l, err := d.LineType(dt[1])
+			if err != nil {
+				return nil, err
+			}
+			lt = l
+		case "370":
+			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			lw = int(val)
+		case "390":
+			// plotstyle
+		}
+	}
+	l := table.NewLayer(name, col, lt)
+	l.SetFlag(flag)
+	l.SetLineWidth(lw)
+	return l, nil
+}
+
+func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 
-func ParseStyle(data [][2]string) (table.SymbolTable, error) {
+func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 
-func ParseView(data [][2]string) (table.SymbolTable, error) {
+func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 
-func ParseUCS(data [][2]string) (table.SymbolTable, error) {
+func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 
-func ParseAppID(data [][2]string) (table.SymbolTable, error) {
+func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 
-func ParseDimStyle(data [][2]string) (table.SymbolTable, error) {
-	return nil, nil
-}
-
-func ParseBlockRecord(data [][2]string) (table.SymbolTable, error) {
+func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return nil, nil
 }
 

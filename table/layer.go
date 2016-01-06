@@ -106,6 +106,9 @@ func (l *Layer) SetPlotStyle(ps handle.Handler) {
 	l.PlotStyle = ps
 }
 
+func (l *Layer) SetFlag(val int) {
+	l.flag = val
+}
 func (l *Layer) Freeze() {
 	l.flag |= 1
 }
