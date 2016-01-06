@@ -274,7 +274,15 @@ func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 }
 
 func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	return nil, nil
+	var name string
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		}
+	}
+	a := table.NewAppID(name)
+	return a, nil
 }
 
 func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
