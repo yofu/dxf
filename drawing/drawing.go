@@ -123,6 +123,14 @@ func (d *Drawing) ChangeLayer(name string) error {
 	return errors.New(fmt.Sprintf("layer %s doesn't exist", name))
 }
 
+func (d *Drawing) LineType(name string) (*table.LineType, error) {
+	lt, err := d.Sections[TABLES].(table.Tables)[table.LTYPE].Contains(name)
+	if err != nil {
+		return nil, fmt.Errorf("linetype %s", err.Error())
+	}
+	return lt.(*table.LineType), nil
+}
+
 func (d *Drawing) AddEntity(e entity.Entity) {
 	d.Sections[4] = d.Sections[4].(entity.Entities).Add(e)
 }
