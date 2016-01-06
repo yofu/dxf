@@ -28,7 +28,7 @@ func Open(filename string) (*drawing.Drawing, error) {
 	scanner := bufio.NewScanner(f)
 	d := NewDrawing()
 	var code, value string
-	parsers := []func(d *drawing.Drawing, line int, data [][2]string) (error) {
+	parsers := []func(*drawing.Drawing, int, [][2]string) (error) {
 		ParseHeader,
 		ParseClasses,
 		ParseTables,
@@ -38,7 +38,7 @@ func Open(filename string) (*drawing.Drawing, error) {
 	}
 	data := make([][2]string, 0)
 	setparser := false
-	var parser func(d *drawing.Drawing, line int, data [][2]string) (error)
+	var parser func(*drawing.Drawing, int, [][2]string) (error)
 	line := 0
 	startline := 0
 	for scanner.Scan() {
