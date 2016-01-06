@@ -42,7 +42,7 @@ func (p *Polyline) Format(f *format.Formatter) {
 	f.WriteString(0, "SEQEND")
 	f.WriteHex(5, p.endhandle)
 	f.WriteString(100, "AcDbEntity")
-	f.WriteString(8, p.Layer().Name)
+	f.WriteString(8, p.Layer().Name())
 }
 
 func (p *Polyline) String() string {

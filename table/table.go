@@ -1,7 +1,9 @@
 package table
 
 import (
+	"fmt"
 	"github.com/yofu/dxf/format"
+	"strings"
 )
 
 type Table struct {
@@ -66,4 +68,13 @@ func (t *Table) Add(st SymbolTable) {
 func (t *Table) Clear() {
 	t.tables = make([]SymbolTable, 0)
 	t.size = 0
+}
+
+func (t *Table) Contains(name string) (SymbolTable, error) {
+	for _, st := range t.tables {
+		if strings.EqualFold(st.Name(), name) {
+			return st, nil
+		}
+	}
+	return nil, fmt.Errorf("%s doesn't exist", name)
 }

@@ -31,7 +31,7 @@ func (b *Block) Format(f *format.Formatter) {
 	f.WriteString(0, "BLOCK")
 	f.WriteHex(5, b.handle)
 	f.WriteString(100, "AcDbEntity")
-	f.WriteString(8, b.layer.Name)
+	f.WriteString(8, b.layer.Name())
 	f.WriteString(100, "AcDbBlockBegin")
 	f.WriteString(2, b.Name)
 	f.WriteInt(70, b.Flag)
@@ -43,7 +43,7 @@ func (b *Block) Format(f *format.Formatter) {
 	f.WriteString(0, "ENDBLK")
 	f.WriteHex(5, b.endhandle)
 	f.WriteString(100, "AcDbEntity")
-	f.WriteString(8, b.layer.Name)
+	f.WriteString(8, b.layer.Name())
 	f.WriteString(100, "AcDbBlockEnd")
 }
 

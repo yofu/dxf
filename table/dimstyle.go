@@ -6,12 +6,12 @@ import (
 
 type DimStyle struct {
 	handle   int
-	Name     string
+	name     string
 }
 
 func NewDimStyle(name string) *DimStyle {
 	d := new(DimStyle)
-	d.Name = name
+	d.name = name
 	return d
 }
 
@@ -24,7 +24,7 @@ func (d *DimStyle) Format(f *format.Formatter) {
 	f.WriteHex(105, d.handle)
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbDimStyleTableRecord")
-	f.WriteString(2, d.Name)
+	f.WriteString(2, d.name)
 	f.WriteInt(70, 0)
 }
 
@@ -44,4 +44,8 @@ func (d *DimStyle) Handle() int {
 func (d *DimStyle) SetHandle(v *int) {
 	d.handle = *v
 	(*v)++
+}
+
+func (d *DimStyle) Name() string {
+	return d.name
 }

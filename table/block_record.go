@@ -8,12 +8,12 @@ import (
 type BlockRecord struct {
 	handle   int
 	owner    handle.Handler
-	Name     string
+	name     string
 }
 
 func NewBlockRecord(name string) *BlockRecord {
 	b := new(BlockRecord)
-	b.Name = name
+	b.name = name
 	return b
 }
 
@@ -29,7 +29,7 @@ func (b *BlockRecord) Format(f *format.Formatter) {
 	}
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbBlockTableRecord")
-	f.WriteString(2, b.Name)
+	f.WriteString(2, b.name)
 	f.WriteInt(70, 0)
 	f.WriteInt(280, 1)
 	f.WriteInt(281, 0)
@@ -55,4 +55,8 @@ func (b *BlockRecord) SetHandle(v *int) {
 
 func (b *BlockRecord) SetOwner(h handle.Handler) {
 	b.owner = h
+}
+
+func (b *BlockRecord) Name() string {
+	return b.name
 }

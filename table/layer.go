@@ -13,7 +13,7 @@ var (
 type Layer struct {
 	handle    int
 	owner     handle.Handler
-	Name      string
+	name      string
 	flag      int
 	Color     color.ColorNumber
 	LineType  *LineType
@@ -23,7 +23,7 @@ type Layer struct {
 
 func NewLayer(name string, color color.ColorNumber, lt *LineType) *Layer {
 	l := new(Layer)
-	l.Name = name
+	l.name = name
 	l.Color = color
 	l.LineType = lt
 	l.lineWidth = -3
@@ -42,10 +42,10 @@ func (l *Layer) Format(f *format.Formatter) {
 	}
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbLayerTableRecord")
-	f.WriteString(2, l.Name)
+	f.WriteString(2, l.name)
 	f.WriteInt(70, l.flag)
 	f.WriteInt(62, int(l.Color))
-	f.WriteString(6, l.LineType.Name)
+	f.WriteString(6, l.LineType.Name())
 	f.WriteInt(370, l.lineWidth)
 	f.WriteHex(390, l.PlotStyle.Handle())
 }
@@ -70,6 +70,10 @@ func (l *Layer) SetHandle(v *int) {
 
 func (l *Layer) SetOwner(h handle.Handler) {
 	l.owner = h
+}
+
+func (l *Layer) Name() string {
+	return l.name
 }
 
 func (l *Layer) SetLineWidth(w int) int {

@@ -17,14 +17,14 @@ var (
 type LineType struct {
 	handle      int
 	owner       handle.Handler
-	Name        string // 2
+	name        string // 2
 	Description string // 3
 	lengths     []float64
 }
 
 func NewLineType(name, desc string, ls ...float64) *LineType {
 	lt := new(LineType)
-	lt.Name = name
+	lt.name = name
 	lt.Description = desc
 	if len(ls) > 0 {
 		lt.lengths = ls
@@ -46,7 +46,7 @@ func (lt *LineType) Format(f *format.Formatter) {
 	}
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbLinetypeTableRecord")
-	f.WriteString(2, lt.Name)
+	f.WriteString(2, lt.name)
 	f.WriteInt(70, 0)
 	f.WriteString(3, lt.Description)
 	f.WriteInt(72, 65)
@@ -78,6 +78,10 @@ func (lt *LineType) SetHandle(v *int) {
 
 func (lt *LineType) SetOwner(h handle.Handler) {
 	lt.owner = h
+}
+
+func (lt *LineType) Name() string {
+	return lt.name
 }
 
 func (lt *LineType) TotalLength() float64 {

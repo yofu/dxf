@@ -8,12 +8,12 @@ import (
 type AppID struct {
 	handle   int
 	owner    handle.Handler
-	Name     string
+	name     string
 }
 
 func NewAppID(name string) *AppID {
 	a := new(AppID)
-	a.Name = name
+	a.name = name
 	return a
 }
 
@@ -29,7 +29,7 @@ func (a *AppID) Format(f *format.Formatter) {
 	}
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbRegAppTableRecord")
-	f.WriteString(2, a.Name)
+	f.WriteString(2, a.name)
 	f.WriteInt(70, 0)
 }
 
@@ -53,4 +53,8 @@ func (a *AppID) SetHandle(v *int) {
 
 func (a *AppID) SetOwner(h handle.Handler) {
 	a.owner = h
+}
+
+func (a *AppID) Name() string {
+	return a.name
 }

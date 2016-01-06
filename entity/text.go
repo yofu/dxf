@@ -59,7 +59,7 @@ func (t *Text) Format(f *format.Formatter) {
 	}
 	f.WriteFloat(40, t.Height)
 	f.WriteString(1, t.Value)
-	f.WriteString(7, t.Style.Name)
+	f.WriteString(7, t.Style.Name())
 	if t.genflag != 0 {
 		f.WriteInt(71, t.genflag)
 	}

@@ -6,12 +6,12 @@ import (
 
 type View struct {
 	handle int
-	Name   string // 2
+	name   string // 2
 }
 
 func NewView(name string) *View {
 	v := new(View)
-	v.Name = name
+	v.name = name
 	return v
 }
 
@@ -24,7 +24,7 @@ func (v *View) Format(f *format.Formatter) {
 	f.WriteHex(5, v.handle)
 	f.WriteString(100, "AcDbSymbostableRecord")
 	f.WriteString(100, "AcDbViewTableRecord")
-	f.WriteString(2, v.Name)
+	f.WriteString(2, v.name)
 }
 
 func (v *View) String() string {
@@ -43,4 +43,8 @@ func (v *View) Handle() int {
 func (v *View) SetHandle(h *int) {
 	v.handle = *h
 	(*h)++
+}
+
+func (v *View) Name() string {
+	return v.name
 }

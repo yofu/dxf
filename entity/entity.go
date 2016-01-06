@@ -47,7 +47,7 @@ func (e *entity) Format(f *format.Formatter) {
 		f.WriteHex(330, e.owner.Handle())
 	}
 	f.WriteString(100, "AcDbEntity")
-	f.WriteString(8, e.layer.Name)
+	f.WriteString(8, e.layer.Name())
 }
 
 func (e *entity) String() string {

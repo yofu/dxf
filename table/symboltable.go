@@ -11,4 +11,5 @@ type SymbolTable interface {
 	Handle() int
 	SetHandle(*int)
 	SetOwner(handle.Handler)
+	Name() string
 }

@@ -12,14 +12,14 @@ var (
 type Style struct {
 	handle      int
 	owner       handle.Handler
-	Name        string // 2
+	name        string // 2
 	FontName    string // 3
 	BigFontName string // 4
 }
 
 func NewStyle(name string) *Style {
 	st := new(Style)
-	st.Name = name
+	st.name = name
 	st.FontName = "arial.ttf"
 	return st
 }
@@ -36,7 +36,7 @@ func (st *Style) Format(f *format.Formatter) {
 	}
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbTextStyleTableRecord")
-	f.WriteString(2, st.Name)
+	f.WriteString(2, st.name)
 	f.WriteInt(70, 0)
 	f.WriteString(40, "0.0")
 	f.WriteString(41, "1.0")
@@ -68,3 +68,8 @@ func (st *Style) SetHandle(v *int) {
 func (st *Style) SetOwner(h handle.Handler) {
 	st.owner = h
 }
+
+func (st *Style) Name() string {
+	return st.name
+}
+
