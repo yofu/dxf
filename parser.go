@@ -278,7 +278,15 @@ func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) 
 }
 
 func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	return nil, nil
+	var name string
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		}
+	}
+	u := table.NewUCS(name)
+	return u, nil
 }
 
 func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
