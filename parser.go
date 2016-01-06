@@ -6,7 +6,9 @@ import (
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/header"
+	"github.com/yofu/dxf/table"
 	"strconv"
+	"strings"
 )
 
 func SetFloat(data [2]string, f func(float64)) error {
@@ -74,7 +76,153 @@ func ParseClasses(d *drawing.Drawing, line int, data [][2]string) error {
 
 // TABLES
 func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
+	parsers := []func([][2]string) (table.SymbolTable, error) {
+		ParseVport,
+		ParseLtype,
+		ParseLayer,
+		ParseStyle,
+		ParseView,
+		ParseUCS,
+		ParseAppID,
+		ParseDimStyle,
+		ParseBlockRecord,
+	}
+	tmpdata := make([][2]string, 0)
+	setparser := false
+	var parser func([][2]string) (table.SymbolTable, error)
+	var ind int
+	for i, dt := range data {
+		if setparser {
+			if dt[0] != "2" {
+				return fmt.Errorf("line %d: invalid group code: %s", line + 2*i, dt[0])
+			}
+			ind = int(table.TableTypeValue(strings.ToUpper(dt[1])))
+			if ind < 0 {
+				return fmt.Errorf("line %d: unknown table type: %s", line + 2*i, dt[1])
+			}
+			parser = parsers[ind]
+			setparser = false
+		} else {
+			if dt[0] == "0" {
+				switch strings.ToUpper(dt[1]) {
+				case "TABLE":
+					setparser = true
+				case "ENDTAB":
+					if len(tmpdata) > 0 {
+						err := ParseTable(d, tmpdata, ind, parser)
+						if err != nil {
+							return err
+						}
+						tmpdata = make([][2]string, 0)
+					}
+				default:
+					tmpdata = append(tmpdata, dt)
+				}
+			} else {
+				tmpdata = append(tmpdata, dt)
+			}
+		}
+	}
+	if len(tmpdata) > 0 {
+		err := ParseTable(d, tmpdata, ind, parser)
+		if err != nil {
+			return fmt.Errorf("line %d: %s", line + 2*len(data), err.Error())
+		}
+		tmpdata = make([][2]string, 0)
+	}
 	return nil
+}
+
+func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func([][2]string)(table.SymbolTable, error)) error {
+	t := d.Sections[drawing.TABLES].(table.Tables)[index]
+	tmpdata := make([][2]string, 0)
+	for _, dt := range data {
+		switch dt[0] {
+		case "0":
+			if len(tmpdata) > 0 {
+				st, err := parser(tmpdata)
+				if err != nil {
+					return err
+				}
+				t.Add(st)
+				tmpdata = make([][2]string, 0)
+			}
+		default:
+			tmpdata = append(tmpdata, dt)
+		}
+	}
+	if len(tmpdata) > 0 {
+		st, err := parser(tmpdata)
+		if err != nil {
+			return err
+		}
+		t.Add(st)
+		tmpdata = make([][2]string, 0)
+	}
+	return nil
+}
+
+func ParseVport(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseLtype(data [][2]string) (table.SymbolTable, error) {
+	var name, desc string
+	var lengths []float64
+	ind := 0
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			name = dt[1]
+		case "3":
+			desc = dt[1]
+		case "73":
+			l, err := strconv.ParseInt(dt[1], 10, 64)
+			if err != nil {
+				return nil, err
+			}
+			lengths = make([]float64, int(l))
+		case "49":
+			if ind >= len(lengths) {
+				return nil, fmt.Errorf("ltype too long")
+			}
+			val, err := strconv.ParseFloat(dt[1], 64)
+			if err != nil {
+				return nil, err
+			}
+			lengths[ind] = val
+			ind++
+		}
+	}
+	return table.NewLineType(name, desc, lengths...), nil
+}
+
+func ParseLayer(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseStyle(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseView(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseUCS(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseAppID(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseDimStyle(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
+}
+
+func ParseBlockRecord(data [][2]string) (table.SymbolTable, error) {
+	return nil, nil
 }
 
 // BLOCKS
