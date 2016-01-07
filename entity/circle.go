@@ -29,7 +29,7 @@ func NewCircle() *Circle {
 }
 
 // Format writes data to formatter.
-func (c *Circle) Format(f *format.Formatter) {
+func (c *Circle) Format(f format.Formatter) {
 	c.entity.Format(f)
 	f.WriteString(100, "AcDbCircle")
 	for i := 0; i < 3; i++ {
@@ -43,12 +43,12 @@ func (c *Circle) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (c *Circle) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return c.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (c *Circle) FormatString(f *format.Formatter) string {
+func (c *Circle) FormatString(f format.Formatter) string {
 	c.Format(f)
 	return f.Output()
 }

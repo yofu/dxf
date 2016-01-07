@@ -56,7 +56,7 @@ func (v *Viewport) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (v *Viewport) Format(f *format.Formatter) {
+func (v *Viewport) Format(f format.Formatter) {
 	f.WriteString(0, "VIEW")
 	f.WriteHex(5, v.handle)
 	if v.owner != nil {
@@ -101,12 +101,12 @@ func (v *Viewport) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (v *Viewport) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return v.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (v *Viewport) FormatString(f *format.Formatter) string {
+func (v *Viewport) FormatString(f format.Formatter) string {
 	v.Format(f)
 	return f.Output()
 }

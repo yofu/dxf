@@ -10,18 +10,18 @@ type Class struct {
 }
 
 // Format writes data to formatter.
-func (c *Class) Format(f *format.Formatter) {
+func (c *Class) Format(f format.Formatter) {
 	f.WriteString(0, "CLASS")
 }
 
 // String outputs data using default formatter.
 func (c *Class) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return c.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (c *Class) FormatString(f *format.Formatter) string {
+func (c *Class) FormatString(f format.Formatter) string {
 	c.Format(f)
 	return f.Output()
 }
@@ -36,7 +36,7 @@ func New() Classes {
 }
 
 // WriteTo writes CLASSES data to formatter.
-func (cs Classes) WriteTo(f *format.Formatter) {
+func (cs Classes) WriteTo(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "CLASSES")
 	for _, c := range cs {

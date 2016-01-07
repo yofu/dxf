@@ -25,7 +25,7 @@ func (d *DimStyle) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (d *DimStyle) Format(f *format.Formatter) {
+func (d *DimStyle) Format(f format.Formatter) {
 	f.WriteString(0, "DIMSTYLE")
 	f.WriteHex(105, d.handle)
 	if d.owner != nil {
@@ -39,12 +39,12 @@ func (d *DimStyle) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (d *DimStyle) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return d.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (d *DimStyle) FormatString(f *format.Formatter) string {
+func (d *DimStyle) FormatString(f format.Formatter) string {
 	d.Format(f)
 	return f.Output()
 }

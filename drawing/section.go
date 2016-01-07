@@ -6,7 +6,7 @@ import (
 
 // Section is interface for DXF sections.
 type Section interface {
-	WriteTo(*format.Formatter)
+	WriteTo(format.Formatter)
 	SetHandle(*int)
 }
 

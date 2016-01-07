@@ -36,7 +36,7 @@ func NewAcDbDictionaryWDFLT(owner handle.Handler) (*AcDbDictionaryWDFLT, *AcDbPl
 }
 
 // Format writes data to formatter.
-func (d *AcDbDictionaryWDFLT) Format(f *format.Formatter) {
+func (d *AcDbDictionaryWDFLT) Format(f format.Formatter) {
 	f.WriteString(0, "ACDBDICTIONARYWDFLT")
 	f.WriteHex(5, d.handle)
 	if d.owner != nil {
@@ -57,12 +57,12 @@ func (d *AcDbDictionaryWDFLT) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (d *AcDbDictionaryWDFLT) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return d.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (d *AcDbDictionaryWDFLT) FormatString(f *format.Formatter) string {
+func (d *AcDbDictionaryWDFLT) FormatString(f format.Formatter) string {
 	d.Format(f)
 	return f.Output()
 }

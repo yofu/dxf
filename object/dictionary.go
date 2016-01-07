@@ -29,7 +29,7 @@ func NewDictionary() *Dictionary {
 }
 
 // Format writes data to formatter.
-func (d *Dictionary) Format(f *format.Formatter) {
+func (d *Dictionary) Format(f format.Formatter) {
 	f.WriteString(0, "DICTIONARY")
 	f.WriteHex(5, d.handle)
 	f.WriteString(100, "AcDbDictionary")
@@ -42,12 +42,12 @@ func (d *Dictionary) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (d *Dictionary) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return d.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (d *Dictionary) FormatString(f *format.Formatter) string {
+func (d *Dictionary) FormatString(f format.Formatter) string {
 	d.Format(f)
 	return f.Output()
 }

@@ -30,7 +30,7 @@ func NewBlock(name, desc string) *Block {
 }
 
 // Format writes data to formatter.
-func (b *Block) Format(f *format.Formatter) {
+func (b *Block) Format(f format.Formatter) {
 	f.WriteString(0, "BLOCK")
 	f.WriteHex(5, b.handle)
 	f.WriteString(100, "AcDbEntity")
@@ -52,12 +52,12 @@ func (b *Block) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (b *Block) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return b.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (b *Block) FormatString(f *format.Formatter) string {
+func (b *Block) FormatString(f format.Formatter) string {
 	b.Format(f)
 	return f.Output()
 }

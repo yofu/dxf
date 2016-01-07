@@ -56,7 +56,7 @@ func NewText() *Text {
 }
 
 // Format writes data to formatter.
-func (t *Text) Format(f *format.Formatter) {
+func (t *Text) Format(f format.Formatter) {
 	t.entity.Format(f)
 	f.WriteString(100, "AcDbText")
 	for i := 0; i < 3; i++ {
@@ -84,12 +84,12 @@ func (t *Text) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (t *Text) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return t.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (t *Text) FormatString(f *format.Formatter) string {
+func (t *Text) FormatString(f format.Formatter) string {
 	t.Format(f)
 	return f.Output()
 }

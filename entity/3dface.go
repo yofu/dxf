@@ -31,7 +31,7 @@ func New3DFace() *ThreeDFace {
 }
 
 // Format writes data to formatter.
-func (f *ThreeDFace) Format(fm *format.Formatter) {
+func (f *ThreeDFace) Format(fm format.Formatter) {
 	f.entity.Format(fm)
 	fm.WriteString(100, "AcDbFace")
 	for i := 0; i < 4; i++ {
@@ -46,12 +46,12 @@ func (f *ThreeDFace) Format(fm *format.Formatter) {
 
 // String outputs data using default formatter.
 func (f *ThreeDFace) String() string {
-	fm := format.New()
+	fm := format.NewASCII()
 	return f.FormatString(fm)
 }
 
 // FormatString outputs data using given formatter.
-func (f *ThreeDFace) FormatString(fm *format.Formatter) string {
+func (f *ThreeDFace) FormatString(fm format.Formatter) string {
 	f.Format(fm)
 	return fm.Output()
 }

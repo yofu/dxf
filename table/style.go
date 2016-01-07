@@ -33,7 +33,7 @@ func (st *Style) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (st *Style) Format(f *format.Formatter) {
+func (st *Style) Format(f format.Formatter) {
 	f.WriteString(0, "STYLE")
 	f.WriteHex(5, st.handle)
 	if st.owner != nil {
@@ -54,12 +54,12 @@ func (st *Style) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (st *Style) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return st.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (st *Style) FormatString(f *format.Formatter) string {
+func (st *Style) FormatString(f format.Formatter) string {
 	st.Format(f)
 	return f.Output()
 }

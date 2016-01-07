@@ -25,7 +25,7 @@ func (b *BlockRecord) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (b *BlockRecord) Format(f *format.Formatter) {
+func (b *BlockRecord) Format(f format.Formatter) {
 	f.WriteString(0, "BLOCK_RECORD")
 	f.WriteHex(5, b.handle)
 	if b.owner != nil {
@@ -41,12 +41,12 @@ func (b *BlockRecord) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (b *BlockRecord) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return b.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (b *BlockRecord) FormatString(f *format.Formatter) string {
+func (b *BlockRecord) FormatString(f format.Formatter) string {
 	b.Format(f)
 	return f.Output()
 }

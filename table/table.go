@@ -22,7 +22,7 @@ func NewTable(name string) *Table {
 }
 
 // Format writes data to formatter.
-func (t *Table) Format(f *format.Formatter) {
+func (t *Table) Format(f format.Formatter) {
 	f.WriteString(0, "TABLE")
 	f.WriteString(2, t.name)
 	f.WriteHex(5, t.handle)
@@ -43,12 +43,12 @@ func (t *Table) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (t *Table) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return t.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (t *Table) FormatString(f *format.Formatter) string {
+func (t *Table) FormatString(f format.Formatter) string {
 	t.Format(f)
 	return f.Output()
 }

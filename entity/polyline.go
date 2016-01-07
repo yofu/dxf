@@ -32,7 +32,7 @@ func NewPolyline() *Polyline {
 }
 
 // Format writes data to formatter.
-func (p *Polyline) Format(f *format.Formatter) {
+func (p *Polyline) Format(f format.Formatter) {
 	p.entity.Format(f)
 	f.WriteString(100, "AcDb3dPolyline")
 	f.WriteInt(66, 1)
@@ -51,12 +51,12 @@ func (p *Polyline) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (p *Polyline) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return p.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (p *Polyline) FormatString(f *format.Formatter) string {
+func (p *Polyline) FormatString(f format.Formatter) string {
 	p.Format(f)
 	return f.Output()
 }

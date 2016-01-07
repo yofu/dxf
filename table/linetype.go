@@ -43,7 +43,7 @@ func (lt *LineType) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (lt *LineType) Format(f *format.Formatter) {
+func (lt *LineType) Format(f format.Formatter) {
 	f.WriteString(0, "LTYPE")
 	f.WriteHex(5, lt.handle)
 	if lt.owner != nil {
@@ -65,12 +65,12 @@ func (lt *LineType) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (lt *LineType) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return lt.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (lt *LineType) FormatString(f *format.Formatter) string {
+func (lt *LineType) FormatString(f format.Formatter) string {
 	lt.Format(f)
 	return f.Output()
 }

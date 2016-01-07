@@ -25,7 +25,7 @@ func NewPoint() *Point {
 }
 
 // Format writes data to formatter.
-func (p *Point) Format(f *format.Formatter) {
+func (p *Point) Format(f format.Formatter) {
 	p.entity.Format(f)
 	f.WriteString(100, "AcDbPoint")
 	for i := 0; i < 3; i++ {
@@ -35,12 +35,12 @@ func (p *Point) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (p *Point) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return p.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (p *Point) FormatString(f *format.Formatter) string {
+func (p *Point) FormatString(f format.Formatter) string {
 	p.Format(f)
 	return f.Output()
 }

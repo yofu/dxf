@@ -25,7 +25,7 @@ func (a *AppID) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (a *AppID) Format(f *format.Formatter) {
+func (a *AppID) Format(f format.Formatter) {
 	f.WriteString(0, "APPID")
 	f.WriteHex(5, a.handle)
 	if a.owner != nil {
@@ -39,12 +39,12 @@ func (a *AppID) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (a *AppID) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return a.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (a *AppID) FormatString(f *format.Formatter) string {
+func (a *AppID) FormatString(f format.Formatter) string {
 	a.Format(f)
 	return f.Output()
 }

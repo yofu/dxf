@@ -9,7 +9,7 @@ import (
 // Entity is interface for DXF Entities.
 type Entity interface {
 	IsEntity() bool
-	Format(*format.Formatter)
+	Format(format.Formatter)
 	Handle() int
 	SetHandle(*int)
 	SetBlockRecord(handle.Handler)
@@ -40,7 +40,7 @@ func NewEntity(t EntityType) *entity {
 }
 
 // Format writes data to formatter.
-func (e *entity) Format(f *format.Formatter) {
+func (e *entity) Format(f format.Formatter) {
 	f.WriteString(0, EntityTypeString(e.Type))
 	f.WriteHex(5, e.handle)
 	if e.blockRecord != nil {
@@ -57,12 +57,12 @@ func (e *entity) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (e *entity) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return e.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (e *entity) FormatString(f *format.Formatter) string {
+func (e *entity) FormatString(f format.Formatter) string {
 	e.Format(f)
 	return f.Output()
 }

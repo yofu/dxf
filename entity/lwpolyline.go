@@ -33,7 +33,7 @@ func NewLwPolyline(size int) *LwPolyline {
 }
 
 // Format writes data to formatter.
-func (l *LwPolyline) Format(f *format.Formatter) {
+func (l *LwPolyline) Format(f format.Formatter) {
 	l.entity.Format(f)
 	f.WriteString(100, "AcDbPolyline")
 	f.WriteInt(90, l.Num)
@@ -51,12 +51,12 @@ func (l *LwPolyline) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (l *LwPolyline) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return l.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (l *LwPolyline) FormatString(f *format.Formatter) string {
+func (l *LwPolyline) FormatString(f format.Formatter) string {
 	l.Format(f)
 	return f.Output()
 }

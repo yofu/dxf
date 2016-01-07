@@ -27,7 +27,7 @@ func NewVertex(x, y, z float64) *Vertex {
 }
 
 // Format writes data to formatter.
-func (v *Vertex) Format(f *format.Formatter) {
+func (v *Vertex) Format(f format.Formatter) {
 	v.entity.Format(f)
 	f.WriteString(100, "AcDbVertex")
 	f.WriteString(100, "AcDb3dPolylineVertex")
@@ -39,12 +39,12 @@ func (v *Vertex) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (v *Vertex) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return v.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (v *Vertex) FormatString(f *format.Formatter) string {
+func (v *Vertex) FormatString(f format.Formatter) string {
 	v.Format(f)
 	return f.Output()
 }

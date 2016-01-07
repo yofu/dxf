@@ -8,7 +8,7 @@ import (
 // SymbolTable is interface for AcDbSymbolTableRecord.
 type SymbolTable interface {
 	IsSymbolTable() bool
-	Format(*format.Formatter)
+	Format(format.Formatter)
 	Handle() int
 	SetHandle(*int)
 	SetOwner(handle.Handler)

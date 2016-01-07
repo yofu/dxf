@@ -24,7 +24,7 @@ type Drawing struct {
 	Styles       map[string]*table.Style
 	CurrentLayer *table.Layer
 	CurrentStyle *table.Style
-	formatter    *format.Formatter
+	formatter    format.Formatter
 	Sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
@@ -41,7 +41,7 @@ func New() *Drawing {
 	d.Styles = make(map[string]*table.Style)
 	d.Styles["STANDARD"] = table.ST_STANDARD
 	d.CurrentStyle = d.Styles["STANDARD"]
-	d.formatter = format.New()
+	d.formatter = format.NewASCII()
 	d.formatter.SetPrecision(16)
 	d.Sections = []Section{
 		header.New(),

@@ -39,7 +39,7 @@ func (l *Layer) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (l *Layer) Format(f *format.Formatter) {
+func (l *Layer) Format(f format.Formatter) {
 	f.WriteString(0, "LAYER")
 	f.WriteHex(5, l.handle)
 	if l.owner != nil {
@@ -57,12 +57,12 @@ func (l *Layer) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (l *Layer) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return l.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (l *Layer) FormatString(f *format.Formatter) string {
+func (l *Layer) FormatString(f format.Formatter) string {
 	l.Format(f)
 	return f.Output()
 }

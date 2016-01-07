@@ -35,7 +35,7 @@ func New() Tables {
 }
 
 // WriteTo writes TABLES data to formatter.
-func (ts Tables) WriteTo(f *format.Formatter) {
+func (ts Tables) WriteTo(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "TABLES")
 	for _, t := range ts {

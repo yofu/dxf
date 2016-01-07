@@ -8,7 +8,7 @@ import (
 // Object is interface for OBJECT.
 type Object interface {
 	IsObject() bool
-	Format(f *format.Formatter)
+	Format(f format.Formatter)
 	Handle() int
 	SetHandle(*int)
 }
@@ -23,7 +23,7 @@ func New() Objects {
 }
 
 // WriteTo writes OBJECTS data to formatter.
-func (os Objects) WriteTo(f *format.Formatter) {
+func (os Objects) WriteTo(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "OBJECTS")
 	for _, o := range os {

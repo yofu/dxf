@@ -26,7 +26,7 @@ func NewAcDbPlaceHolder() *AcDbPlaceHolder {
 }
 
 // Format writes data to formatter.
-func (p *AcDbPlaceHolder) Format(f *format.Formatter) {
+func (p *AcDbPlaceHolder) Format(f format.Formatter) {
 	f.WriteString(0, "ACDBPLACEHOLDER")
 	f.WriteHex(5, p.handle)
 	if p.owner != nil {
@@ -39,12 +39,12 @@ func (p *AcDbPlaceHolder) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (p *AcDbPlaceHolder) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return p.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (p *AcDbPlaceHolder) FormatString(f *format.Formatter) string {
+func (p *AcDbPlaceHolder) FormatString(f format.Formatter) string {
 	p.Format(f)
 	return f.Output()
 }

@@ -41,7 +41,7 @@ func (g *Group) SetOwner(d *Dictionary) {
 }
 
 // Format writes data to formatter.
-func (g *Group) Format(f *format.Formatter) {
+func (g *Group) Format(f format.Formatter) {
 	f.WriteString(0, "GROUP")
 	f.WriteHex(5, g.handle)
 	f.WriteString(102, "{ACAD_REACTORS")
@@ -63,12 +63,12 @@ func (g *Group) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (g *Group) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return g.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (g *Group) FormatString(f *format.Formatter) string {
+func (g *Group) FormatString(f format.Formatter) string {
 	g.Format(f)
 	return f.Output()
 }

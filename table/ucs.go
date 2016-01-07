@@ -25,7 +25,7 @@ func (u *Ucs) IsSymbolTable() bool {
 }
 
 // Format writes data to formatter.
-func (u *Ucs) Format(f *format.Formatter) {
+func (u *Ucs) Format(f format.Formatter) {
 	f.WriteString(0, "UCS")
 	f.WriteHex(5, u.handle)
 	if u.owner != nil {
@@ -38,12 +38,12 @@ func (u *Ucs) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (u *Ucs) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return u.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (u *Ucs) FormatString(f *format.Formatter) string {
+func (u *Ucs) FormatString(f format.Formatter) string {
 	u.Format(f)
 	return f.Output()
 }

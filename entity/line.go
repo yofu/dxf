@@ -27,7 +27,7 @@ func NewLine() *Line {
 }
 
 // Format writes data to formatter.
-func (l *Line) Format(f *format.Formatter) {
+func (l *Line) Format(f format.Formatter) {
 	l.entity.Format(f)
 	f.WriteString(100, "AcDbLine")
 	for i := 0; i < 3; i++ {
@@ -40,12 +40,12 @@ func (l *Line) Format(f *format.Formatter) {
 
 // String outputs data using default formatter.
 func (l *Line) String() string {
-	f := format.New()
+	f := format.NewASCII()
 	return l.FormatString(f)
 }
 
 // FormatString outputs data using given formatter.
-func (l *Line) FormatString(f *format.Formatter) string {
+func (l *Line) FormatString(f format.Formatter) string {
 	l.Format(f)
 	return f.Output()
 }

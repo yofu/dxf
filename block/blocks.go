@@ -18,7 +18,7 @@ func New() Blocks {
 }
 
 // WriteTo writes BLOCKS data to formatter.
-func (bs Blocks) WriteTo(f *format.Formatter) {
+func (bs Blocks) WriteTo(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "BLOCKS")
 	for _, b := range bs {
