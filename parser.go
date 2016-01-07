@@ -538,10 +538,9 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		default:
 			continue
 		case "8":
-			if layer, exists := d.Layers[dt[1]]; exists {
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
 				l.SetLayer(layer)
-			} else {
-				err = fmt.Errorf("unknown layer: %s", dt[1])
 			}
 		case "10":
 			err = SetFloat(dt, func(val float64) { l.Start[0] = val })
