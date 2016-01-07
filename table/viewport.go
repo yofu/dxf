@@ -57,12 +57,12 @@ func (v *Viewport) IsSymbolTable() bool {
 
 // Format writes data to formatter.
 func (v *Viewport) Format(f format.Formatter) {
-	f.WriteString(0, "VIEW")
+	f.WriteString(0, "VPORT")
 	f.WriteHex(5, v.handle)
 	if v.owner != nil {
 		f.WriteHex(330, v.owner.Handle())
 	}
-	f.WriteString(100, "AcDbSymbostableRecord")
+	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbViewportTableRecord")
 	f.WriteString(2, v.name)
 	f.WriteInt(70, 0)
@@ -88,7 +88,7 @@ func (v *Viewport) Format(f format.Formatter) {
 		f.WriteFloat((i+1)*10+6, v.ViewDirection[i])
 	}
 	for i := 0; i < 3; i++ {
-		f.WriteFloat((i+1)*10+6, v.ViewTarget[i])
+		f.WriteFloat((i+1)*10+7, v.ViewTarget[i])
 	}
 	f.WriteFloat(40, v.Height)
 	f.WriteFloat(41, v.AspectRatio)

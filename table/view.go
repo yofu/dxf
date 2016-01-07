@@ -31,7 +31,7 @@ func (v *View) Format(f format.Formatter) {
 	if v.owner != nil {
 		f.WriteHex(330, v.owner.Handle())
 	}
-	f.WriteString(100, "AcDbSymbostableRecord")
+	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbViewTableRecord")
 	f.WriteString(2, v.name)
 }
