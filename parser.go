@@ -312,6 +312,7 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	l := table.NewLayer(name, col, lt)
 	l.SetFlag(flag)
 	l.SetLineWidth(lw)
+	l.SetPlotStyle(d.PlotStyle)
 	return l, nil
 }
 

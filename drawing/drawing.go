@@ -26,7 +26,7 @@ type Drawing struct {
 	Sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
-	plotstyle    handle.Handler
+	PlotStyle    handle.Handler
 }
 
 func New() *Drawing {
@@ -57,8 +57,8 @@ func New() *Drawing {
 	d.groupdict = object.NewDictionary()
 	d.addObject(d.groupdict)
 	d.dictionary.AddItem("ACAD_GROUP", d.groupdict)
-	d.plotstyle = ph
-	d.Layers["0"].SetPlotStyle(d.plotstyle)
+	d.PlotStyle = ph
+	d.Layers["0"].SetPlotStyle(d.PlotStyle)
 	return d
 }
 
@@ -116,7 +116,7 @@ func (d *Drawing) AddLayer(name string, cl color.ColorNumber, lt *table.LineType
 		return l, errors.New(fmt.Sprintf("layer %s already exists", name))
 	}
 	l := table.NewLayer(name, cl, lt)
-	l.SetPlotStyle(d.plotstyle)
+	l.SetPlotStyle(d.PlotStyle)
 	d.Layers[name] = l
 	d.Sections[2].(table.Tables).AddLayer(l)
 	if setcurrent {
