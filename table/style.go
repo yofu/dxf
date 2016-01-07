@@ -5,10 +5,12 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// Default Styles.
 var (
 	ST_STANDARD = NewStyle("Standard")
 )
 
+// Style represents STYLE SymbolTable.
 type Style struct {
 	handle      int
 	owner       handle.Handler
@@ -17,6 +19,7 @@ type Style struct {
 	BigFontName string // 4
 }
 
+// NewStyle create a new Style.
 func NewStyle(name string) *Style {
 	st := new(Style)
 	st.name = name
@@ -24,10 +27,12 @@ func NewStyle(name string) *Style {
 	return st
 }
 
+// IsSymbolTable is for SymbolTable interface.
 func (st *Style) IsSymbolTable() bool {
 	return true
 }
 
+// Format writes data to formatter.
 func (st *Style) Format(f *format.Formatter) {
 	f.WriteString(0, "STYLE")
 	f.WriteHex(5, st.handle)
@@ -47,28 +52,34 @@ func (st *Style) Format(f *format.Formatter) {
 	f.WriteString(4, st.BigFontName)
 }
 
+// String outputs data using default formatter.
 func (st *Style) String() string {
 	f := format.New()
 	return st.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (st *Style) FormatString(f *format.Formatter) string {
 	st.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value.
 func (st *Style) Handle() int {
 	return st.handle
 }
+// SetHandle sets a handle.
 func (st *Style) SetHandle(v *int) {
 	st.handle = *v
 	(*v)++
 }
 
+// SetOwner sets an owner.
 func (st *Style) SetOwner(h handle.Handler) {
 	st.owner = h
 }
 
+// Name returns a name of STYLE (code 2).
 func (st *Style) Name() string {
 	return st.name
 }

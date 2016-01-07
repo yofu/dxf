@@ -4,6 +4,10 @@ import (
 	"github.com/yofu/dxf/geometry"
 )
 
+// Extruder represents an entity with code 210, 220, 230 like Circle.
+//   210: Extrusion direction (optional; default = 0, 0, 1)
+//   X value
+//   220, 230: Y and Z values of extrusion direction (optional)
 type Extruder interface { // 210 220 230
 	CurrentDirection() []float64
 	SetDirection([]float64)
@@ -11,6 +15,7 @@ type Extruder interface { // 210 220 230
 	SetCoord([]float64)
 }
 
+// SetExtrusion sets new coord acoording to given direction.
 func SetExtrusion(e Extruder, d []float64) {
 	dx, dy, err := geometry.ArbitraryAxis(d)
 	if err != nil {

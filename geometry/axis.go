@@ -1,3 +1,4 @@
+// Geometrical Functions
 package geometry
 
 import (
@@ -5,6 +6,9 @@ import (
 	"math"
 )
 
+// ArbitraryAxis generates according X, Y axis from given Z axis using Arbitrary Axis Algorithm.
+// Z axis is assumed to be unit-length vector.
+// http://www.autodesk.com/techpubs/autocad/acad2000/dxf/arbitrary_axis_algorithm_dxf_ab.htm
 func ArbitraryAxis(d []float64) ([]float64, []float64, error) {
 	if len(d) < 3 {
 		return nil, nil, errors.New("not enough length")

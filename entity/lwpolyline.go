@@ -4,6 +4,7 @@ import (
 	"github.com/yofu/dxf/format"
 )
 
+// LwPolyline represents LWPOLYLINE Entity.
 type LwPolyline struct {
 	*entity
 	Num      int // 90
@@ -11,10 +12,12 @@ type LwPolyline struct {
 	Vertices [][]float64
 }
 
+// IsEntity is for Entity interface.
 func (l *LwPolyline) IsEntity() bool {
 	return true
 }
 
+// NewLwPolyline creates a new LwPolyline.
 func NewLwPolyline(size int) *LwPolyline {
 	vs := make([][]float64, size)
 	for i := 0; i < size; i++ {
@@ -29,6 +32,7 @@ func NewLwPolyline(size int) *LwPolyline {
 	return l
 }
 
+// Format writes data to formatter.
 func (l *LwPolyline) Format(f *format.Formatter) {
 	l.entity.Format(f)
 	f.WriteString(100, "AcDbPolyline")
@@ -45,16 +49,19 @@ func (l *LwPolyline) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (l *LwPolyline) String() string {
 	f := format.New()
 	return l.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (l *LwPolyline) FormatString(f *format.Formatter) string {
 	l.Format(f)
 	return f.Output()
 }
 
+// Close closes LwPolyline.
 func (l *LwPolyline) Close() {
 	l.Closed = true
 }

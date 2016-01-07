@@ -5,6 +5,7 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// Viewport represents VPORT SymbolTable.
 type Viewport struct {
 	handle        int
 	owner         handle.Handler
@@ -26,6 +27,7 @@ type Viewport struct {
 	TwistAngle    float64
 }
 
+// NewViewport creates a new Viewport.
 func NewViewport(name string) *Viewport {
 	v := &Viewport{
 		name:          name,
@@ -48,10 +50,12 @@ func NewViewport(name string) *Viewport {
 	return v
 }
 
+// IsSymbolTable is for SymbolTable interface.
 func (v *Viewport) IsSymbolTable() bool {
 	return true
 }
 
+// Format writes data to formatter.
 func (v *Viewport) Format(f *format.Formatter) {
 	f.WriteString(0, "VIEW")
 	f.WriteHex(5, v.handle)
@@ -95,32 +99,39 @@ func (v *Viewport) Format(f *format.Formatter) {
 	f.WriteFloat(51, v.TwistAngle)
 }
 
+// String outputs data using default formatter.
 func (v *Viewport) String() string {
 	f := format.New()
 	return v.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (v *Viewport) FormatString(f *format.Formatter) string {
 	v.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value.
 func (v *Viewport) Handle() int {
 	return v.handle
 }
+// SetHandle sets a handle.
 func (v *Viewport) SetHandle(h *int) {
 	v.handle = *h
 	(*h)++
 }
 
+// SetOwner sets an owner.
 func (v *Viewport) SetOwner(h handle.Handler) {
 	v.owner = h
 }
 
+// Name returns a name of VPORT (code 2).
 func (v *Viewport) Name() string {
 	return v.name
 }
 
+// SetName sets a name to VPORT (code 2).
 func (v *Viewport) SetName(name string) {
 	v.name = name
 }

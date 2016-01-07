@@ -7,6 +7,7 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// AcDbDictionaryWDFLT represents ACDBDICTIONARYWDFLT Object.
 type AcDbDictionaryWDFLT struct {
 	handle        int
 	item          map[string]handle.Handler
@@ -14,10 +15,12 @@ type AcDbDictionaryWDFLT struct {
 	defaulthandle handle.Handler
 }
 
+// IsObject is for Object interface.
 func (d *AcDbDictionaryWDFLT) IsObject() bool {
 	return true
 }
 
+// NewAcDbDictionaryWDFLT creates a new AcDbDictionaryWDFLT & AcDbPlaceHolder.
 func NewAcDbDictionaryWDFLT(owner handle.Handler) (*AcDbDictionaryWDFLT, *AcDbPlaceHolder) {
 	ds := make(map[string]handle.Handler)
 	p := NewAcDbPlaceHolder()
@@ -32,6 +35,7 @@ func NewAcDbDictionaryWDFLT(owner handle.Handler) (*AcDbDictionaryWDFLT, *AcDbPl
 	return d, p
 }
 
+// Format writes data to formatter.
 func (d *AcDbDictionaryWDFLT) Format(f *format.Formatter) {
 	f.WriteString(0, "ACDBDICTIONARYWDFLT")
 	f.WriteHex(5, d.handle)
@@ -51,24 +55,29 @@ func (d *AcDbDictionaryWDFLT) Format(f *format.Formatter) {
 	f.WriteHex(340, d.defaulthandle.Handle())
 }
 
+// String outputs data using default formatter.
 func (d *AcDbDictionaryWDFLT) String() string {
 	f := format.New()
 	return d.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (d *AcDbDictionaryWDFLT) FormatString(f *format.Formatter) string {
 	d.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value.
 func (d *AcDbDictionaryWDFLT) Handle() int {
 	return d.handle
 }
+// SetHandle sets a handle.
 func (d *AcDbDictionaryWDFLT) SetHandle(v *int) {
 	d.handle = *v
 	(*v)++
 }
 
+// AddItem adds new a new item to AcDbDictionaryWDFLT.
 func (d *AcDbDictionaryWDFLT) AddItem(key string, value handle.Handler) error {
 	if _, exist := d.item[key]; exist {
 		return errors.New(fmt.Sprintf("key %s already exists"))

@@ -1,11 +1,14 @@
+// TABLES section
 package table
 
 import (
 	"github.com/yofu/dxf/format"
 )
 
+// Tables represents TABLES section.
 type Tables []*Table
 
+// New creates a new Tables.
 func New() Tables {
 	t := make([]*Table, 9)
 	t[0] = NewTable("VPORT")
@@ -31,6 +34,7 @@ func New() Tables {
 	return t
 }
 
+// WriteTo writes TABLES data to formatter.
 func (ts Tables) WriteTo(f *format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "TABLES")
@@ -40,17 +44,20 @@ func (ts Tables) WriteTo(f *format.Formatter) {
 	f.WriteString(0, "ENDSEC")
 }
 
+// Add adds a new table to TABLES section.
 func (ts Tables) Add(t *Table) Tables {
 	ts = append(ts, t)
 	return ts
 }
 
+// SetHandle sets handles to each table.
 func (ts Tables) SetHandle(h *int) {
 	for _, t := range ts {
 		t.SetHandle(h)
 	}
 }
 
+// AddLayer adds a new layer to LAYER table.
 func (ts Tables) AddLayer(l *Layer) {
 	ts[2].Add(l)
 }

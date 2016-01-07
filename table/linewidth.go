@@ -1,5 +1,6 @@
 package table
 
+// LineWeight enum value (code 370)
 var LineWidth = map[int]float64{
 	5:   0.05,
 	9:   0.09,

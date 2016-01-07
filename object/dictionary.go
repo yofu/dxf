@@ -7,15 +7,18 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// Dictionary represents DICTIONARY Object.
 type Dictionary struct {
 	handle int
 	item   map[string]handle.Handler
 }
 
+// IsObject is for Object interface.
 func (d *Dictionary) IsObject() bool {
 	return true
 }
 
+// NewDictionary creates a new Dictionary.
 func NewDictionary() *Dictionary {
 	ds := make(map[string]handle.Handler)
 	d := &Dictionary{
@@ -25,6 +28,7 @@ func NewDictionary() *Dictionary {
 	return d
 }
 
+// Format writes data to formatter.
 func (d *Dictionary) Format(f *format.Formatter) {
 	f.WriteString(0, "DICTIONARY")
 	f.WriteHex(5, d.handle)
@@ -36,19 +40,23 @@ func (d *Dictionary) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (d *Dictionary) String() string {
 	f := format.New()
 	return d.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (d *Dictionary) FormatString(f *format.Formatter) string {
 	d.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value.
 func (d *Dictionary) Handle() int {
 	return d.handle
 }
+// SetHandle sets a handle.
 func (d *Dictionary) SetHandle(v *int) {
 	d.handle = *v
 	(*v)++
@@ -57,6 +65,7 @@ func (d *Dictionary) SetHandle(v *int) {
 	}
 }
 
+// AddItem adds new a new item to Dictionary.
 func (d *Dictionary) AddItem(key string, value handle.Handler) error {
 	if _, exist := d.item[key]; exist {
 		return errors.New(fmt.Sprintf("key %s already exists"))

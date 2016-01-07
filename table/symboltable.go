@@ -5,6 +5,7 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// SymbolTable is interface for AcDbSymbolTableRecord.
 type SymbolTable interface {
 	IsSymbolTable() bool
 	Format(*format.Formatter)

@@ -13,6 +13,7 @@ import (
 	"strings"
 )
 
+// setFloat sets a floating point number to a variable using given function.
 func setFloat(data [2]string, f func(float64)) error {
 	val, err := strconv.ParseFloat(strings.TrimSpace(data[1]), 64)
 	if err != nil {
@@ -23,6 +24,8 @@ func setFloat(data [2]string, f func(float64)) error {
 }
 
 // HEADER
+
+// ParseHeader parses HEADER section.
 func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 	h := d.Sections[drawing.HEADER].(*header.Header)
 	var name string
@@ -72,11 +75,15 @@ func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 }
 
 // CLASSES
+
+// ParseClasses parses CLASSES section.
 func ParseClasses(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
 }
 
 // TABLES
+
+// ParseTables parses TABLES section.
 func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	parsers := []func(*drawing.Drawing, [][2]string) (table.SymbolTable, error) {
 		ParseViewport,
@@ -135,6 +142,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
 }
 
+// ParseTable parses each TABLE, which starts with "0\nTABLE\n" and ends with "0\nENDTAB\n".
 func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*drawing.Drawing, [][2]string)(table.SymbolTable, error)) error {
 	t := d.Sections[drawing.TABLES].(table.Tables)[index]
 	t.Clear()
@@ -169,6 +177,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 	return nil
 }
 
+// ParseViewport parses VPORT tables.
 func ParseViewport(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	v := table.NewViewport("")
 	var err error
@@ -240,6 +249,7 @@ func ParseViewport(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 	return v, nil
 }
 
+// ParseLtype parses LTYPE tables.
 func ParseLtype(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name, desc string
 	var lengths []float64
@@ -271,6 +281,7 @@ func ParseLtype(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	return table.NewLineType(name, desc, lengths...), nil
 }
 
+// ParseLayer parses LAYER tables.
 func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
 	var flag int
@@ -316,6 +327,7 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	return l, nil
 }
 
+// ParseStyle parses STYLE tables.
 func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name, font, bigfont string
 	for _, dt := range data {
@@ -334,6 +346,7 @@ func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	return s, nil
 }
 
+// ParseView parses VIEW tables.
 func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
 	for _, dt := range data {
@@ -346,6 +359,7 @@ func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) 
 	return v, nil
 }
 
+// ParseUCS parses UCS tables.
 func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
 	for _, dt := range data {
@@ -358,6 +372,7 @@ func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	return u, nil
 }
 
+// ParseAppID parses APPID tables.
 func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
 	for _, dt := range data {
@@ -370,6 +385,7 @@ func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	return a, nil
 }
 
+// ParseDimStyle parses DIMSTYLE tables.
 func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
 	for _, dt := range data {
@@ -382,6 +398,7 @@ func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 	return ds, nil
 }
 
+// ParseBlockRecord parses BLOCK_RECORD tables.
 func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
 	for _, dt := range data {
@@ -395,6 +412,8 @@ func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, 
 }
 
 // BLOCKS
+
+// ParseBlocks parses BLOCKS section.
 func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	tmpdata := make([][2]string, 0)
 	add := true // skip ENDBLK
@@ -433,6 +452,7 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
 }
 
+// ParseBlock parses each BLOCK, which starts with "0\nBLOCK\n" and ends with "0\nENDBLK\n".
 func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 	b := block.NewBlock("", "")
 	var err error
@@ -468,6 +488,8 @@ func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 }
 
 // ENTITIES
+
+// ParseEntities parses ENTITIES section.
 func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
 	tmpdata := make([][2]string, 0)
 	for i, dt := range data {
@@ -494,6 +516,7 @@ func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
 }
 
+// ParseEntity parses each entity.
 func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	if len(data) < 1 {
 		return nil, fmt.Errorf("no data")
@@ -508,6 +531,7 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	return f(d, data)
 }
 
+// ParseEntityFunc returns a function for parsing acoording to entity type string.
 func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string)(entity.Entity, error), error) {
 	switch t {
 	case "LINE":
@@ -531,6 +555,7 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string)(entity.Entit
 	}
 }
 
+// ParseLine parses LINE entities.
 func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	l := entity.NewLine()
 	var err error
@@ -564,6 +589,8 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 }
 
 // OBJECTS
+
+// ParseObjects parses OBJECTS section.
 func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
 }

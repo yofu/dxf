@@ -1,9 +1,11 @@
+// HEADER section
 package header
 
 import (
 	"github.com/yofu/dxf/format"
 )
 
+// Header contains information written in HEADER section.
 type Header struct {
 	Version  string
 	InsBase  []float64
@@ -12,6 +14,7 @@ type Header struct {
 	handseed int
 }
 
+// New creates a new Header.
 func New() *Header {
 	h := new(Header)
 	h.Version = "AC1015"
@@ -21,6 +24,7 @@ func New() *Header {
 	return h
 }
 
+// WriteTo writes HEADER information to formatter.
 func (h *Header) WriteTo(f *format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "HEADER")
@@ -43,6 +47,7 @@ func (h *Header) WriteTo(f *format.Formatter) {
 	f.WriteString(0, "ENDSEC")
 }
 
+// SetHandle sets $HANDSEED.
 func (h *Header) SetHandle(v *int) {
 	h.handseed = *v
 }

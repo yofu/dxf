@@ -1,8 +1,10 @@
+// Color Number
 package color
 
+// AutoCAD color index number (code 62)
 type ColorNumber uint8
 
-// 1 - 9
+// color number: 1 - 9
 const (
 	Red ColorNumber = iota + 1
 	Yellow
@@ -15,7 +17,7 @@ const (
 	Grey192
 )
 
-// 250 - 255
+// color number: 250 - 255
 const (
 	Grey51 = iota + 250
 	Grey91
@@ -25,6 +27,7 @@ const (
 	Grey255
 )
 
+// color number to RGB equivalents
 var (
 	ColorRGB = [][]uint8{
 		[]uint8{0, 0, 0},       // 0

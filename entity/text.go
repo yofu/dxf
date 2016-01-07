@@ -5,6 +5,7 @@ import (
 	"github.com/yofu/dxf/table"
 )
 
+// Text Anchor
 const (
 	LEFT_BASE = iota
 	CENTER_BASE
@@ -20,6 +21,7 @@ const (
 	RIGHT_TOP
 )
 
+// Text represents TEXT Entity.
 type Text struct {
 	*entity
 	Coord1         []float64    // 10, 20, 30
@@ -32,10 +34,12 @@ type Text struct {
 	verticalflag   int          // 73
 }
 
+// IsEntity is for Entity interface.
 func (t *Text) IsEntity() bool {
 	return true
 }
 
+// NewText creates a new Text.
 func NewText() *Text {
 	t := &Text{
 		entity:         NewEntity(TEXT),
@@ -51,6 +55,7 @@ func NewText() *Text {
 	return t
 }
 
+// Format writes data to formatter.
 func (t *Text) Format(f *format.Formatter) {
 	t.entity.Format(f)
 	f.WriteString(100, "AcDbText")
@@ -77,11 +82,13 @@ func (t *Text) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (t *Text) String() string {
 	f := format.New()
 	return t.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (t *Text) FormatString(f *format.Formatter) string {
 	t.Format(f)
 	return f.Output()
@@ -94,13 +101,16 @@ func (t *Text) togglegenflag(val int) {
 		t.genflag |= val
 	}
 }
+// FlipHorizontal flips Text horizontally.
 func (t *Text) FlipHorizontal() {
 	t.togglegenflag(2)
 }
+// FlipHorizontal flips Text vertically.
 func (t *Text) FlipVertical() {
 	t.togglegenflag(4)
 }
 
+// Anchor sets anchor point flags.
 func (t *Text) Anchor(pos int) {
 	switch pos {
 	case LEFT_BASE:

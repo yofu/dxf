@@ -5,15 +5,18 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// AcDbPlaceHolder represents ACDBPLACEHOLDER Object.
 type AcDbPlaceHolder struct {
 	handle int
 	owner  handle.Handler
 }
 
+// IsObject is for Object interface.
 func (p *AcDbPlaceHolder) IsObject() bool {
 	return true
 }
 
+// NewAcDbPlaceHolder creates a new AcDbPlaceHolder.
 func NewAcDbPlaceHolder() *AcDbPlaceHolder {
 	p := &AcDbPlaceHolder{
 		handle: 0,
@@ -22,6 +25,7 @@ func NewAcDbPlaceHolder() *AcDbPlaceHolder {
 	return p
 }
 
+// Format writes data to formatter.
 func (p *AcDbPlaceHolder) Format(f *format.Formatter) {
 	f.WriteString(0, "ACDBPLACEHOLDER")
 	f.WriteHex(5, p.handle)
@@ -33,19 +37,23 @@ func (p *AcDbPlaceHolder) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (p *AcDbPlaceHolder) String() string {
 	f := format.New()
 	return p.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (p *AcDbPlaceHolder) FormatString(f *format.Formatter) string {
 	p.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value.
 func (p *AcDbPlaceHolder) Handle() int {
 	return p.handle
 }
+// SetHandle sets a handle.
 func (p *AcDbPlaceHolder) SetHandle(v *int) {
 	p.handle = *v
 	(*v)++

@@ -1,7 +1,9 @@
 package entity
 
+// EntityType represents Entity names (code 2)
 type EntityType int
 
+// Entity name: code 2
 const (
 	LINE EntityType = iota
 	THREEDFACE
@@ -14,6 +16,8 @@ const (
 	TEXT
 )
 
+// EntityTypeString converts EntityType to string.
+// If EntityType is out of range, it returns empty string.
 func EntityTypeString(t EntityType) string {
 	switch t {
 	case LINE:
@@ -39,6 +43,8 @@ func EntityTypeString(t EntityType) string {
 	}
 }
 
+// EntityTypeValue converts string to EntityType.
+// If string is unknown EntityType, it returns -1.
 func EntityTypeValue(t string) EntityType {
 	switch t {
 	case "LINE":

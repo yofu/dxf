@@ -5,6 +5,7 @@ import (
 	"github.com/yofu/dxf/table"
 )
 
+// Block represents each BLOCK.
 type Block struct {
 	Name        string
 	Description string
@@ -15,6 +16,7 @@ type Block struct {
 	Coord       []float64
 }
 
+// NewBlock create a new Block.
 func NewBlock(name, desc string) *Block {
 	b := &Block{
 		Name:        name,
@@ -27,6 +29,8 @@ func NewBlock(name, desc string) *Block {
 	return b
 }
 
+
+// Format writes data to formatter.
 func (b *Block) Format(f *format.Formatter) {
 	f.WriteString(0, "BLOCK")
 	f.WriteHex(5, b.handle)
@@ -47,19 +51,23 @@ func (b *Block) Format(f *format.Formatter) {
 	f.WriteString(100, "AcDbBlockEnd")
 }
 
+// String outputs data using default formatter.
 func (b *Block) String() string {
 	f := format.New()
 	return b.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (b *Block) FormatString(f *format.Formatter) string {
 	b.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value of BLOCK.
 func (b *Block) Handle() int {
 	return b.handle
 }
+// SetHandle sets handles to BLOCK and ENDBLK.
 func (b *Block) SetHandle(v *int) {
 	b.handle = *v
 	(*v)++
@@ -67,10 +75,12 @@ func (b *Block) SetHandle(v *int) {
 	(*v)++
 }
 
+// Layer returns BLOCK's Layer.
 func (b *Block) Layer() *table.Layer {
 	return b.layer
 }
 
+// SetLayer sets Layer to BLOCK.
 func (b *Block) SetLayer(layer *table.Layer) {
 	b.layer = layer
 }

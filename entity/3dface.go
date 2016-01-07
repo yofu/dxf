@@ -4,16 +4,19 @@ import (
 	"github.com/yofu/dxf/format"
 )
 
+// ThreeDFace represents 3DFACE Entity.
 type ThreeDFace struct {
 	*entity
 	Points [][]float64
 	Flag   int // 70
 }
 
+// IsEntity is for Entity interface.
 func (f *ThreeDFace) IsEntity() bool {
 	return true
 }
 
+// New3DFace creates a new ThreeDFace.
 func New3DFace() *ThreeDFace {
 	f := &ThreeDFace{
 		entity: NewEntity(THREEDFACE),
@@ -27,6 +30,7 @@ func New3DFace() *ThreeDFace {
 	return f
 }
 
+// Format writes data to formatter.
 func (f *ThreeDFace) Format(fm *format.Formatter) {
 	f.entity.Format(fm)
 	fm.WriteString(100, "AcDbFace")
@@ -40,11 +44,13 @@ func (f *ThreeDFace) Format(fm *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (f *ThreeDFace) String() string {
 	fm := format.New()
 	return f.FormatString(fm)
 }
 
+// FormatString outputs data using given formatter.
 func (f *ThreeDFace) FormatString(fm *format.Formatter) string {
 	f.Format(fm)
 	return fm.Output()

@@ -4,6 +4,7 @@ import (
 	"github.com/yofu/dxf/format"
 )
 
+// Circle represents CIRCLE Entity.
 type Circle struct {
 	*entity
 	Center    []float64 // 10, 20, 30
@@ -11,10 +12,12 @@ type Circle struct {
 	Direction []float64 // 210, 220, 230
 }
 
+// IsEntity is for Entity interface.
 func (c *Circle) IsEntity() bool {
 	return true
 }
 
+// NewCircle creates a new Circle.
 func NewCircle() *Circle {
 	c := &Circle{
 		entity:    NewEntity(CIRCLE),
@@ -25,6 +28,7 @@ func NewCircle() *Circle {
 	return c
 }
 
+// Format writes data to formatter.
 func (c *Circle) Format(f *format.Formatter) {
 	c.entity.Format(f)
 	f.WriteString(100, "AcDbCircle")
@@ -37,25 +41,31 @@ func (c *Circle) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (c *Circle) String() string {
 	f := format.New()
 	return c.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (c *Circle) FormatString(f *format.Formatter) string {
 	c.Format(f)
 	return f.Output()
 }
 
+// CurrentDirection returns extrusion direction.
 func (c *Circle) CurrentDirection() []float64 {
 	return c.Direction
 }
+// SetDirection sets new extrusion direction.
 func (c *Circle) SetDirection(d []float64) {
 	c.Direction = d
 }
+// CurrentCoord returns center point coord.
 func (c *Circle) CurrentCoord() []float64 {
 	return c.Center
 }
+// SetCoord sets new center point coord.
 func (c *Circle) SetCoord(co []float64) {
 	c.Center = co
 }

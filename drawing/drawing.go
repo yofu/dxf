@@ -1,3 +1,4 @@
+// Package drawing defines Drawing struct for DXF.
 package drawing
 
 import (
@@ -15,6 +16,7 @@ import (
 	"os"
 )
 
+// Drawing contains DXF drawing data.
 type Drawing struct {
 	FileName     string
 	Layers       map[string]*table.Layer
@@ -29,6 +31,7 @@ type Drawing struct {
 	PlotStyle    handle.Handler
 }
 
+// New creates a new Drawing.
 func New() *Drawing {
 	d := new(Drawing)
 	d.Layers = make(map[string]*table.Layer)
@@ -78,6 +81,8 @@ func (d *Drawing) saveFile(filename string) error {
 	return nil
 }
 
+// Save saves the drawing file.
+// If it is the first time, use SaveAs(filename).
 func (d *Drawing) Save() error {
 	if d.FileName == "" {
 		return errors.New("filename is blank, use SaveAs(filename)")
@@ -85,11 +90,13 @@ func (d *Drawing) Save() error {
 	return d.saveFile(d.FileName)
 }
 
+// SaveAs saves the drawing file as given filename.
 func (d *Drawing) SaveAs(filename string) error {
 	d.FileName = filename
 	return d.saveFile(filename)
 }
 
+// setHandle sets all the handles contained in Drawing.
 func (d *Drawing) setHandle() {
 	h := 1
 	for _, s := range d.Sections[1:] {
@@ -98,6 +105,8 @@ func (d *Drawing) setHandle() {
 	d.Sections[0].SetHandle(&h)
 }
 
+// Layer returns the named layer if exists.
+// If setcurrent is true, set current layer to it.
 func (d *Drawing) Layer(name string, setcurrent bool) (*table.Layer, error) {
 	if l, exist := d.Layers[name]; exist {
 		if setcurrent {
@@ -108,6 +117,8 @@ func (d *Drawing) Layer(name string, setcurrent bool) (*table.Layer, error) {
 	return nil, fmt.Errorf("layer %s doesn't exist", name)
 }
 
+// AddLayer adds a new layer with given name, color and line type.
+// If setcurrent is true, set current layer to it.
 func (d *Drawing) AddLayer(name string, cl color.ColorNumber, lt *table.LineType, setcurrent bool) (*table.Layer, error) {
 	if l, exist := d.Layers[name]; exist {
 		if setcurrent {
@@ -125,6 +136,7 @@ func (d *Drawing) AddLayer(name string, cl color.ColorNumber, lt *table.LineType
 	return l, nil
 }
 
+// ChangeLayer changes current layer to the named layer.
 func (d *Drawing) ChangeLayer(name string) error {
 	if l, exist := d.Layers[name]; exist {
 		d.CurrentLayer = l
@@ -133,6 +145,7 @@ func (d *Drawing) ChangeLayer(name string) error {
 	return errors.New(fmt.Sprintf("layer %s doesn't exist", name))
 }
 
+// LineType returns the named line type if exists.
 func (d *Drawing) LineType(name string) (*table.LineType, error) {
 	lt, err := d.Sections[TABLES].(table.Tables)[table.LTYPE].Contains(name)
 	if err != nil {
@@ -141,14 +154,17 @@ func (d *Drawing) LineType(name string) (*table.LineType, error) {
 	return lt.(*table.LineType), nil
 }
 
+// Entities returns slice of all entities contained in Drawing.
 func (d *Drawing) Entities() (entity.Entities) {
 	return d.Sections[ENTITIES].(entity.Entities)
 }
 
+// AddEntity adds a new entity.
 func (d *Drawing) AddEntity(e entity.Entity) {
 	d.Sections[4] = d.Sections[4].(entity.Entities).Add(e)
 }
 
+// Point creates a new POINT at (x, y, z).
 func (d *Drawing) Point(x, y, z float64) (*entity.Point, error) {
 	p := entity.NewPoint()
 	p.Coord = []float64{x, y, z}
@@ -157,6 +173,7 @@ func (d *Drawing) Point(x, y, z float64) (*entity.Point, error) {
 	return p, nil
 }
 
+// Line creates a new LINE from (x1, y1, z1) to (x2, y2, z2).
 func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	l := entity.NewLine()
 	l.Start = []float64{x1, y1, z1}
@@ -166,6 +183,7 @@ func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	return l, nil
 }
 
+// Circle creates a new CIRCLE at (x, y, z) with radius r.
 func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
 	c := entity.NewCircle()
 	c.Center = []float64{x, y, z}
@@ -175,6 +193,7 @@ func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
 	return c, nil
 }
 
+// Polyline creates a new POLYLINE with given vertices.
 func (d *Drawing) Polyline(closed bool, vertices ...[]float64) (*entity.Polyline, error) {
 	p := entity.NewPolyline()
 	p.SetLayer(d.CurrentLayer)
@@ -188,6 +207,7 @@ func (d *Drawing) Polyline(closed bool, vertices ...[]float64) (*entity.Polyline
 	return p, nil
 }
 
+// LwPolyline creates a new LWPOLYLINE with given vertices.
 func (d *Drawing) LwPolyline(closed bool, vertices ...[]float64) (*entity.LwPolyline, error) {
 	size := len(vertices)
 	l := entity.NewLwPolyline(size)
@@ -202,6 +222,7 @@ func (d *Drawing) LwPolyline(closed bool, vertices ...[]float64) (*entity.LwPoly
 	return l, nil
 }
 
+// ThreeDFace creates a new 3DFACE with given points.
 func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	f := entity.New3DFace()
 	if len(points) < 3 {
@@ -220,6 +241,7 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	return f, nil
 }
 
+// Text creates a new TEXT str at (x, y, z) with given height.
 func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error) {
 	t := entity.NewText()
 	t.Coord1 = []float64{x, y, z}
@@ -235,6 +257,8 @@ func (d *Drawing) addObject(o object.Object) {
 	d.Sections[5] = d.Sections[5].(object.Objects).Add(o)
 }
 
+// Group adds given entities to the named group.
+// If the named group doesn't exist, create it.
 func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, error) {
 	if g, exist := d.Groups[name]; exist {
 		g.AddEntity(es...)
@@ -247,6 +271,8 @@ func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, 
 	return g, nil
 }
 
+// AddGroup adds given entities to the named group.
+// If the named group doesn't exist, returns error.
 func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 	if g, exist := d.Groups[name]; exist {
 		g.AddEntity(es...)

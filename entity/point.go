@@ -4,15 +4,18 @@ import (
 	"github.com/yofu/dxf/format"
 )
 
+// Point represents POINT Entity.
 type Point struct {
 	*entity
 	Coord []float64 // 10, 20, 30
 }
 
+// IsEntity is for Entity interface.
 func (p *Point) IsEntity() bool {
 	return true
 }
 
+// NewPoint creates a new Point.
 func NewPoint() *Point {
 	p := &Point{
 		entity: NewEntity(POINT),
@@ -21,6 +24,7 @@ func NewPoint() *Point {
 	return p
 }
 
+// Format writes data to formatter.
 func (p *Point) Format(f *format.Formatter) {
 	p.entity.Format(f)
 	f.WriteString(100, "AcDbPoint")
@@ -29,11 +33,13 @@ func (p *Point) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (p *Point) String() string {
 	f := format.New()
 	return p.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (p *Point) FormatString(f *format.Formatter) string {
 	p.Format(f)
 	return f.Output()

@@ -4,6 +4,7 @@ import (
 	"github.com/yofu/dxf/format"
 )
 
+// Polyline represents POLYLINE Entity.
 type Polyline struct {
 	*entity
 	Flag      int
@@ -12,10 +13,12 @@ type Polyline struct {
 	endhandle int
 }
 
+// IsEntity is for Entity interface.
 func (p *Polyline) IsEntity() bool {
 	return true
 }
 
+// NewPolyline creates a new Polyline.
 func NewPolyline() *Polyline {
 	vs := make([]*Vertex, 0)
 	p := &Polyline{
@@ -28,6 +31,7 @@ func NewPolyline() *Polyline {
 	return p
 }
 
+// Format writes data to formatter.
 func (p *Polyline) Format(f *format.Formatter) {
 	p.entity.Format(f)
 	f.WriteString(100, "AcDb3dPolyline")
@@ -45,20 +49,24 @@ func (p *Polyline) Format(f *format.Formatter) {
 	f.WriteString(8, p.Layer().Name())
 }
 
+// String outputs data using default formatter.
 func (p *Polyline) String() string {
 	f := format.New()
 	return p.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (p *Polyline) FormatString(f *format.Formatter) string {
 	p.Format(f)
 	return f.Output()
 }
 
+// Close closes Polyline.
 func (p *Polyline) Close() {
 	p.Flag |= 1
 }
 
+// AddVertex adds a new vertex to Polyline.
 func (p *Polyline) AddVertex(x, y, z float64) *Vertex {
 	v := NewVertex(x, y, z)
 	p.Vertices = append(p.Vertices, v)
@@ -68,6 +76,7 @@ func (p *Polyline) AddVertex(x, y, z float64) *Vertex {
 	return v
 }
 
+// SetHandle sets handles to itself and its vertices.
 func (p *Polyline) SetHandle(h *int) {
 	p.entity.SetHandle(h)
 	for _, v := range p.Vertices {

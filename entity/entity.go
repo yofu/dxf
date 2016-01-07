@@ -6,6 +6,7 @@ import (
 	"github.com/yofu/dxf/table"
 )
 
+// Entity is interface for DXF Entities.
 type Entity interface {
 	IsEntity() bool
 	Format(*format.Formatter)
@@ -16,6 +17,8 @@ type Entity interface {
 	SetLayer(*table.Layer)
 }
 
+// entity is common part of Entities.
+// It is embedded in each entities to implement Entity interface.
 type entity struct {
 	Type        EntityType     // 0
 	handle      int            // 5
@@ -24,6 +27,7 @@ type entity struct {
 	layer       *table.Layer   // 8
 }
 
+// NewEntity creates a new entity.
 func NewEntity(t EntityType) *entity {
 	e := &entity{
 		Type:        t,
@@ -35,6 +39,7 @@ func NewEntity(t EntityType) *entity {
 	return e
 }
 
+// Format writes data to formatter.
 func (e *entity) Format(f *format.Formatter) {
 	f.WriteString(0, EntityTypeString(e.Type))
 	f.WriteHex(5, e.handle)
@@ -50,36 +55,44 @@ func (e *entity) Format(f *format.Formatter) {
 	f.WriteString(8, e.layer.Name())
 }
 
+// String outputs data using default formatter.
 func (e *entity) String() string {
 	f := format.New()
 	return e.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (e *entity) FormatString(f *format.Formatter) string {
 	e.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value of TABLE.
 func (e *entity) Handle() int {
 	return e.handle
 }
+// SetHandle sets handles to TABLE itself and each SymbolTable.
 func (e *entity) SetHandle(v *int) {
 	e.handle = *v
 	(*v)++
 }
 
+// SetBlockRecord sets BLOCK_RECORD to entity (code 330).
 func (e *entity) SetBlockRecord(h handle.Handler) {
 	e.blockRecord = h
 }
 
+// SetOwner sets an owner.
 func (e *entity) SetOwner(h handle.Handler) {
 	e.owner = h
 }
 
+// Layer returns entity's Layer.
 func (e *entity) Layer() *table.Layer {
 	return e.layer
 }
 
+// SetLayer sets Layer to entity.
 func (e *entity) SetLayer(l *table.Layer) {
 	e.layer = l
 }

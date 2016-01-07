@@ -6,6 +6,7 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
+// Group represents GROUP Object.
 type Group struct {
 	Name        string
 	Description string
@@ -15,10 +16,12 @@ type Group struct {
 	selectable  bool
 }
 
+// IsObject is for Object interface.
 func (g *Group) IsObject() bool {
 	return true
 }
 
+// NewGroup creates a new Group.
 func NewGroup(name, desc string, es ...entity.Entity) *Group {
 	g := &Group{
 		Name:        name,
@@ -31,11 +34,13 @@ func NewGroup(name, desc string, es ...entity.Entity) *Group {
 	return g
 }
 
+// SetOwner sets an owner(Dictionary).
 func (g *Group) SetOwner(d *Dictionary) {
 	g.owner = d
 	d.AddItem(g.Name, g)
 }
 
+// Format writes data to formatter.
 func (g *Group) Format(f *format.Formatter) {
 	f.WriteString(0, "GROUP")
 	f.WriteHex(5, g.handle)
@@ -56,24 +61,29 @@ func (g *Group) Format(f *format.Formatter) {
 	}
 }
 
+// String outputs data using default formatter.
 func (g *Group) String() string {
 	f := format.New()
 	return g.FormatString(f)
 }
 
+// FormatString outputs data using given formatter.
 func (g *Group) FormatString(f *format.Formatter) string {
 	g.Format(f)
 	return f.Output()
 }
 
+// Handle returns a handle value.
 func (g *Group) Handle() int {
 	return g.handle
 }
+// SetHandle sets a handle.
 func (g *Group) SetHandle(v *int) {
 	g.handle = *v
 	(*v)++
 }
 
+// AddEntity adds entities to Group.
 func (g *Group) AddEntity(es ...entity.Entity) {
 	for _, e := range es {
 		e.SetBlockRecord(g)

@@ -1,3 +1,6 @@
+// Package dxf is a DXF(Drawing Exchange Format) library for golang.
+// ACAD2000(AC1015), ASCII format is only supported.
+// http://www.autodesk.com/techpubs/autocad/acad2000/dxf/index.htm
 package dxf
 
 import (
@@ -10,15 +13,18 @@ import (
 	"strings"
 )
 
+// Default values.
 var (
 	DefaultColor    = color.White
 	DefaultLineType = table.LT_CONTINUOUS
 )
 
+// NewDrawing creates a drawing.
 func NewDrawing() *drawing.Drawing {
 	return drawing.New()
 }
 
+// Open opens the named DXF file.
 func Open(filename string) (*drawing.Drawing, error) {
 	var err error
 	f, err := os.Open(filename)
@@ -96,6 +102,7 @@ func Open(filename string) (*drawing.Drawing, error) {
 	return d, nil
 }
 
+// ColorIndex converts RGB value to corresponding color number.
 func ColorIndex(cl []int) color.ColorNumber {
 	minind := 0
 	minval := 1000000
@@ -115,6 +122,7 @@ func ColorIndex(cl []int) color.ColorNumber {
 	return color.ColorNumber(minind)
 }
 
+// IndexColor converts color number to RGB value.
 func IndexColor(index uint8) []uint8 {
 	return color.ColorRGB[index]
 }
