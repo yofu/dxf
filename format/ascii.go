@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// ASCII is Formatter for ASCII format.
 type ASCII struct {
 	buffer bytes.Buffer
 	float  string
