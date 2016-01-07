@@ -66,3 +66,11 @@ func (b *Block) SetHandle(v *int) {
 	b.endhandle = *v
 	(*v)++
 }
+
+func (b *Block) Layer() *table.Layer {
+	return b.layer
+}
+
+func (b *Block) SetLayer(layer *table.Layer) {
+	b.layer = layer
+}

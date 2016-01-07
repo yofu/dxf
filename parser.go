@@ -3,6 +3,7 @@ package dxf
 import (
 	"errors"
 	"fmt"
+	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
@@ -394,6 +395,74 @@ func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, 
 
 // BLOCKS
 func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
+	tmpdata := make([][2]string, 0)
+	add := true // skip ENDBLK
+	for i, dt := range data {
+		if dt[0] == "0" {
+			switch strings.ToUpper(dt[1]) {
+			case "BLOCK":
+				add = true
+			case "ENDBLK":
+				if len(tmpdata) > 0 {
+					err := ParseBlock(d, tmpdata)
+					if err != nil {
+						return fmt.Errorf("line %d: %s", line + 2*i, err.Error())
+					}
+					tmpdata = make([][2]string, 0)
+				}
+				add = false
+			default:
+				if add {
+					tmpdata = append(tmpdata, dt)
+				}
+			}
+		} else {
+			if add {
+				tmpdata = append(tmpdata, dt)
+			}
+		}
+	}
+	if len(tmpdata) > 0 {
+		err := ParseBlock(d, tmpdata)
+		if err != nil {
+			return fmt.Errorf("line %d: %s", line + 2*len(data), err.Error())
+		}
+		tmpdata = make([][2]string, 0)
+	}
+	return nil
+}
+
+func ParseBlock(d *drawing.Drawing, data [][2]string) error {
+	b := block.NewBlock("", "")
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		case "2":
+			b.Name = dt[1]
+		case "1": // 4?
+			b.Description = dt[1]
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				b.SetLayer(layer)
+			}
+		case "10":
+			err = SetFloat(dt, func(val float64) { b.Coord[0] = val })
+		case "20":
+			err = SetFloat(dt, func(val float64) { b.Coord[1] = val })
+		case "30":
+			err = SetFloat(dt, func(val float64) { b.Coord[2] = val })
+		case "70":
+			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
+			if err != nil {
+				return err
+			}
+			b.Flag = int(val)
+		}
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
