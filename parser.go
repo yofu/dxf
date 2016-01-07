@@ -139,6 +139,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 	t := d.Sections[drawing.TABLES].(table.Tables)[index]
 	t.Clear()
 	tmpdata := make([][2]string, 0)
+	add := false // skip before first 0-code
 	for _, dt := range data {
 		switch dt[0] {
 		case "0":
@@ -147,13 +148,14 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 				if err != nil {
 					return err
 				}
-				if st != nil {
-					t.Add(st)
-				}
+				t.Add(st)
 				tmpdata = make([][2]string, 0)
 			}
+			add = true
 		default:
-			tmpdata = append(tmpdata, dt)
+			if add {
+				tmpdata = append(tmpdata, dt)
+			}
 		}
 	}
 	if len(tmpdata) > 0 {
@@ -161,9 +163,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 		if err != nil {
 			return err
 		}
-		if st != nil {
-			t.Add(st)
-		}
+		t.Add(st)
 		tmpdata = make([][2]string, 0)
 	}
 	return nil
