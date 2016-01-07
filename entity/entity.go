@@ -71,6 +71,7 @@ func (e *entity) FormatString(f *format.Formatter) string {
 func (e *entity) Handle() int {
 	return e.handle
 }
+
 // SetHandle sets handles to TABLE itself and each SymbolTable.
 func (e *entity) SetHandle(v *int) {
 	e.handle = *v

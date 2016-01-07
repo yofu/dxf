@@ -7,9 +7,9 @@ import (
 
 // AppID represents APPID SymbolTable.
 type AppID struct {
-	handle   int
-	owner    handle.Handler
-	name     string
+	handle int
+	owner  handle.Handler
+	name   string
 }
 
 // NewAppID create a new AppID.
@@ -53,6 +53,7 @@ func (a *AppID) FormatString(f *format.Formatter) string {
 func (a *AppID) Handle() int {
 	return a.handle
 }
+
 // SetHandle sets a handle.
 func (a *AppID) SetHandle(v *int) {
 	a.handle = *v

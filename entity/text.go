@@ -101,10 +101,12 @@ func (t *Text) togglegenflag(val int) {
 		t.genflag |= val
 	}
 }
+
 // FlipHorizontal flips Text horizontally.
 func (t *Text) FlipHorizontal() {
 	t.togglegenflag(2)
 }
+
 // FlipHorizontal flips Text vertically.
 func (t *Text) FlipVertical() {
 	t.togglegenflag(4)

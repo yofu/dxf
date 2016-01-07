@@ -56,6 +56,7 @@ func (d *Dictionary) FormatString(f *format.Formatter) string {
 func (d *Dictionary) Handle() int {
 	return d.handle
 }
+
 // SetHandle sets a handle.
 func (d *Dictionary) SetHandle(v *int) {
 	d.handle = *v

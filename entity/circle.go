@@ -57,14 +57,17 @@ func (c *Circle) FormatString(f *format.Formatter) string {
 func (c *Circle) CurrentDirection() []float64 {
 	return c.Direction
 }
+
 // SetDirection sets new extrusion direction.
 func (c *Circle) SetDirection(d []float64) {
 	c.Direction = d
 }
+
 // CurrentCoord returns center point coord.
 func (c *Circle) CurrentCoord() []float64 {
 	return c.Center
 }
+
 // SetCoord sets new center point coord.
 func (c *Circle) SetCoord(co []float64) {
 	c.Center = co

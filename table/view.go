@@ -52,6 +52,7 @@ func (v *View) FormatString(f *format.Formatter) string {
 func (v *View) Handle() int {
 	return v.handle
 }
+
 // SetHandle sets a handle.
 func (v *View) SetHandle(h *int) {
 	v.handle = *h

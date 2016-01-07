@@ -52,6 +52,7 @@ func (u *Ucs) FormatString(f *format.Formatter) string {
 func (u *Ucs) Handle() int {
 	return u.handle
 }
+
 // SetHandle sets a handle.
 func (u *Ucs) SetHandle(h *int) {
 	u.handle = *h

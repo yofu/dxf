@@ -29,7 +29,6 @@ func NewBlock(name, desc string) *Block {
 	return b
 }
 
-
 // Format writes data to formatter.
 func (b *Block) Format(f *format.Formatter) {
 	f.WriteString(0, "BLOCK")
@@ -67,6 +66,7 @@ func (b *Block) FormatString(f *format.Formatter) string {
 func (b *Block) Handle() int {
 	return b.handle
 }
+
 // SetHandle sets handles to BLOCK and ENDBLK.
 func (b *Block) SetHandle(v *int) {
 	b.handle = *v

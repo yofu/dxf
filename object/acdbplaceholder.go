@@ -53,6 +53,7 @@ func (p *AcDbPlaceHolder) FormatString(f *format.Formatter) string {
 func (p *AcDbPlaceHolder) Handle() int {
 	return p.handle
 }
+
 // SetHandle sets a handle.
 func (p *AcDbPlaceHolder) SetHandle(v *int) {
 	p.handle = *v

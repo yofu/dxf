@@ -68,6 +68,7 @@ func (st *Style) FormatString(f *format.Formatter) string {
 func (st *Style) Handle() int {
 	return st.handle
 }
+
 // SetHandle sets a handle.
 func (st *Style) SetHandle(v *int) {
 	st.handle = *v
@@ -83,4 +84,3 @@ func (st *Style) SetOwner(h handle.Handler) {
 func (st *Style) Name() string {
 	return st.name
 }
-

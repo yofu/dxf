@@ -115,6 +115,7 @@ func (v *Viewport) FormatString(f *format.Formatter) string {
 func (v *Viewport) Handle() int {
 	return v.handle
 }
+
 // SetHandle sets a handle.
 func (v *Viewport) SetHandle(h *int) {
 	v.handle = *h

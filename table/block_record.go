@@ -7,9 +7,9 @@ import (
 
 // BlockRecord represents BLOCK_RECORD SymbolTable.
 type BlockRecord struct {
-	handle   int
-	owner    handle.Handler
-	name     string
+	handle int
+	owner  handle.Handler
+	name   string
 }
 
 // NewBlockRecord creates a new BlockRecord.
@@ -55,6 +55,7 @@ func (b *BlockRecord) FormatString(f *format.Formatter) string {
 func (b *BlockRecord) Handle() int {
 	return b.handle
 }
+
 // SetHandle sets a handle.
 func (b *BlockRecord) SetHandle(v *int) {
 	b.handle = *v

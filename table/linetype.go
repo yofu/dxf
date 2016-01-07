@@ -79,6 +79,7 @@ func (lt *LineType) FormatString(f *format.Formatter) string {
 func (lt *LineType) Handle() int {
 	return lt.handle
 }
+
 // SetHandle sets a handle.
 func (lt *LineType) SetHandle(v *int) {
 	lt.handle = *v

@@ -155,7 +155,7 @@ func (d *Drawing) LineType(name string) (*table.LineType, error) {
 }
 
 // Entities returns slice of all entities contained in Drawing.
-func (d *Drawing) Entities() (entity.Entities) {
+func (d *Drawing) Entities() entity.Entities {
 	return d.Sections[ENTITIES].(entity.Entities)
 }
 

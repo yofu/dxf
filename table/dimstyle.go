@@ -7,9 +7,9 @@ import (
 
 // DimStyle represents DIMSTYLE SymbolTable.
 type DimStyle struct {
-	handle   int
-	owner    handle.Handler
-	name     string
+	handle int
+	owner  handle.Handler
+	name   string
 }
 
 // NewDimStyle creates a new DimStyle.
@@ -53,6 +53,7 @@ func (d *DimStyle) FormatString(f *format.Formatter) string {
 func (d *DimStyle) Handle() int {
 	return d.handle
 }
+
 // SetHandle sets a handle.
 func (d *DimStyle) SetHandle(v *int) {
 	d.handle = *v

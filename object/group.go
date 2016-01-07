@@ -77,6 +77,7 @@ func (g *Group) FormatString(f *format.Formatter) string {
 func (g *Group) Handle() int {
 	return g.handle
 }
+
 // SetHandle sets a handle.
 func (g *Group) SetHandle(v *int) {
 	g.handle = *v

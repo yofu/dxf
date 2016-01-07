@@ -71,6 +71,7 @@ func (l *Layer) FormatString(f *format.Formatter) string {
 func (l *Layer) Handle() int {
 	return l.handle
 }
+
 // SetHandle sets a handle.
 func (l *Layer) SetHandle(v *int) {
 	l.handle = *v
@@ -106,7 +107,7 @@ func (l *Layer) SetLineWidth(w int) int {
 	minkey := -3
 	minval := 211
 	for k, _ := range LineWidth {
-		tmp := k-w
+		tmp := k - w
 		if tmp > 0 && tmp < minval {
 			minkey = k
 			minval = tmp
@@ -122,7 +123,7 @@ func (l *Layer) SetPlotStyle(ps handle.Handler) {
 }
 
 // SetFlag sets standard flags.
-//     1  = Layer is frozen; otherwise layer is thawed. 
+//     1  = Layer is frozen; otherwise layer is thawed.
 //     2  = Layer is frozen by default in new viewports.
 //     4  = Layer is locked.
 //     16 = If set, table entry is externally dependent on an xref.
@@ -131,10 +132,12 @@ func (l *Layer) SetPlotStyle(ps handle.Handler) {
 func (l *Layer) SetFlag(val int) {
 	l.flag = val
 }
+
 // Freeze freezes Layer.
 func (l *Layer) Freeze() {
 	l.flag |= 1
 }
+
 // UnFreeze unfreezes Layer.
 func (l *Layer) UnFreeze() {
 	l.flag &= ^1
@@ -144,6 +147,7 @@ func (l *Layer) UnFreeze() {
 func (l *Layer) Lock() {
 	l.flag |= 4
 }
+
 // UnLock unlocks Layer.
 func (l *Layer) UnLock() {
 	l.flag &= ^4

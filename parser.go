@@ -85,7 +85,7 @@ func ParseClasses(d *drawing.Drawing, line int, data [][2]string) error {
 
 // ParseTables parses TABLES section.
 func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
-	parsers := []func(*drawing.Drawing, [][2]string) (table.SymbolTable, error) {
+	parsers := []func(*drawing.Drawing, [][2]string) (table.SymbolTable, error){
 		ParseViewport,
 		ParseLtype,
 		ParseLayer,
@@ -103,11 +103,11 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	for i, dt := range data {
 		if setparser {
 			if dt[0] != "2" {
-				return fmt.Errorf("line %d: invalid group code: %s", line + 2*i, dt[0])
+				return fmt.Errorf("line %d: invalid group code: %s", line+2*i, dt[0])
 			}
 			ind = int(table.TableTypeValue(strings.ToUpper(dt[1])))
 			if ind < 0 {
-				return fmt.Errorf("line %d: unknown table type: %s", line + 2*i, dt[1])
+				return fmt.Errorf("line %d: unknown table type: %s", line+2*i, dt[1])
 			}
 			parser = parsers[ind]
 			setparser = false
@@ -135,7 +135,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	if len(tmpdata) > 0 {
 		err := ParseTable(d, tmpdata, ind, parser)
 		if err != nil {
-			return fmt.Errorf("line %d: %s", line + 2*len(data), err.Error())
+			return fmt.Errorf("line %d: %s", line+2*len(data), err.Error())
 		}
 		tmpdata = make([][2]string, 0)
 	}
@@ -143,7 +143,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 }
 
 // ParseTable parses each TABLE, which starts with "0\nTABLE\n" and ends with "0\nENDTAB\n".
-func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*drawing.Drawing, [][2]string)(table.SymbolTable, error)) error {
+func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*drawing.Drawing, [][2]string) (table.SymbolTable, error)) error {
 	t := d.Sections[drawing.TABLES].(table.Tables)[index]
 	t.Clear()
 	tmpdata := make([][2]string, 0)
@@ -426,7 +426,7 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 				if len(tmpdata) > 0 {
 					err := ParseBlock(d, tmpdata)
 					if err != nil {
-						return fmt.Errorf("line %d: %s", line + 2*i, err.Error())
+						return fmt.Errorf("line %d: %s", line+2*i, err.Error())
 					}
 					tmpdata = make([][2]string, 0)
 				}
@@ -445,7 +445,7 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	if len(tmpdata) > 0 {
 		err := ParseBlock(d, tmpdata)
 		if err != nil {
-			return fmt.Errorf("line %d: %s", line + 2*len(data), err.Error())
+			return fmt.Errorf("line %d: %s", line+2*len(data), err.Error())
 		}
 		tmpdata = make([][2]string, 0)
 	}
@@ -497,7 +497,7 @@ func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
 			if len(tmpdata) > 0 {
 				e, err := ParseEntity(d, tmpdata)
 				if err != nil {
-					return fmt.Errorf("line %d: %s", line + 2*i, err.Error())
+					return fmt.Errorf("line %d: %s", line+2*i, err.Error())
 				}
 				d.AddEntity(e)
 				tmpdata = make([][2]string, 0)
@@ -508,7 +508,7 @@ func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
 	if len(tmpdata) > 0 {
 		e, err := ParseEntity(d, tmpdata)
 		if err != nil {
-			return fmt.Errorf("line %d: %s", line + 2*len(data), err.Error())
+			return fmt.Errorf("line %d: %s", line+2*len(data), err.Error())
 		}
 		d.AddEntity(e)
 		tmpdata = make([][2]string, 0)
@@ -532,7 +532,7 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 }
 
 // ParseEntityFunc returns a function for parsing acoording to entity type string.
-func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string)(entity.Entity, error), error) {
+func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Entity, error), error) {
 	switch t {
 	case "LINE":
 		return ParseLine, nil

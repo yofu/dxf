@@ -71,6 +71,7 @@ func (d *AcDbDictionaryWDFLT) FormatString(f *format.Formatter) string {
 func (d *AcDbDictionaryWDFLT) Handle() int {
 	return d.handle
 }
+
 // SetHandle sets a handle.
 func (d *AcDbDictionaryWDFLT) SetHandle(v *int) {
 	d.handle = *v
