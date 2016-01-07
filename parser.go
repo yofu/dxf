@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func SetFloat(data [2]string, f func(float64)) error {
+func setFloat(data [2]string, f func(float64)) error {
 	val, err := strconv.ParseFloat(strings.TrimSpace(data[1]), 64)
 	if err != nil {
 		return fmt.Errorf("code %s: %s", data[0], err.Error())
@@ -39,29 +39,29 @@ func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 		case "10":
 			switch name {
 			case "$INSBASE":
-				err = SetFloat(dt, func(val float64) { h.InsBase[0] = val })
+				err = setFloat(dt, func(val float64) { h.InsBase[0] = val })
 			case "$EXTMIN":
-				err = SetFloat(dt, func(val float64) { h.ExtMin[0] = val })
+				err = setFloat(dt, func(val float64) { h.ExtMin[0] = val })
 			case "$EXTMAX":
-				err = SetFloat(dt, func(val float64) { h.ExtMax[0] = val })
+				err = setFloat(dt, func(val float64) { h.ExtMax[0] = val })
 			}
 		case "20":
 			switch name {
 			case "$INSBASE":
-				err = SetFloat(dt, func(val float64) { h.InsBase[1] = val })
+				err = setFloat(dt, func(val float64) { h.InsBase[1] = val })
 			case "$EXTMIN":
-				err = SetFloat(dt, func(val float64) { h.ExtMin[1] = val })
+				err = setFloat(dt, func(val float64) { h.ExtMin[1] = val })
 			case "$EXTMAX":
-				err = SetFloat(dt, func(val float64) { h.ExtMax[1] = val })
+				err = setFloat(dt, func(val float64) { h.ExtMax[1] = val })
 			}
 		case "30":
 			switch name {
 			case "$INSBASE":
-				err = SetFloat(dt, func(val float64) { h.InsBase[2] = val })
+				err = setFloat(dt, func(val float64) { h.InsBase[2] = val })
 			case "$EXTMIN":
-				err = SetFloat(dt, func(val float64) { h.ExtMin[2] = val })
+				err = setFloat(dt, func(val float64) { h.ExtMin[2] = val })
 			case "$EXTMAX":
-				err = SetFloat(dt, func(val float64) { h.ExtMax[2] = val })
+				err = setFloat(dt, func(val float64) { h.ExtMax[2] = val })
 			}
 		}
 		if err != nil {
@@ -177,61 +177,61 @@ func ParseViewport(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 		case "2":
 			v.SetName(dt[1])
 		case "10":
-			err = SetFloat(dt, func(val float64) { v.LowerLeft[0] = val })
+			err = setFloat(dt, func(val float64) { v.LowerLeft[0] = val })
 		case "20":
-			err = SetFloat(dt, func(val float64) { v.LowerLeft[1] = val })
+			err = setFloat(dt, func(val float64) { v.LowerLeft[1] = val })
 		case "11":
-			err = SetFloat(dt, func(val float64) { v.UpperRight[0] = val })
+			err = setFloat(dt, func(val float64) { v.UpperRight[0] = val })
 		case "21":
-			err = SetFloat(dt, func(val float64) { v.UpperRight[1] = val })
+			err = setFloat(dt, func(val float64) { v.UpperRight[1] = val })
 		case "12":
-			err = SetFloat(dt, func(val float64) { v.ViewCenter[0] = val })
+			err = setFloat(dt, func(val float64) { v.ViewCenter[0] = val })
 		case "22":
-			err = SetFloat(dt, func(val float64) { v.ViewCenter[1] = val })
+			err = setFloat(dt, func(val float64) { v.ViewCenter[1] = val })
 		case "13":
-			err = SetFloat(dt, func(val float64) { v.SnapBase[0] = val })
+			err = setFloat(dt, func(val float64) { v.SnapBase[0] = val })
 		case "23":
-			err = SetFloat(dt, func(val float64) { v.SnapBase[1] = val })
+			err = setFloat(dt, func(val float64) { v.SnapBase[1] = val })
 		case "14":
-			err = SetFloat(dt, func(val float64) {
+			err = setFloat(dt, func(val float64) {
 				v.SnapSpacing[0] = val
 				v.SnapSpacing[1] = val
 			})
 		case "24":
-			err = SetFloat(dt, func(val float64) { v.SnapSpacing[1] = val })
+			err = setFloat(dt, func(val float64) { v.SnapSpacing[1] = val })
 		case "15":
-			err = SetFloat(dt, func(val float64) {
+			err = setFloat(dt, func(val float64) {
 				v.GridSpacing[0] = val
 				v.GridSpacing[1] = val
 			})
 		case "25":
-			err = SetFloat(dt, func(val float64) { v.GridSpacing[1] = val })
+			err = setFloat(dt, func(val float64) { v.GridSpacing[1] = val })
 		case "16":
-			err = SetFloat(dt, func(val float64) { v.ViewDirection[0] = val })
+			err = setFloat(dt, func(val float64) { v.ViewDirection[0] = val })
 		case "26":
-			err = SetFloat(dt, func(val float64) { v.ViewDirection[1] = val })
+			err = setFloat(dt, func(val float64) { v.ViewDirection[1] = val })
 		case "36":
-			err = SetFloat(dt, func(val float64) { v.ViewDirection[2] = val })
+			err = setFloat(dt, func(val float64) { v.ViewDirection[2] = val })
 		case "17":
-			err = SetFloat(dt, func(val float64) { v.ViewTarget[0] = val })
+			err = setFloat(dt, func(val float64) { v.ViewTarget[0] = val })
 		case "27":
-			err = SetFloat(dt, func(val float64) { v.ViewTarget[1] = val })
+			err = setFloat(dt, func(val float64) { v.ViewTarget[1] = val })
 		case "37":
-			err = SetFloat(dt, func(val float64) { v.ViewTarget[2] = val })
+			err = setFloat(dt, func(val float64) { v.ViewTarget[2] = val })
 		case "40":
-			err = SetFloat(dt, func(val float64) { v.Height = val })
+			err = setFloat(dt, func(val float64) { v.Height = val })
 		case "41":
-			err = SetFloat(dt, func(val float64) { v.AspectRatio = val })
+			err = setFloat(dt, func(val float64) { v.AspectRatio = val })
 		case "42":
-			err = SetFloat(dt, func(val float64) { v.LensLength = val })
+			err = setFloat(dt, func(val float64) { v.LensLength = val })
 		case "43":
-			err = SetFloat(dt, func(val float64) { v.FrontClip = val })
+			err = setFloat(dt, func(val float64) { v.FrontClip = val })
 		case "44":
-			err = SetFloat(dt, func(val float64) { v.BackClip = val })
+			err = setFloat(dt, func(val float64) { v.BackClip = val })
 		case "50":
-			err = SetFloat(dt, func(val float64) { v.SnapAngle = val })
+			err = setFloat(dt, func(val float64) { v.SnapAngle = val })
 		case "51":
-			err = SetFloat(dt, func(val float64) { v.TwistAngle = val })
+			err = setFloat(dt, func(val float64) { v.TwistAngle = val })
 		}
 		if err != nil {
 			return v, err
@@ -448,11 +448,11 @@ func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 				b.SetLayer(layer)
 			}
 		case "10":
-			err = SetFloat(dt, func(val float64) { b.Coord[0] = val })
+			err = setFloat(dt, func(val float64) { b.Coord[0] = val })
 		case "20":
-			err = SetFloat(dt, func(val float64) { b.Coord[1] = val })
+			err = setFloat(dt, func(val float64) { b.Coord[1] = val })
 		case "30":
-			err = SetFloat(dt, func(val float64) { b.Coord[2] = val })
+			err = setFloat(dt, func(val float64) { b.Coord[2] = val })
 		case "70":
 			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
 			if err != nil {
@@ -544,17 +544,17 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 				l.SetLayer(layer)
 			}
 		case "10":
-			err = SetFloat(dt, func(val float64) { l.Start[0] = val })
+			err = setFloat(dt, func(val float64) { l.Start[0] = val })
 		case "20":
-			err = SetFloat(dt, func(val float64) { l.Start[1] = val })
+			err = setFloat(dt, func(val float64) { l.Start[1] = val })
 		case "30":
-			err = SetFloat(dt, func(val float64) { l.Start[2] = val })
+			err = setFloat(dt, func(val float64) { l.Start[2] = val })
 		case "11":
-			err = SetFloat(dt, func(val float64) { l.End[0] = val })
+			err = setFloat(dt, func(val float64) { l.End[0] = val })
 		case "21":
-			err = SetFloat(dt, func(val float64) { l.End[1] = val })
+			err = setFloat(dt, func(val float64) { l.End[1] = val })
 		case "31":
-			err = SetFloat(dt, func(val float64) { l.End[2] = val })
+			err = setFloat(dt, func(val float64) { l.End[2] = val })
 		}
 		if err != nil {
 			return l, err
