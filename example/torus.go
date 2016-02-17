@@ -10,6 +10,7 @@ import (
 
 func main() {
 	d := dxf.NewDrawing()
+	d.Header().LtScale = 100.0
 	d.AddLayer("Toroidal", dxf.DefaultColor, dxf.DefaultLineType, true)
 	d.AddLayer("Poloidal", color.Red, table.LT_HIDDEN, true)
 	z := 0.0

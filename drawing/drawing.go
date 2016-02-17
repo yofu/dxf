@@ -105,6 +105,10 @@ func (d *Drawing) setHandle() {
 	d.Sections[0].SetHandle(&h)
 }
 
+func (d *Drawing) Header() *header.Header {
+	return d.Sections[0].(*header.Header)
+}
+
 // Layer returns the named layer if exists.
 // If setcurrent is true, set current layer to it.
 func (d *Drawing) Layer(name string, setcurrent bool) (*table.Layer, error) {

@@ -66,6 +66,11 @@ func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 			case "$EXTMAX":
 				err = setFloat(dt, func(val float64) { h.ExtMax[2] = val })
 			}
+		case "40":
+			switch name {
+			case "$LTSCALE":
+				err = setFloat(dt, func(val float64) { h.LtScale = val })
+			}
 		}
 		if err != nil {
 			return err

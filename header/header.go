@@ -11,6 +11,7 @@ type Header struct {
 	InsBase  []float64
 	ExtMin   []float64
 	ExtMax   []float64
+	LtScale  float64
 	handseed int
 }
 
@@ -21,6 +22,7 @@ func New() *Header {
 	h.InsBase = make([]float64, 3)
 	h.ExtMin = make([]float64, 3)
 	h.ExtMax = make([]float64, 3)
+	h.LtScale = 1.0
 	return h
 }
 
@@ -42,6 +44,8 @@ func (h *Header) WriteTo(f format.Formatter) {
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, h.ExtMax[i])
 	}
+	f.WriteString(9, "$LTSCALE")
+	f.WriteFloat(40, h.LtScale)
 	f.WriteString(9, "$HANDSEED")
 	f.WriteHex(5, h.handseed)
 	f.WriteString(0, "ENDSEC")
