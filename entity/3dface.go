@@ -55,3 +55,19 @@ func (f *ThreeDFace) FormatString(fm format.Formatter) string {
 	f.Format(fm)
 	return fm.Output()
 }
+
+func (f *ThreeDFace) BBox() ([]float64, []float64) {
+	mins := make([]float64, 3)
+	maxs := make([]float64, 3)
+	for _, p := range f.Points {
+		for i := 0; i < 3; i++ {
+			if p[i] < mins[i] {
+				mins[i] = p[i]
+			}
+			if p[i] > maxs[i] {
+				maxs[i] = p[i]
+			}
+		}
+	}
+	return mins, maxs
+}

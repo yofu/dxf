@@ -85,3 +85,19 @@ func (p *Polyline) SetHandle(h *int) {
 	p.endhandle = *h
 	(*h)++
 }
+
+func (p *Polyline) BBox() ([]float64, []float64) {
+	mins := make([]float64, 3)
+	maxs := make([]float64, 3)
+	for _, v := range p.Vertices {
+		for i := 0; i < 3; i++ {
+			if v.Coord[i] < mins[i] {
+				mins[i] = v.Coord[i]
+			}
+			if v.Coord[i] > maxs[i] {
+				maxs[i] = v.Coord[i]
+			}
+		}
+	}
+	return mins, maxs
+}

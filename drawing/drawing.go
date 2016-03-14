@@ -283,3 +283,24 @@ func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 	}
 	return errors.New(fmt.Sprintf("group %s doesn't exist", name))
 }
+
+func (d *Drawing) SetExt() {
+	mins := []float64{1e16, 1e16, 1e16}
+	maxs := []float64{-1e16, -1e16, -1e16}
+	for _, en := range d.Entities() {
+		tmpmins, tmpmaxs := en.BBox()
+		for i := 0; i < 3; i++ {
+			if tmpmins[i] < mins[i] {
+				mins[i] = tmpmins[i]
+			}
+			if tmpmaxs[i] > maxs[i] {
+				maxs[i] = tmpmaxs[i]
+			}
+		}
+	}
+	h := d.Header()
+	for i := 0; i < 3; i++ {
+		h.ExtMin[i] = mins[i]
+		h.ExtMax[i] = maxs[i]
+	}
+}

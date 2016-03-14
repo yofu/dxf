@@ -48,3 +48,9 @@ func (v *Vertex) FormatString(f format.Formatter) string {
 	v.Format(f)
 	return f.Output()
 }
+
+func (v *Vertex) BBox() ([]float64, []float64) {
+	mins := []float64{v.Coord[0], v.Coord[1], v.Coord[2]}
+	maxs := []float64{v.Coord[0], v.Coord[1], v.Coord[2]}
+	return mins, maxs
+}

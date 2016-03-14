@@ -15,6 +15,7 @@ type Entity interface {
 	SetBlockRecord(handle.Handler)
 	Layer() *table.Layer
 	SetLayer(*table.Layer)
+	BBox() ([]float64, []float64)
 }
 
 // entity is common part of Entities.

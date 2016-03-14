@@ -65,3 +65,19 @@ func (l *LwPolyline) FormatString(f format.Formatter) string {
 func (l *LwPolyline) Close() {
 	l.Closed = true
 }
+
+func (l *LwPolyline) BBox() ([]float64, []float64) {
+	mins := make([]float64, 3)
+	maxs := make([]float64, 3)
+	for _, p := range l.Vertices {
+		for i := 0; i < 3; i++ {
+			if p[i] < mins[i] {
+				mins[i] = p[i]
+			}
+			if p[i] > maxs[i] {
+				maxs[i] = p[i]
+			}
+		}
+	}
+	return mins, maxs
+}

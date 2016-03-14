@@ -49,3 +49,18 @@ func (l *Line) FormatString(f format.Formatter) string {
 	l.Format(f)
 	return f.Output()
 }
+
+func (l *Line) BBox() ([]float64, []float64) {
+	mins := make([]float64, 3)
+	maxs := make([]float64, 3)
+	for i := 0; i < 3; i++ {
+		if l.Start[i] <= l.End[i] {
+			mins[i] = l.Start[i]
+			maxs[i] = l.End[i]
+		} else {
+			mins[i] = l.End[i]
+			maxs[i] = l.Start[i]
+		}
+	}
+	return mins, maxs
+}

@@ -72,3 +72,8 @@ func (c *Circle) CurrentCoord() []float64 {
 func (c *Circle) SetCoord(co []float64) {
 	c.Center = co
 }
+
+func (c *Circle) BBox() ([]float64, []float64) {
+	// TODO: extrusion
+	return []float64{c.Center[0] - c.Radius, c.Center[1] - c.Radius, c.Center[2]}, []float64{c.Center[0] + c.Radius, c.Center[1] + c.Radius, c.Center[2]}
+}
