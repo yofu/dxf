@@ -157,6 +157,6 @@ func (t *Text) Anchor(pos int) {
 func (t *Text) BBox() ([]float64, []float64) {
 	// TODO: text length, anchor point
 	mins := []float64{t.Coord1[0], t.Coord1[1], t.Coord1[2]}
-	maxs := []float64{t.Coord1[0], t.Coord1[1] + Height, t.Coord1[2]}
+	maxs := []float64{t.Coord1[0], t.Coord1[1] + t.Height, t.Coord1[2]}
 	return mins, maxs
 }
