@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/yofu/dxf/format"
+	"math"
 )
 
 // Line represents LINE Entity.
@@ -63,4 +64,37 @@ func (l *Line) BBox() ([]float64, []float64) {
 		}
 	}
 	return mins, maxs
+}
+
+func (l *Line) Length() float64 {
+	sum := 0.0
+	for i := 0; i < 3; i++ {
+		sum += math.Pow(l.End[i] - l.Start[i], 2.0)
+	}
+	return math.Sqrt(sum)
+}
+
+func (l *Line) Direction(normalize bool) []float64 {
+	vec := make([]float64, 3)
+	var length float64
+	if normalize {
+		length = l.Length()
+		if length == 0.0 {
+			length = 1.0
+		}
+	}
+	for i := 0; i < 3; i++ {
+		vec[i] = l.End[i] - l.Start[i]
+		if normalize {
+			vec[i] /= length
+		}
+	}
+	return vec
+}
+
+func (l *Line) Move(x, y, z float64) {
+	for i, val := range []float64{x, y, z} {
+		l.Start[i] += val
+		l.End[i] += val
+	}
 }
