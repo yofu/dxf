@@ -162,6 +162,9 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 					return err
 				}
 				t.Add(st)
+				if layer, ok := st.(*table.Layer); ok {
+					d.Layers[layer.Name()] = layer
+				}
 				tmpdata = make([][2]string, 0)
 			}
 			add = true
@@ -177,6 +180,9 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 			return err
 		}
 		t.Add(st)
+		if layer, ok := st.(*table.Layer); ok {
+			d.Layers[layer.Name()] = layer
+		}
 		tmpdata = make([][2]string, 0)
 	}
 	return nil
