@@ -31,6 +31,7 @@ func Open(filename string) (*drawing.Drawing, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 	scanner := bufio.NewScanner(f)
 	d := NewDrawing()
 	var code, value string
