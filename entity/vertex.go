@@ -12,7 +12,7 @@ type Vertex struct {
 }
 
 // IsEntity is for Entity interface.
-func (p *Vertex) IsEntity() bool {
+func (v *Vertex) IsEntity() bool {
 	return true
 }
 

@@ -81,7 +81,7 @@ func (d *AcDbDictionaryWDFLT) SetHandle(v *int) {
 // AddItem adds new a new item to AcDbDictionaryWDFLT.
 func (d *AcDbDictionaryWDFLT) AddItem(key string, value handle.Handler) error {
 	if _, exist := d.item[key]; exist {
-		return errors.New(fmt.Sprintf("key %s already exists"))
+		return fmt.Errorf("key %s already exists")
 	}
 	d.item[key] = value
 	return nil

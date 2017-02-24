@@ -106,7 +106,7 @@ func (l *Layer) SetLineWidth(w int) int {
 	}
 	minkey := -3
 	minval := 211
-	for k, _ := range LineWidth {
+	for k := range LineWidth {
 		tmp := k - w
 		if tmp > 0 && tmp < minval {
 			minkey = k
