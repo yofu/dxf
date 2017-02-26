@@ -533,7 +533,7 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		return nil, fmt.Errorf("no data")
 	}
 	if data[0][0] != "0" {
-		return nil, fmt.Errorf("invalid group code: %d", data[0][0])
+		return nil, fmt.Errorf("invalid group code: %q", data[0][0])
 	}
 	f, err := ParseEntityFunc(data[0][1])
 	if err != nil {

@@ -128,7 +128,7 @@ func (d *Drawing) AddLayer(name string, cl color.ColorNumber, lt *table.LineType
 		if setcurrent {
 			d.CurrentLayer = l
 		}
-		return l, errors.New(fmt.Sprintf("layer %s already exists", name))
+		return l, fmt.Errorf("layer %s already exists", name)
 	}
 	l := table.NewLayer(name, cl, lt)
 	l.SetPlotStyle(d.PlotStyle)
@@ -146,7 +146,7 @@ func (d *Drawing) ChangeLayer(name string) error {
 		d.CurrentLayer = l
 		return nil
 	}
-	return errors.New(fmt.Sprintf("layer %s doesn't exist", name))
+	return fmt.Errorf("layer %s doesn't exist", name)
 }
 
 // LineType returns the named line type if exists.
@@ -266,7 +266,7 @@ func (d *Drawing) addObject(o object.Object) {
 func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, error) {
 	if g, exist := d.Groups[name]; exist {
 		g.AddEntity(es...)
-		return g, errors.New(fmt.Sprintf("group %s already exists", name))
+		return g, fmt.Errorf("group %s already exists", name)
 	}
 	g := object.NewGroup(name, desc, es...)
 	d.Groups[name] = g
@@ -281,7 +281,7 @@ func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 	if g, exist := d.Groups[name]; exist {
 		g.AddEntity(es...)
 	}
-	return errors.New(fmt.Sprintf("group %s doesn't exist", name))
+	return fmt.Errorf("group %s doesn't exist", name)
 }
 
 func (d *Drawing) SetExt() {
