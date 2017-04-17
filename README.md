@@ -49,7 +49,7 @@ func main() {
 }
 ```
 
-![Torus](example/torus.png)
+![Torus](example/torus/torus.png)
 
 ## Installation
 
