@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log"
+	"math"
+
 	"github.com/yofu/dxf"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/table"
-	"log"
-	"math"
 )
 
 func main() {

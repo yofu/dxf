@@ -3,14 +3,15 @@ package dxf
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/table"
-	"strconv"
-	"strings"
 )
 
 // setFloat sets a floating point number to a variable using given function.

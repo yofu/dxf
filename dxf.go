@@ -6,11 +6,12 @@ package dxf
 import (
 	"bufio"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/table"
-	"os"
-	"strings"
 )
 
 // Default values.

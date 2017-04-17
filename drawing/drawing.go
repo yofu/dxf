@@ -4,6 +4,8 @@ package drawing
 import (
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/color"
@@ -13,7 +15,6 @@ import (
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/object"
 	"github.com/yofu/dxf/table"
-	"os"
 )
 
 // Drawing contains DXF drawing data.

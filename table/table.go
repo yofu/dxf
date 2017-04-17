@@ -2,8 +2,9 @@ package table
 
 import (
 	"fmt"
-	"github.com/yofu/dxf/format"
 	"strings"
+
+	"github.com/yofu/dxf/format"
 )
 
 // Table represents each TABLE.

@@ -1,9 +1,10 @@
 package table
 
 import (
+	"math"
+
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
-	"math"
 )
 
 // Default LineTypes.
