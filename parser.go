@@ -558,8 +558,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 	// 	return ParsePolyline, nil
 	// case "VERTEX":
 	// 	return ParseVertex, nil
-	// case "POINT":
-	// 	return ParsePoint, nil
+	case "POINT":
+		return ParsePoint, nil
 	// case "TEXT":
 	// 	return ParseText, nil
 	default:
@@ -598,6 +598,33 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		}
 	}
 	return l, nil
+}
+
+// ParsePoint parses POINT entities.
+func ParsePoint(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	p := entity.NewPoint()
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		default:
+			continue
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				p.SetLayer(layer)
+			}
+		case "10":
+			err = setFloat(dt, func(val float64) { p.Coord[0] = val })
+		case "20":
+			err = setFloat(dt, func(val float64) { p.Coord[1] = val })
+		case "30":
+			err = setFloat(dt, func(val float64) { p.Coord[2] = val })
+		}
+		if err != nil {
+			return p, err
+		}
+	}
+	return p, nil
 }
 
 // OBJECTS
