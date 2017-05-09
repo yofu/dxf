@@ -560,8 +560,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseLine, nil
 	case "3DFACE":
 		return Parse3DFace, nil
-	// case "LWPOLYLINE":
-	// 	return ParseLwPolyline, nil
+	case "LWPOLYLINE":
+		return ParseLwPolyline, nil
 	case "CIRCLE":
 		return ParseCircle, nil
 	// case "POLYLINE":
@@ -670,6 +670,68 @@ func Parse3DFace(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		}
 	}
 	return t, nil
+}
+
+// ParseLwPolyline parses LWPOLYLINE entities.
+func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	lw := entity.NewLwPolyline(0)
+	ind := 0
+	read := 0
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		default:
+			continue
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				lw.SetLayer(layer)
+			}
+		case "90":
+			err = setInt(dt, func(val int) {
+				lw.Num = val
+				lw.Vertices = make([][]float64, val)
+				for i := 0; i < val; i++ {
+					lw.Vertices[i] = make([]float64, 2)
+				}
+			})
+		case "10":
+			if lw.Num > ind {
+				err = setFloat(dt, func(val float64) {
+					lw.Vertices[ind][0] = val
+					read |= 1
+				})
+			} else {
+				err = fmt.Errorf("LWPOLYLINE extra vertices")
+			}
+		case "20":
+			if lw.Num > ind {
+				err = setFloat(dt, func(val float64) {
+					lw.Vertices[ind][1] = val
+					read |= 2
+				})
+			} else {
+				err = fmt.Errorf("LWPOLYLINE extra vertices")
+			}
+		case "70":
+			err = setInt(dt, func(val int) {
+				if val == 1 {
+					lw.Close()
+				}
+			})
+		}
+		if err != nil {
+			return lw, err
+		}
+		if read == 3 {
+			read = 0
+			ind++
+		}
+	}
+	if ind != lw.Num {
+		return lw, fmt.Errorf("LWPOLYLINE not enough vertices")
+	}
+	return lw, nil
 }
 
 // ParseCircle parses CIRCLE entities.
