@@ -558,8 +558,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 	switch t {
 	case "LINE":
 		return ParseLine, nil
-	// case "3DFACE":
-	// 	return Parse3DFace, nil
+	case "3DFACE":
+		return Parse3DFace, nil
 	// case "LWPOLYLINE":
 	// 	return ParseLwPolyline, nil
 	case "CIRCLE":
@@ -608,6 +608,68 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		}
 	}
 	return l, nil
+}
+
+// Parse3DFace parses 3DFACE entities.
+func Parse3DFace(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	t := entity.New3DFace()
+	fourth := 0
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		default:
+			continue
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				t.SetLayer(layer)
+			}
+		case "10":
+			err = setFloat(dt, func(val float64) { t.Points[0][0] = val })
+		case "20":
+			err = setFloat(dt, func(val float64) { t.Points[0][1] = val })
+		case "30":
+			err = setFloat(dt, func(val float64) { t.Points[0][2] = val })
+		case "11":
+			err = setFloat(dt, func(val float64) { t.Points[1][0] = val })
+		case "21":
+			err = setFloat(dt, func(val float64) { t.Points[1][1] = val })
+		case "31":
+			err = setFloat(dt, func(val float64) { t.Points[1][2] = val })
+		case "12":
+			err = setFloat(dt, func(val float64) { t.Points[2][0] = val })
+		case "22":
+			err = setFloat(dt, func(val float64) { t.Points[2][1] = val })
+		case "32":
+			err = setFloat(dt, func(val float64) { t.Points[2][2] = val })
+		case "13":
+			err = setFloat(dt, func(val float64) {
+				t.Points[3][0] = val
+				fourth |= 1
+			})
+		case "23":
+			err = setFloat(dt, func(val float64) {
+				t.Points[3][1] = val
+				fourth |= 2
+			})
+		case "33":
+			err = setFloat(dt, func(val float64) {
+				t.Points[3][2] = val
+				fourth |= 4
+			})
+		case "70":
+			err = setInt(dt, func(val int) { t.Flag = val })
+		}
+		if err != nil {
+			return t, err
+		}
+	}
+	if fourth != 7 {
+		for i := 0; i < 3; i++ {
+			t.Points[3][i] = t.Points[2][i]
+		}
+	}
+	return t, nil
 }
 
 // ParseCircle parses CIRCLE entities.
