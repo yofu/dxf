@@ -24,6 +24,16 @@ func setFloat(data [2]string, f func(float64)) error {
 	return nil
 }
 
+// setInt sets an integer value to a variable using given function.
+func setInt(data [2]string, f func(int)) error {
+	val, err := strconv.ParseInt(strings.TrimSpace(data[1]), 10, 64)
+	if err != nil {
+		return fmt.Errorf("code %s: %s", data[0], err.Error())
+	}
+	f(int(val))
+	return nil
+}
+
 // HEADER
 
 // ParseHeader parses HEADER section.
