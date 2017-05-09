@@ -29,9 +29,9 @@ type Text struct {
 	Height         float64      // 40
 	Value          string       // 1
 	Style          *table.Style // 7
-	genflag        int          // 71
-	horizontalflag int          // 72
-	verticalflag   int          // 73
+	GenFlag        int          // 71
+	HorizontalFlag int          // 72
+	VerticalFlag   int          // 73
 }
 
 // IsEntity is for Entity interface.
@@ -48,9 +48,9 @@ func NewText() *Text {
 		Height:         1.0,
 		Value:          "",
 		Style:          table.ST_STANDARD,
-		genflag:        0,
-		horizontalflag: 0,
-		verticalflag:   0,
+		GenFlag:        0,
+		HorizontalFlag: 0,
+		VerticalFlag:   0,
 	}
 	return t
 }
@@ -65,20 +65,20 @@ func (t *Text) Format(f format.Formatter) {
 	f.WriteFloat(40, t.Height)
 	f.WriteString(1, t.Value)
 	f.WriteString(7, t.Style.Name())
-	if t.genflag != 0 {
-		f.WriteInt(71, t.genflag)
+	if t.GenFlag != 0 {
+		f.WriteInt(71, t.GenFlag)
 	}
-	if t.horizontalflag != 0 {
-		f.WriteInt(72, t.horizontalflag)
-		if t.verticalflag != 0 {
+	if t.HorizontalFlag != 0 {
+		f.WriteInt(72, t.HorizontalFlag)
+		if t.VerticalFlag != 0 {
 			for i := 0; i < 3; i++ {
 				f.WriteFloat((i+1)*11, t.Coord1[i])
 			}
 		}
 	}
 	f.WriteString(100, "AcDbText")
-	if t.verticalflag != 0 {
-		f.WriteInt(73, t.verticalflag)
+	if t.VerticalFlag != 0 {
+		f.WriteInt(73, t.VerticalFlag)
 	}
 }
 
@@ -95,10 +95,10 @@ func (t *Text) FormatString(f format.Formatter) string {
 }
 
 func (t *Text) togglegenflag(val int) {
-	if t.genflag&val != 0 {
-		t.genflag &= ^val
+	if t.GenFlag&val != 0 {
+		t.GenFlag &= ^val
 	} else {
-		t.genflag |= val
+		t.GenFlag |= val
 	}
 }
 
@@ -116,41 +116,41 @@ func (t *Text) FlipVertical() {
 func (t *Text) Anchor(pos int) {
 	switch pos {
 	case LEFT_BASE:
-		t.horizontalflag = 0
-		t.verticalflag = 0
+		t.HorizontalFlag = 0
+		t.VerticalFlag = 0
 	case CENTER_BASE:
-		t.horizontalflag = 1
-		t.verticalflag = 0
+		t.HorizontalFlag = 1
+		t.VerticalFlag = 0
 	case RIGHT_BASE:
-		t.horizontalflag = 2
-		t.verticalflag = 0
+		t.HorizontalFlag = 2
+		t.VerticalFlag = 0
 	case LEFT_BOTTOM:
-		t.horizontalflag = 0
-		t.verticalflag = 1
+		t.HorizontalFlag = 0
+		t.VerticalFlag = 1
 	case CENTER_BOTTOM:
-		t.horizontalflag = 1
-		t.verticalflag = 1
+		t.HorizontalFlag = 1
+		t.VerticalFlag = 1
 	case RIGHT_BOTTOM:
-		t.horizontalflag = 2
-		t.verticalflag = 1
+		t.HorizontalFlag = 2
+		t.VerticalFlag = 1
 	case LEFT_CENTER:
-		t.horizontalflag = 0
-		t.verticalflag = 2
+		t.HorizontalFlag = 0
+		t.VerticalFlag = 2
 	case CENTER_CENTER:
-		t.horizontalflag = 1
-		t.verticalflag = 2
+		t.HorizontalFlag = 1
+		t.VerticalFlag = 2
 	case RIGHT_CENTER:
-		t.horizontalflag = 2
-		t.verticalflag = 2
+		t.HorizontalFlag = 2
+		t.VerticalFlag = 2
 	case LEFT_TOP:
-		t.horizontalflag = 0
-		t.verticalflag = 3
+		t.HorizontalFlag = 0
+		t.VerticalFlag = 3
 	case CENTER_TOP:
-		t.horizontalflag = 1
-		t.verticalflag = 3
+		t.HorizontalFlag = 1
+		t.VerticalFlag = 3
 	case RIGHT_TOP:
-		t.horizontalflag = 2
-		t.verticalflag = 3
+		t.HorizontalFlag = 2
+		t.VerticalFlag = 3
 	}
 }
 
