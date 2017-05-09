@@ -552,8 +552,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 	// 	return Parse3DFace, nil
 	// case "LWPOLYLINE":
 	// 	return ParseLwPolyline, nil
-	// case "CIRCLE":
-	// 	return ParseCircle, nil
+	case "CIRCLE":
+		return ParseCircle, nil
 	// case "POLYLINE":
 	// 	return ParsePolyline, nil
 	// case "VERTEX":
@@ -598,6 +598,41 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		}
 	}
 	return l, nil
+}
+
+// ParseCircle parses CIRCLE entities.
+func ParseCircle(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	c := entity.NewCircle()
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		default:
+			continue
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				c.SetLayer(layer)
+			}
+		case "10":
+			err = setFloat(dt, func(val float64) { c.Center[0] = val })
+		case "20":
+			err = setFloat(dt, func(val float64) { c.Center[1] = val })
+		case "30":
+			err = setFloat(dt, func(val float64) { c.Center[2] = val })
+		case "40":
+			err = setFloat(dt, func(val float64) { c.Radius = val })
+		case "210":
+			err = setFloat(dt, func(val float64) { c.Direction[0] = val })
+		case "220":
+			err = setFloat(dt, func(val float64) { c.Direction[1] = val })
+		case "230":
+			err = setFloat(dt, func(val float64) { c.Direction[2] = val })
+		}
+		if err != nil {
+			return c, err
+		}
+	}
+	return c, nil
 }
 
 // ParsePoint parses POINT entities.
