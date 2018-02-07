@@ -27,6 +27,7 @@ type Text struct {
 	Coord1         []float64    // 10, 20, 30
 	Coord2         []float64    // 11, 21, 31
 	Height         float64      // 40
+	Rotation       float64	    // 50
 	Value          string       // 1
 	Style          *table.Style // 7
 	GenFlag        int          // 71
@@ -63,6 +64,7 @@ func (t *Text) Format(f format.Formatter) {
 		f.WriteFloat((i+1)*10, t.Coord1[i])
 	}
 	f.WriteFloat(40, t.Height)
+	f.WriteFloat(50, t.Rotation)
 	f.WriteString(1, t.Value)
 	f.WriteString(7, t.Style.Name())
 	if t.GenFlag != 0 {
