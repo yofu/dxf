@@ -590,6 +590,8 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			if err == nil {
 				l.SetLayer(layer)
 			}
+		case "48":
+			err = setFloat(dt, func(val float64) { l.SetLtscale(val) })
 		case "10":
 			err = setFloat(dt, func(val float64) { l.Start[0] = val })
 		case "20":
@@ -624,6 +626,8 @@ func Parse3DFace(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			if err == nil {
 				t.SetLayer(layer)
 			}
+		case "48":
+			err = setFloat(dt, func(val float64) { t.SetLtscale(val) })
 		case "10":
 			err = setFloat(dt, func(val float64) { t.Points[0][0] = val })
 		case "20":
@@ -687,6 +691,8 @@ func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error
 			if err == nil {
 				lw.SetLayer(layer)
 			}
+		case "48":
+			err = setFloat(dt, func(val float64) { lw.SetLtscale(val) })
 		case "90":
 			err = setInt(dt, func(val int) {
 				lw.Num = val
@@ -747,6 +753,8 @@ func ParseCircle(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			if err == nil {
 				c.SetLayer(layer)
 			}
+		case "48":
+			err = setFloat(dt, func(val float64) { c.SetLtscale(val) })
 		case "10":
 			err = setFloat(dt, func(val float64) { c.Center[0] = val })
 		case "20":
@@ -782,6 +790,8 @@ func ParsePoint(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			if err == nil {
 				p.SetLayer(layer)
 			}
+		case "48":
+			err = setFloat(dt, func(val float64) { p.SetLtscale(val) })
 		case "10":
 			err = setFloat(dt, func(val float64) { p.Coord[0] = val })
 		case "20":
@@ -809,6 +819,8 @@ func ParseText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			if err == nil {
 				t.SetLayer(layer)
 			}
+		case "48":
+			err = setFloat(dt, func(val float64) { t.SetLtscale(val) })
 		case "10":
 			err = setFloat(dt, func(val float64) { t.Coord1[0] = val })
 		case "20":

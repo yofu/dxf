@@ -15,6 +15,7 @@ type Entity interface {
 	SetBlockRecord(handle.Handler)
 	Layer() *table.Layer
 	SetLayer(*table.Layer)
+	SetLtscale(float64)
 	BBox() ([]float64, []float64)
 }
 
@@ -26,6 +27,7 @@ type entity struct {
 	blockRecord handle.Handler // 102 330
 	owner       handle.Handler // 330
 	layer       *table.Layer   // 8
+	ltscale     float64        // 48
 }
 
 // NewEntity creates a new entity.
@@ -36,6 +38,7 @@ func NewEntity(t EntityType) *entity {
 		blockRecord: nil,
 		owner:       nil,
 		layer:       table.LY_0,
+		ltscale:     1.0,
 	}
 	return e
 }
@@ -54,6 +57,9 @@ func (e *entity) Format(f format.Formatter) {
 	}
 	f.WriteString(100, "AcDbEntity")
 	f.WriteString(8, e.layer.Name())
+	if e.ltscale != 1.0 {
+		f.WriteFloat(48, e.ltscale)
+	}
 }
 
 // String outputs data using default formatter.
@@ -97,4 +103,9 @@ func (e *entity) Layer() *table.Layer {
 // SetLayer sets Layer to entity.
 func (e *entity) SetLayer(l *table.Layer) {
 	e.layer = l
+}
+
+// SetLtscale sets Layer to entity.
+func (e *entity) SetLtscale(v float64) {
+	e.ltscale = v
 }
