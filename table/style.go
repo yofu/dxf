@@ -12,19 +12,27 @@ var (
 
 // Style represents STYLE SymbolTable.
 type Style struct {
-	handle      int
-	owner       handle.Handler
-	name        string // 2
-	FontName    string // 3
-	BigFontName string // 4
+	handle          int
+	owner           handle.Handler
+	name            string  // 2
+	FontName        string  // 3
+	BigFontName     string  // 4
+	FixedTextHeight float64 // 40
+	WidthFactor     float64 // 41
+	LastHeightUsed  float64 // 42
+	ObliqueAngle    float64 // 50
 }
 
 // NewStyle create a new Style.
 func NewStyle(name string) *Style {
-	st := new(Style)
-	st.name = name
-	st.FontName = "arial.ttf"
-	return st
+	return &Style{
+		name:            name,
+		FontName:        "arial.ttf",
+		FixedTextHeight: 0.0,
+		WidthFactor:     1.0,
+		LastHeightUsed:  100.0,
+		ObliqueAngle:    0.0,
+	}
 }
 
 // IsSymbolTable is for SymbolTable interface.
@@ -43,11 +51,11 @@ func (st *Style) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbTextStyleTableRecord")
 	f.WriteString(2, st.name)
 	f.WriteInt(70, 0)
-	f.WriteString(40, "0.0")
-	f.WriteString(41, "1.0")
-	f.WriteString(50, "0.0")
+	f.WriteFloat(40, st.FixedTextHeight)
+	f.WriteFloat(41, st.WidthFactor)
+	f.WriteFloat(50, st.ObliqueAngle)
 	f.WriteInt(71, 0)
-	f.WriteString(42, "0.2")
+	f.WriteFloat(42, st.LastHeightUsed)
 	f.WriteString(3, st.FontName)
 	f.WriteString(4, st.BigFontName)
 }

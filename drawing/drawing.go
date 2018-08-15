@@ -297,6 +297,7 @@ func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error
 	t.Value = str
 	t.SetLayer(d.CurrentLayer)
 	t.Style = d.CurrentStyle
+	t.Style.LastHeightUsed = height
 	d.AddEntity(t)
 	return t, nil
 }
