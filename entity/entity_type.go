@@ -14,6 +14,7 @@ const (
 	POINT
 	ARC
 	TEXT
+	SPLINE
 )
 
 // EntityTypeString converts EntityType to string.
@@ -38,6 +39,8 @@ func EntityTypeString(t EntityType) string {
 		return "ARC"
 	case TEXT:
 		return "TEXT"
+	case SPLINE:
+		return "SPLINE"
 	default:
 		return ""
 	}
@@ -65,6 +68,8 @@ func EntityTypeValue(t string) EntityType {
 		return ARC
 	case "TEXT":
 		return TEXT
+	case "SPLINE":
+		return SPLINE
 	default:
 		return -1
 	}
