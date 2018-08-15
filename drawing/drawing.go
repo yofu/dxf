@@ -150,6 +150,38 @@ func (d *Drawing) ChangeLayer(name string) error {
 	return fmt.Errorf("layer %s doesn't exist", name)
 }
 
+// Style returns the named text style if exists.
+// If setcurrent is true, set current style to it.
+func (d *Drawing) Style(name string, setcurrent bool) (*table.Style, error) {
+	if s, exist := d.Styles[name]; exist {
+		if setcurrent {
+			d.CurrentStyle = s
+		}
+		return s, nil
+	}
+	return nil, fmt.Errorf("style %s doesn't exist", name)
+}
+
+// AddStyle adds a new text style.
+// If setcurrent is true, set current style to it.
+func (d *Drawing) AddStyle(name string, fontname, bigfontname string, setcurrent bool) (*table.Style, error) {
+	if s, exist := d.Styles[name]; exist {
+		if setcurrent {
+			d.CurrentStyle = s
+		}
+		return s, fmt.Errorf("style %s already exists", name)
+	}
+	s := table.NewStyle(name)
+	s.FontName = fontname
+	s.BigFontName = bigfontname
+	d.Styles[name] = s
+	d.Sections[TABLES].(table.Tables)[table.STYLE].Add(s)
+	if setcurrent {
+		d.CurrentStyle = s
+	}
+	return s, nil
+}
+
 // LineType returns the named line type if exists.
 func (d *Drawing) LineType(name string) (*table.LineType, error) {
 	lt, err := d.Sections[TABLES].(table.Tables)[table.LTYPE].Contains(name)
