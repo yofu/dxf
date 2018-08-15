@@ -159,6 +159,17 @@ func (d *Drawing) LineType(name string) (*table.LineType, error) {
 	return lt.(*table.LineType), nil
 }
 
+// AddLineType adds a new linetype.
+func (d *Drawing) AddLineType(name string, desc string, ls ...float64) (*table.LineType, error) {
+	lt, _ := d.Sections[TABLES].(table.Tables)[table.LTYPE].Contains(name)
+	if lt != nil {
+		return lt.(*table.LineType), fmt.Errorf("linetype %s already exists", name)
+	}
+	newlt := table.NewLineType(name, desc, ls...)
+	d.Sections[TABLES].(table.Tables)[table.LTYPE].Add(newlt)
+	return newlt, nil
+}
+
 // Entities returns slice of all entities contained in Drawing.
 func (d *Drawing) Entities() entity.Entities {
 	return d.Sections[ENTITIES].(entity.Entities)
