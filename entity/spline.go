@@ -10,7 +10,7 @@ type Spline struct {
 	Normal    []float64   // 210, 220, 230
 	Flag      int         // 70
 	Degree    int         // 71
-	Knots     []float64 // 72, 40
+	Knots     []float64   // 72, 40
 	Controls  [][]float64 // 73, 10, 20, 30
 	Fits      [][]float64 // 74, 11, 21, 31
 	Tolerance []float64   // 42, 43, 44
