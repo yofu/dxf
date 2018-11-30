@@ -6,6 +6,7 @@ package dxf
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -25,15 +26,27 @@ func NewDrawing() *drawing.Drawing {
 	return drawing.New()
 }
 
-// Open opens the named DXF file.
-func Open(filename string) (*drawing.Drawing, error) {
+// Create drawing from file
+func FromFile(fn string) (*drawing.Drawing, error) {
 	var err error
-	f, err := os.Open(filename)
+	f, err := os.Open(fn)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	scanner := bufio.NewScanner(f)
+	return FromReader(f)
+}
+
+// Create drawing from string
+func FromStringData(d string) (*drawing.Drawing, error) {
+	sr := strings.NewReader(d)
+	return FromReader(sr)
+}
+
+// Main logic to create a drawing
+func FromReader(r io.Reader) (*drawing.Drawing, error) {
+	var err error
+	scanner := bufio.NewScanner(r)
 	d := NewDrawing()
 	var code, value string
 	parsers := []func(*drawing.Drawing, int, [][2]string) error{
@@ -102,6 +115,17 @@ func Open(filename string) (*drawing.Drawing, error) {
 		}
 	}
 	return d, nil
+}
+
+// Deprecated in favor of FromFile
+func Open(filename string) (*drawing.Drawing, error) {
+	var err error
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return FromReader(f)
 }
 
 // ColorIndex converts RGB value to corresponding color number.
