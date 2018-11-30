@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	dr, err := dxf.Open("point.dxf")
+	dr, err := dxf.FromFile("point.dxf")
 	if err != nil {
 		log.Fatal(err)
 	}
