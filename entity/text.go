@@ -113,7 +113,7 @@ func (t *Text) FlipHorizontal() {
 	t.togglegenflag(2)
 }
 
-// FlipHorizontal flips Text vertically.
+// FlipVertical flips Text vertically.
 func (t *Text) FlipVertical() {
 	t.togglegenflag(4)
 }
