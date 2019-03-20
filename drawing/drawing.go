@@ -322,7 +322,7 @@ func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, 
 	return g, nil
 }
 
-// AddGroup adds given entities to the named group.
+// AddToGroup adds given entities to the named group.
 // If the named group doesn't exist, returns error.
 func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 	if g, exist := d.Groups[name]; exist {
