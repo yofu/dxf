@@ -2,7 +2,7 @@
 package table
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/gdey/dxf/format"
 )
 
 // Tables represents TABLES section.

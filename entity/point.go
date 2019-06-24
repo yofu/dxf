@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/gdey/dxf/format"
 )
 
 // Point represents POINT Entity.

@@ -2,7 +2,7 @@
 package entity
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/gdey/dxf/format"
 )
 
 // Entities represents ENTITIES section.

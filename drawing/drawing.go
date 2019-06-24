@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yofu/dxf/block"
-	"github.com/yofu/dxf/class"
-	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/entity"
-	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/handle"
-	"github.com/yofu/dxf/header"
-	"github.com/yofu/dxf/object"
-	"github.com/yofu/dxf/table"
+	"github.com/gdey/dxf/block"
+	"github.com/gdey/dxf/class"
+	"github.com/gdey/dxf/color"
+	"github.com/gdey/dxf/entity"
+	"github.com/gdey/dxf/format"
+	"github.com/gdey/dxf/handle"
+	"github.com/gdey/dxf/header"
+	"github.com/gdey/dxf/object"
+	"github.com/gdey/dxf/table"
 )
 
 // Drawing contains DXF drawing data.

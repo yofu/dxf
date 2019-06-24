@@ -1,7 +1,7 @@
 package dxf
 
 import (
-	"github.com/yofu/dxf/geometry"
+	"github.com/gdey/dxf/geometry"
 )
 
 // Extruder represents an entity with code 210, 220, 230 like Circle.

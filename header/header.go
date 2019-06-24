@@ -2,7 +2,7 @@
 package header
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/gdey/dxf/format"
 )
 
 // Header contains information written in HEADER section.

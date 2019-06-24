@@ -6,7 +6,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/yofu/dxf/entity"
+	"github.com/gdey/dxf/entity"
 )
 
 func TestFromStringData(t *testing.T) {

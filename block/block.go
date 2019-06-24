@@ -1,8 +1,8 @@
 package block
 
 import (
-	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/table"
+	"github.com/gdey/dxf/format"
+	"github.com/gdey/dxf/table"
 )
 
 // Block represents each BLOCK.
