@@ -11,6 +11,7 @@ import (
 	"github.com/gdey/dxf/drawing"
 	"github.com/gdey/dxf/entity"
 	"github.com/gdey/dxf/header"
+	"github.com/gdey/dxf/insunit"
 	"github.com/gdey/dxf/table"
 )
 
@@ -81,6 +82,14 @@ func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 			switch name {
 			case "$LTSCALE":
 				err = setFloat(dt, func(val float64) { h.LtScale = val })
+			}
+		case "70":
+			switch name {
+			case "$INSUNITS":
+				err = setInt(dt, func(val int) { h.InsUnit = insunit.Unit(val) })
+			case "$LUNITS":
+				// Need to adjust the value back to the constants
+				err = setInt(dt, func(val int) { h.InsLUnit = insunit.Type(val - 2) })
 			}
 		}
 		if err != nil {

@@ -3,12 +3,15 @@ package header
 
 import (
 	"github.com/gdey/dxf/format"
+	"github.com/gdey/dxf/insunit"
 )
 
 // Header contains information written in HEADER section.
 type Header struct {
 	Version  string
 	InsBase  []float64
+	InsUnit  insunit.Unit
+	InsLUnit insunit.Type
 	ExtMin   []float64
 	ExtMax   []float64
 	LtScale  float64
@@ -36,6 +39,11 @@ func (h *Header) WriteTo(f format.Formatter) {
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, h.InsBase[i])
 	}
+	f.WriteString(9, "$INSUNITS")
+	h.InsUnit.Format(f)
+	f.WriteString(9, "$LUNITS")
+	h.InsLUnit.Format(f)
+
 	f.WriteString(9, "$EXTMIN")
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, h.ExtMin[i])
