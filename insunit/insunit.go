@@ -1,6 +1,8 @@
 package insunit
 
-import "github.com/yofu/dxf/format"
+import (
+	"github.com/yofu/dxf/format"
+)
 
 // Unit is the drawing unit for AutoCAD DesignCenter Blocks
 type Unit uint8
