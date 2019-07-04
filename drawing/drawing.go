@@ -2,8 +2,10 @@
 package drawing
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/yofu/dxf/block"
@@ -30,6 +32,8 @@ type Drawing struct {
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
 	PlotStyle    handle.Handler
+	// savebuff is used internally for the io.Reader options.
+	savebuff *bytes.Buffer
 }
 
 // New creates a new Drawing.
@@ -67,19 +71,13 @@ func New() *Drawing {
 }
 
 func (d *Drawing) saveFile(filename string) error {
-	d.setHandle()
-	d.formatter.Reset()
-	for _, s := range d.Sections {
-		s.WriteTo(d.formatter)
-	}
-	d.formatter.WriteString(0, "EOF")
 	w, err := os.Create(filename)
-	defer w.Close()
 	if err != nil {
 		return err
 	}
-	d.formatter.WriteTo(w)
-	return nil
+	defer w.Close()
+	_, err = d.WriteTo(w)
+	return err
 }
 
 // Save saves the drawing file.
@@ -331,6 +329,59 @@ func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 	return fmt.Errorf("group %s doesn't exist", name)
 }
 
+// WriteTo write the dxf file data to the given writer until
+// there is no more data to write or if an error occurs. The return
+// value n is the number of bytes writer.
+// This method full fills the io.WriterTo interface.
+func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
+	if d == nil {
+		return 0, nil
+	}
+	d.setHandle()
+	d.formatter.Reset()
+	for _, s := range d.Sections {
+		s.WriteTo(d.formatter)
+	}
+	d.formatter.WriteString(0, "EOF")
+	return d.formatter.WriteTo(w)
+}
+
+var _ io.WriterTo = &Drawing{}
+
+// Read implements the standard Read interface: it reads data from a buffer
+// containing the drawing, the buffer in initialized on the first read or
+// a read call after a close.  If the drawing is nil, read returns 0 for n,
+// nil for the error.
+func (d *Drawing) Read(p []byte) (n int, err error) {
+	if d == nil {
+		return 0, nil
+	}
+	if d.savebuff == nil {
+		// We need to initilize our buffer, and write the contents of the
+		// drawing into it.
+		d.savebuff = new(bytes.Buffer)
+		_, err := d.WriteTo(d.savebuff)
+		if err != nil {
+			return 0, err
+		}
+	}
+	return d.savebuff.Read(p)
+}
+
+// Close implements the standard Close interface: it close the buffer used by
+// the read command if one was initilized, and frees the memory held by it. Close
+// will always return nil for the error.
+func (d *Drawing) Close() error {
+	if d != nil && d.savebuff != nil {
+		d.savebuff = nil
+	}
+	return nil
+}
+
+var _ io.ReadCloser = &Drawing{}
+
+// SetExt sets the extents of the drawing based on the entities
+// in the drawing. If the drawing is nil, this function will panic.
 func (d *Drawing) SetExt() {
 	mins := []float64{1e16, 1e16, 1e16}
 	maxs := []float64{-1e16, -1e16, -1e16}
