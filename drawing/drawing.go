@@ -239,6 +239,19 @@ func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
 	return c, nil
 }
 
+// Arc creates a new ARC at (x, y, z) with radius r from start to end.
+func (d *Drawing) Arc(x, y, z, r, start, end float64) (*entity.Arc, error) {
+	c := entity.NewCircle()
+	c.Center = []float64{x, y, z}
+	c.Radius = r
+	c.SetLayer(d.CurrentLayer)
+	a := entity.NewArc(c)
+	a.Angle[0] = start
+	a.Angle[1] = end
+	d.AddEntity(a)
+	return a, nil
+}
+
 // Polyline creates a new POLYLINE with given vertices.
 func (d *Drawing) Polyline(closed bool, vertices ...[]float64) (*entity.Polyline, error) {
 	p := entity.NewPolyline()

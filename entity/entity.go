@@ -109,3 +109,8 @@ func (e *entity) SetLayer(l *table.Layer) {
 func (e *entity) SetLtscale(v float64) {
 	e.ltscale = v
 }
+
+// SetEntityType sets entity type.
+func (e *entity) SetEntityType(t EntityType) {
+	e.Type = t
+}

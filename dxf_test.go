@@ -35,3 +35,15 @@ func TestFromFile(t *testing.T) {
 		}
 	}
 }
+
+func TestArc(t *testing.T) {
+	dr, err := FromFile("testdata/arc.dxf")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, e := range dr.Entities() {
+		if a, ok := e.(*entity.Arc); ok {
+			fmt.Println(a.Angle)
+		}
+	}
+}
