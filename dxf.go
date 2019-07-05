@@ -117,15 +117,9 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 	return d, nil
 }
 
-// Deprecated in favor of FromFile
+// Open is deprecated, please use FromFile
 func Open(filename string) (*drawing.Drawing, error) {
-	var err error
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	return FromReader(f)
+	return FromFile(filename)
 }
 
 // ColorIndex converts RGB value to corresponding color number.
