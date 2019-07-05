@@ -105,7 +105,14 @@ func TestFromStringData(t *testing.T) {
 				return
 			}
 
-			if len(tc.ExpectedEntities) != 0 && !checkEntities(t, tc.ExpectedEntities, d.Entities()) {
+			if tc.ExpectedEntities == nil {
+				// Let's go ahead and log out the entities in the file.
+				// This is useful for build out test cases.
+				t.Logf("Number of entities: %d", d.Entities())
+				for i, e := range d.Entities() {
+					t.Logf("\t%3d:[%[2]T]%[2]v", i, e)
+				}
+			} else if !checkEntities(t, tc.ExpectedEntities, d.Entities()) {
 				return
 			}
 
@@ -122,6 +129,19 @@ func TestFromStringData(t *testing.T) {
 				entity.NewPoint(),
 				entity.NewPoint(100.0, 100.0, 0.0),
 				entity.NewPoint(200.0, 100.0, 0.0),
+			},
+		},
+		{
+			filename: "arc.dxf",
+			ExpectedEntities: entity.Entities{
+				func() entity.Entity {
+					cr := entity.NewCircle()
+					cr.Direction = []float64{0.0, 0.0, 1.0}
+					cr.Radius = 100
+					arc := entity.NewArc(cr)
+					arc.Angle = []float64{0.0, 60.0}
+					return arc
+				}(),
 			},
 		},
 	}
@@ -178,6 +198,19 @@ func TestFromFile(t *testing.T) {
 				entity.NewPoint(),
 				entity.NewPoint(100.0, 100.0, 0.0),
 				entity.NewPoint(100.0, 200.0, 0.0),
+			},
+		},
+		{
+			filename: "arc.dxf",
+			ExpectedEntities: entity.Entities{
+				func() entity.Entity {
+					cr := entity.NewCircle()
+					cr.Direction = []float64{0.0, 0.0, 1.0}
+					cr.Radius = 100
+					arc := entity.NewArc(cr)
+					arc.Angle = []float64{0.0, 60.0}
+					return arc
+				}(),
 			},
 		},
 	}
@@ -271,6 +304,13 @@ func TestNewDrawing(t *testing.T) {
 					SetExtrusion(c, []float64{-1.0 * math.Sin(theta), math.Cos(theta), 0.0})
 					theta += dtheta
 				}
+			},
+		},
+		{
+			filename: "my_arc.dxf",
+			draw: func(d *drawing.Drawing) {
+				// x , y, z, radius, start, end
+				d.Arc(0.0, 0.0, 0.0, 100.0, 0.0, 60.0)
 			},
 		},
 	}
