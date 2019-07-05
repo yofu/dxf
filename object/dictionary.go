@@ -2,6 +2,7 @@ package object
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
@@ -34,9 +35,19 @@ func (d *Dictionary) Format(f format.Formatter) {
 	f.WriteHex(5, d.handle)
 	f.WriteString(100, "AcDbDictionary")
 	f.WriteInt(281, 1)
-	for k, v := range d.item {
+	keys := make([]string, len(d.item))
+	{
+		idx := 0
+		for k := range d.item {
+			keys[idx] = k
+			idx++
+		}
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
 		f.WriteString(3, k)
-		f.WriteHex(350, v.Handle())
+		f.WriteHex(350, d.item[k].Handle())
 	}
 }
 
