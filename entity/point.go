@@ -16,11 +16,23 @@ func (p *Point) IsEntity() bool {
 }
 
 // NewPoint creates a new Point.
-func NewPoint() *Point {
+func NewPoint(coord ...float64) *Point {
 	p := &Point{
 		entity: NewEntity(POINT),
 		Coord:  []float64{0.0, 0.0, 0.0},
 	}
+	ln := len(coord)
+	if ln == 0 {
+		return p
+	}
+	if ln < 3 {
+		for i := ln; i < 3; i++ {
+			coord = append(coord, 0.0)
+		}
+		p.Coord = coord
+		return p
+	}
+	p.Coord = coord[:3]
 	return p
 }
 
