@@ -157,9 +157,9 @@ func (t Type) String() string {
 var str2Type = map[string]Type{
 	"scientific":      Scientific,
 	"decimal":         Decimal,
-	"engineering:":    Engineering,
-	"architectural:":  Architectural,
-	"fractional:":     Fractional,
+	"engineering":     Engineering,
+	"architectural":   Architectural,
+	"fractional":      Fractional,
 	"windows desktop": WindowsDesktop,
 	"windowsdesktop":  WindowsDesktop,
 }
