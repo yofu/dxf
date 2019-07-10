@@ -22,8 +22,8 @@ func New() Objects {
 	return o
 }
 
-// WriteTo writes OBJECTS data to formatter.
-func (os Objects) WriteTo(f format.Formatter) {
+// Format writes OBJECTS data to formatter.
+func (os Objects) Format(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "OBJECTS")
 	for _, o := range os {

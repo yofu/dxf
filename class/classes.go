@@ -35,8 +35,8 @@ func New() Classes {
 	return c
 }
 
-// WriteTo writes CLASSES data to formatter.
-func (cs Classes) WriteTo(f format.Formatter) {
+// Format writes CLASSES data to formatter.
+func (cs Classes) Format(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "CLASSES")
 	for _, c := range cs {

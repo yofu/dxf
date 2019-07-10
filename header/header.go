@@ -29,8 +29,8 @@ func New() *Header {
 	return h
 }
 
-// WriteTo writes HEADER information to formatter.
-func (h *Header) WriteTo(f format.Formatter) {
+// Format writes HEADER information to formatter.
+func (h *Header) Format(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "HEADER")
 	f.WriteString(9, "$ACADVER")

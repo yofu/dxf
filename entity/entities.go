@@ -14,8 +14,8 @@ func New() Entities {
 	return e
 }
 
-// WriteTo writes ENTITIES data to formatter.
-func (es Entities) WriteTo(f format.Formatter) {
+// Format writes ENTITIES data to formatter.
+func (es Entities) Format(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "ENTITIES")
 	for _, e := range es {

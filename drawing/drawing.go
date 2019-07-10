@@ -353,7 +353,7 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	d.setHandle()
 	d.formatter.Reset()
 	for _, s := range d.Sections {
-		s.WriteTo(d.formatter)
+		s.Format(d.formatter)
 	}
 	d.formatter.WriteString(0, "EOF")
 	return d.formatter.WriteTo(w)
