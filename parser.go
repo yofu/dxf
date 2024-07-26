@@ -1,7 +1,6 @@
 package dxf
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -15,11 +14,13 @@ import (
 	"github.com/yofu/dxf/table"
 )
 
+const entityTypeCode = "0"
+
 // setFloat sets a floating point number to a variable using given function.
 func setFloat(data [2]string, f func(float64)) error {
 	val, err := strconv.ParseFloat(strings.TrimSpace(data[1]), 64)
 	if err != nil {
-		return fmt.Errorf("code %s: %s", data[0], err.Error())
+		return fmt.Errorf("code %s: %w", data[0], err)
 	}
 	f(val)
 	return nil
@@ -29,7 +30,7 @@ func setFloat(data [2]string, f func(float64)) error {
 func setInt(data [2]string, f func(int)) error {
 	val, err := strconv.ParseInt(strings.TrimSpace(data[1]), 10, 64)
 	if err != nil {
-		return fmt.Errorf("code %s: %s", data[0], err.Error())
+		return fmt.Errorf("code %s: %w", data[0], err)
 	}
 	f(int(val))
 	return nil
@@ -132,12 +133,12 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 			}
 			ind = int(table.TableTypeValue(strings.ToUpper(dt[1])))
 			if ind < 0 {
-				return fmt.Errorf("line %d: unknown table type: %s", line+2*i, dt[1])
+				return fmt.Errorf("line %d: unknown table type: %s", line+2*i+1, dt[1])
 			}
 			parser = parsers[ind]
 			setparser = false
 		} else {
-			if dt[0] == "0" {
+			if dt[0] == entityTypeCode {
 				switch strings.ToUpper(dt[1]) {
 				case "TABLE":
 					setparser = true
@@ -145,7 +146,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 					if len(tmpdata) > 0 {
 						err := ParseTable(d, tmpdata, ind, parser)
 						if err != nil {
-							return err
+							return fmt.Errorf("line %d: %w", line+2*i-len(tmpdata)*2, err)
 						}
 						tmpdata = make([][2]string, 0)
 					}
@@ -160,9 +161,8 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 	if len(tmpdata) > 0 {
 		err := ParseTable(d, tmpdata, ind, parser)
 		if err != nil {
-			return fmt.Errorf("line %d: %s", line+2*len(data), err.Error())
+			return fmt.Errorf("line %d: %w", line+2*len(data)-len(tmpdata)*2, err)
 		}
-		tmpdata = make([][2]string, 0)
 	}
 	return nil
 }
@@ -203,7 +203,6 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 		if layer, ok := st.(*table.Layer); ok {
 			d.Layers[layer.Name()] = layer
 		}
-		tmpdata = make([][2]string, 0)
 	}
 	return nil
 }
@@ -449,7 +448,7 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	tmpdata := make([][2]string, 0)
 	add := true // skip ENDBLK
 	for i, dt := range data {
-		if dt[0] == "0" {
+		if dt[0] == entityTypeCode {
 			switch strings.ToUpper(dt[1]) {
 			case "BLOCK":
 				add = true
@@ -457,7 +456,7 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 				if len(tmpdata) > 0 {
 					err := ParseBlock(d, tmpdata)
 					if err != nil {
-						return fmt.Errorf("line %d: %s", line+2*i, err.Error())
+						return fmt.Errorf("line %d: %w", line+2*i-len(tmpdata)*2, err)
 					}
 					tmpdata = make([][2]string, 0)
 				}
@@ -476,9 +475,8 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	if len(tmpdata) > 0 {
 		err := ParseBlock(d, tmpdata)
 		if err != nil {
-			return fmt.Errorf("line %d: %s", line+2*len(data), err.Error())
+			return fmt.Errorf("line %d: %w", line+2*len(data)-len(tmpdata)*2, err)
 		}
-		tmpdata = make([][2]string, 0)
 	}
 	return nil
 }
@@ -524,11 +522,11 @@ func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
 	tmpdata := make([][2]string, 0)
 	for i, dt := range data {
-		if dt[0] == "0" {
+		if dt[0] == entityTypeCode {
 			if len(tmpdata) > 0 {
 				e, err := ParseEntity(d, tmpdata)
 				if err != nil {
-					return fmt.Errorf("line %d: %s", line+2*i, err.Error())
+					return fmt.Errorf("line %d: %w", line+2*i-len(tmpdata)*2, err)
 				}
 				d.AddEntity(e)
 				tmpdata = make([][2]string, 0)
@@ -539,10 +537,9 @@ func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
 	if len(tmpdata) > 0 {
 		e, err := ParseEntity(d, tmpdata)
 		if err != nil {
-			return fmt.Errorf("line %d: %s", line+2*len(data), err.Error())
+			return fmt.Errorf("line %d: %w", line+2*len(data)-len(tmpdata)*2, err)
 		}
 		d.AddEntity(e)
-		tmpdata = make([][2]string, 0)
 	}
 	return nil
 }
@@ -552,7 +549,7 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	if len(data) < 1 {
 		return nil, fmt.Errorf("no data")
 	}
-	if data[0][0] != "0" {
+	if data[0][0] != entityTypeCode {
 		return nil, fmt.Errorf("invalid group code: %q", data[0][0])
 	}
 	f, err := ParseEntityFunc(data[0][1])
@@ -584,7 +581,7 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 	case "TEXT":
 		return ParseText, nil
 	default:
-		return nil, errors.New("unknown entity type")
+		return nil, fmt.Errorf("unknown entity type: %s", t)
 	}
 }
 
