@@ -177,6 +177,12 @@ func TestFromFile(t *testing.T) {
 
 	tests := []tcase{
 		{
+			filename: "vertex1.dxf",
+			ExpectedEntities: entity.Entities{
+				entity.NewVertex(1.1, 1.2, 1.3),
+			},
+		},
+		{
 			filename: "point.dxf",
 			ExpectedEntities: entity.Entities{
 				entity.NewPoint(),

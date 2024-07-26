@@ -26,6 +26,10 @@ func NewVertex(x, y, z float64) *Vertex {
 	return v
 }
 
+func NewDefaultVertex() *Vertex {
+	return NewVertex(0, 0, 0)
+}
+
 // Format writes data to formatter.
 func (v *Vertex) Format(f format.Formatter) {
 	v.entity.Format(f)
