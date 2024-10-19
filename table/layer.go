@@ -1,9 +1,9 @@
 package table
 
 import (
-	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/handle"
+	"github.com/scantrust/dxf-golang/color"
+	"github.com/scantrust/dxf-golang/format"
+	"github.com/scantrust/dxf-golang/handle"
 )
 
 // Default layers.
@@ -123,12 +123,13 @@ func (l *Layer) SetPlotStyle(ps handle.Handler) {
 }
 
 // SetFlag sets standard flags.
-//     1  = Layer is frozen; otherwise layer is thawed.
-//     2  = Layer is frozen by default in new viewports.
-//     4  = Layer is locked.
-//     16 = If set, table entry is externally dependent on an xref.
-//     32 = If this bit and bit 16 are both set, the externally dependent xref has been successfully resolved.
-//     64 = If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF files and need not be set by programs that write DXF files.)
+//
+//	1  = Layer is frozen; otherwise layer is thawed.
+//	2  = Layer is frozen by default in new viewports.
+//	4  = Layer is locked.
+//	16 = If set, table entry is externally dependent on an xref.
+//	32 = If this bit and bit 16 are both set, the externally dependent xref has been successfully resolved.
+//	64 = If set, the table entry was referenced by at least one entity in the drawing the last time the drawing was edited. (This flag is for the benefit of AutoCAD commands. It can be ignored by most programs that read DXF files and need not be set by programs that write DXF files.)
 func (l *Layer) SetFlag(val int) {
 	l.flag = val
 }

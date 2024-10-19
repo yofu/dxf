@@ -2,7 +2,7 @@
 package block
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/scantrust/dxf-golang/format"
 )
 
 // Blocks represents BLOCKS section.

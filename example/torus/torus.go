@@ -4,9 +4,9 @@ import (
 	"log"
 	"math"
 
-	"github.com/yofu/dxf"
-	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/table"
+	"github.com/scantrust/dxf-golang"
+	"github.com/scantrust/dxf-golang/color"
+	"github.com/scantrust/dxf-golang/table"
 )
 
 func main() {

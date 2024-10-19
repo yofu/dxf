@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/handle"
+	"github.com/scantrust/dxf-golang/format"
+	"github.com/scantrust/dxf-golang/handle"
 )
 
 // Dictionary represents DICTIONARY Object.

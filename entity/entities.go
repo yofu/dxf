@@ -2,7 +2,7 @@
 package entity
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/scantrust/dxf-golang/format"
 )
 
 // Entities represents ENTITIES section.

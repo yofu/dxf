@@ -1,13 +1,14 @@
 package dxf
 
 import (
-	"github.com/yofu/dxf/geometry"
+	"github.com/scantrust/dxf-golang/geometry"
 )
 
 // Extruder represents an entity with code 210, 220, 230 like Circle.
-//   210: Extrusion direction (optional; default = 0, 0, 1)
-//   X value
-//   220, 230: Y and Z values of extrusion direction (optional)
+//
+//	210: Extrusion direction (optional; default = 0, 0, 1)
+//	X value
+//	220, 230: Y and Z values of extrusion direction (optional)
 type Extruder interface { // 210 220 230
 	CurrentDirection() []float64
 	SetDirection([]float64)

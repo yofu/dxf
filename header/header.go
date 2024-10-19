@@ -2,8 +2,8 @@
 package header
 
 import (
-	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/insunit"
+	"github.com/scantrust/dxf-golang/format"
+	"github.com/scantrust/dxf-golang/insunit"
 )
 
 // Header contains information written in HEADER section.

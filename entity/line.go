@@ -3,7 +3,7 @@ package entity
 import (
 	"math"
 
-	"github.com/yofu/dxf/format"
+	"github.com/scantrust/dxf-golang/format"
 )
 
 // Line represents LINE Entity.

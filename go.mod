@@ -1,3 +1,3 @@
-module github.com/yofu/dxf
+module github.com/scantrust/dxf-golang
 
 go 1.22

@@ -2,7 +2,7 @@
 package object
 
 import (
-	"github.com/yofu/dxf/format"
+	"github.com/scantrust/dxf-golang/format"
 )
 
 // Object is interface for OBJECT.

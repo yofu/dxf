@@ -3,8 +3,8 @@ package table
 import (
 	"math"
 
-	"github.com/yofu/dxf/format"
-	"github.com/yofu/dxf/handle"
+	"github.com/scantrust/dxf-golang/format"
+	"github.com/scantrust/dxf-golang/handle"
 )
 
 // Default LineTypes.
@@ -107,9 +107,10 @@ func (lt *LineType) TotalLength() float64 {
 }
 
 // SetLength sets pattern length (code 49).
-//     positive value: Dash
-//     0.0: Dot
-//     negative value: Space
+//
+//	positive value: Dash
+//	0.0: Dot
+//	negative value: Space
 func (lt *LineType) SetLength(ls []float64) {
 	lt.lengths = ls
 }

@@ -3,7 +3,7 @@ package insunit
 import (
 	"strings"
 
-	"github.com/yofu/dxf/format"
+	"github.com/scantrust/dxf-golang/format"
 )
 
 // Unit is the drawing unit for AutoCAD DesignCenter Blocks

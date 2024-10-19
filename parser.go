@@ -5,13 +5,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/yofu/dxf/block"
-	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/drawing"
-	"github.com/yofu/dxf/entity"
-	"github.com/yofu/dxf/header"
-	"github.com/yofu/dxf/insunit"
-	"github.com/yofu/dxf/table"
+	"github.com/scantrust/dxf-golang/block"
+	"github.com/scantrust/dxf-golang/color"
+	"github.com/scantrust/dxf-golang/drawing"
+	"github.com/scantrust/dxf-golang/entity"
+	"github.com/scantrust/dxf-golang/header"
+	"github.com/scantrust/dxf-golang/insunit"
+	"github.com/scantrust/dxf-golang/table"
 )
 
 const entityTypeCode = "0"

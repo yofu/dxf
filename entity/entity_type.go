@@ -15,6 +15,7 @@ const (
 	ARC
 	TEXT
 	SPLINE
+	SOLID
 )
 
 // EntityTypeString converts EntityType to string.
@@ -41,6 +42,8 @@ func EntityTypeString(t EntityType) string {
 		return "TEXT"
 	case SPLINE:
 		return "SPLINE"
+	case SOLID:
+		return "SOLID"
 	default:
 		return ""
 	}
@@ -70,6 +73,8 @@ func EntityTypeValue(t string) EntityType {
 		return TEXT
 	case "SPLINE":
 		return SPLINE
+	case "SOLID":
+		return SOLID
 	default:
 		return -1
 	}

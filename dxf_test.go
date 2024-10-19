@@ -11,12 +11,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/insunit"
-	"github.com/yofu/dxf/table"
+	"github.com/scantrust/dxf-golang/color"
+	"github.com/scantrust/dxf-golang/insunit"
+	"github.com/scantrust/dxf-golang/table"
 
-	"github.com/yofu/dxf/drawing"
-	"github.com/yofu/dxf/entity"
+	"github.com/scantrust/dxf-golang/drawing"
+	"github.com/scantrust/dxf-golang/entity"
 )
 
 // TOLERANCE is the epsilon value used in comparing floats.
