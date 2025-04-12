@@ -78,17 +78,28 @@ func (s *Spline) FormatString(f format.Formatter) string {
 	return f.Output()
 }
 
-// func (s *Spline) BBox() ([]float64, []float64) {
-// 	mins := make([]float64, 3)
-// 	maxs := make([]float64, 3)
-// 	for i := 0; i < 3; i++ {
-// 		if l.Start[i] <= l.End[i] {
-// 			mins[i] = l.Start[i]
-// 			maxs[i] = l.End[i]
-// 		} else {
-// 			mins[i] = l.End[i]
-// 			maxs[i] = l.Start[i]
-// 		}
-// 	}
-// 	return mins, maxs
-// }
+// BBox calculates the bounding box of the Spline.
+func (s *Spline) BBox() ([]float64, []float64) {
+	mins := make([]float64, 3)
+	maxs := make([]float64, 3)
+
+	// Initialize mins and maxs with the first control point
+	for i := 0; i < 3; i++ {
+		mins[i] = s.Controls[0][i]
+		maxs[i] = s.Controls[0][i]
+	}
+
+	// Iterate through the control points to find the minimum and maximum values
+	for _, p := range s.Controls {
+		for i := 0; i < 3; i++ {
+			if p[i] < mins[i] {
+				mins[i] = p[i]
+			}
+			if p[i] > maxs[i] {
+				maxs[i] = p[i]
+			}
+		}
+	}
+
+	return mins, maxs
+}
