@@ -415,3 +415,12 @@ func (d *Drawing) SetExt() {
 		h.ExtMax[i] = maxs[i]
 	}
 }
+
+func (d *Drawing) Spline(p [][]float64) (*entity.Spline, error) {
+	l := entity.NewSpline()
+	l.SetLayer(d.CurrentLayer)
+	l.Controls = p
+	l.Knots = []float64{0, 0, 0, 0, 1, 1, 1, 1}
+	d.AddEntity(l)
+	return l, nil
+}
