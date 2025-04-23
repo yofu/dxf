@@ -580,6 +580,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParsePoint, nil
 	case "TEXT":
 		return ParseText, nil
+	case "SPLINE":
+		return ParseSpline, nil
 	default:
 		return nil, fmt.Errorf("unknown entity type: %s", t)
 	}
@@ -948,4 +950,66 @@ func ParseText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 // ParseObjects parses OBJECTS section.
 func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	return nil
+}
+
+// ParseSpline parses SPLINE entities.
+func ParseSpline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	s := entity.NewSpline()
+	var err error
+	var controlPoint []float64
+	for _, dt := range data {
+		switch dt[0] {
+		default:
+			continue
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				s.SetLayer(layer)
+			}
+		case "210":
+			err = setFloat(dt, func(val float64) { s.Normal[0] = val })
+		case "220":
+			err = setFloat(dt, func(val float64) { s.Normal[1] = val })
+		case "230":
+			err = setFloat(dt, func(val float64) { s.Normal[2] = val })
+		case "70":
+			err = setInt(dt, func(val int) { s.Flag = val })
+		case "71":
+			err = setInt(dt, func(val int) { s.Degree = val })
+		case "72":
+			// Node values
+		case "73":
+			// Control point coordinates
+		case "74":
+			// Fitting point coordinates
+		case "42":
+			err = setFloat(dt, func(val float64) { s.Tolerance[0] = val })
+		case "43":
+			err = setFloat(dt, func(val float64) { s.Tolerance[1] = val })
+		case "44":
+			err = setFloat(dt, func(val float64) { s.Tolerance[2] = val })
+		case "40":
+			err = setFloat(dt, func(val float64) { s.Knots = append(s.Knots, val) })
+		case "10", "20", "30":
+			err = setFloat(dt, func(val float64) {
+				controlPoint = append(controlPoint, val)
+				if len(controlPoint) == 3 {
+					s.Controls = append(s.Controls, controlPoint)
+					controlPoint = nil
+				}
+			})
+		case "11", "21", "31":
+			err = setFloat(dt, func(val float64) {
+				controlPoint = append(controlPoint, val)
+				if len(controlPoint) == 3 {
+					s.Fits = append(s.Fits, controlPoint)
+					controlPoint = nil
+				}
+			})
+		}
+		if err != nil {
+			return s, err
+		}
+	}
+	return s, nil
 }
