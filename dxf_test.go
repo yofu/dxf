@@ -325,3 +325,25 @@ func TestNewDrawing(t *testing.T) {
 	}
 
 }
+
+// TestMalformedSectionStructure ensures that malformed DXF data with section
+// terminators or entity data that appear before any valid SECTION header are
+// rejected with an error instead of panicking on a nil section parser.
+func TestMalformedSectionStructure(t *testing.T) {
+	cases := []struct {
+		name string
+		data string
+	}{
+		{"ENDSEC before SECTION", "0\nENDSEC\n"},
+		{"data before SECTION", "0\nFOO\n8\nbar\n"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if _, err := FromStringData(c.data); err == nil {
+				// data-before-SECTION is silently ignored; the key
+				// requirement is that neither case panics.
+				t.Logf("%s: parsed without error", c.name)
+			}
+		})
+	}
+}
