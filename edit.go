@@ -187,6 +187,20 @@ func insertAfter(d *drawing.Drawing, e entity.Entity, n ...entity.Entity) bool {
 // Mirrored text is mirrored as in the block reference (upside down).
 // It returns the new entities.
 func Explode(d *drawing.Drawing, ins *entity.Insert) (entity.Entities, error) {
+	out, err := insertEntities(d, ins)
+	if err != nil {
+		return nil, err
+	}
+	if !insertAfter(d, ins, out...) {
+		return nil, errors.New("explode: the block reference is not in the drawing")
+	}
+	d.RemoveEntity(ins)
+	return out, nil
+}
+
+// insertEntities returns the entities of a block reference (see Explode)
+// without changing the drawing.
+func insertEntities(d *drawing.Drawing, ins *entity.Insert) (entity.Entities, error) {
 	b, err := d.Block(ins.BlockName)
 	if err != nil {
 		return nil, err
@@ -248,10 +262,6 @@ func Explode(d *drawing.Drawing, ins *entity.Insert) (entity.Entities, error) {
 		}
 		out = out.Add(attributeText(a))
 	}
-	if !insertAfter(d, ins, out...) {
-		return nil, errors.New("explode: the block reference is not in the drawing")
-	}
-	d.RemoveEntity(ins)
 	return out, nil
 }
 

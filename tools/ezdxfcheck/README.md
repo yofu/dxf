@@ -24,6 +24,10 @@ venv/bin/python tools/ezdxfcheck/compare.py out/ez out/rt
 # 3. transformations (mirror, non-uniform scaling) compared with ezdxf
 go run ./tools/ezdxfcheck transform out/xf
 venv/bin/python tools/ezdxfcheck/transform_check.py out/xf
+
+# 4. paths and extents compared with ezdxf
+go run ./tools/ezdxfcheck paths out/pa
+venv/bin/python tools/ezdxfcheck/path_check.py out/pa
 ```
 
 `transform_check.py` transforms the paths of the original entities by the

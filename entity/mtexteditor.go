@@ -106,10 +106,14 @@ func (e *MTextEditor) TrueColor(r, g, b uint8, text string) *MTextEditor {
 }
 
 // Underline appends underlined text.
-func (e *MTextEditor) Underline(text string) *MTextEditor { return e.Raw(`\L` + escapeMText(text) + `\l`) }
+func (e *MTextEditor) Underline(text string) *MTextEditor {
+	return e.Raw(`\L` + escapeMText(text) + `\l`)
+}
 
 // Overline appends overlined text.
-func (e *MTextEditor) Overline(text string) *MTextEditor { return e.Raw(`\O` + escapeMText(text) + `\o`) }
+func (e *MTextEditor) Overline(text string) *MTextEditor {
+	return e.Raw(`\O` + escapeMText(text) + `\o`)
+}
 
 // Strike appends struck through text.
 func (e *MTextEditor) Strike(text string) *MTextEditor { return e.Raw(`\K` + escapeMText(text) + `\k`) }

@@ -57,10 +57,16 @@ func TestTransformEntities(t *testing.T) {
 	}
 
 	// errors
+	// extrusion -Z: the OCS X axis is -X
 	ext := entity.NewCircle()
 	ext.Direction = []float64{0, 0, -1}
-	if err := d.Move(1, 0, 0, ext); !errors.Is(err, entity.ErrTransform) {
-		t.Errorf("extruded circle: %v", err)
+	if err := d.Move(1, 0, 0, ext); err != nil || !near(ext.Center, []float64{-1, 0, 0}) || ext.Direction[2] != -1 {
+		t.Errorf("extruded circle: %v %v %v", err, ext.Center, ext.Direction)
+	}
+	tilted := entity.NewCircle()
+	tilted.Direction = []float64{1, 0, 0}
+	if err := d.ScaleXYZ(nil, 2, 1, 1, tilted); !errors.Is(err, entity.ErrTransform) {
+		t.Errorf("non-uniform scaling of a tilted circle: %v", err)
 	}
 	if err := d.Move(1, 0, 0, entity.NewUnknown("XLINE")); !errors.Is(err, entity.ErrTransform) {
 		t.Errorf("unknown entity: %v", err)

@@ -7,6 +7,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/object"
+	"github.com/yofu/dxf/path"
 	"github.com/yofu/dxf/table"
 )
 
@@ -175,6 +177,39 @@ func phaseD() *drawing.Drawing {
 	return d
 }
 
+// pathSamples writes entities of all kinds with paths and the flattened
+// points and extents of this package (paths.json) for path_check.py.
+func pathSamples(out string) {
+	d := transformEntities(true)
+	sp := must(d.Spline([][]float64{{0, 10, 0}, {1, 13, 0}, {3, 14, 0}, {5, 11, 0}, {7, 13, 0}, {9, 10, 0}}))
+	sp.Knots = []float64{0, 0, 0, 0, 1, 2, 3, 3, 3, 3}
+	h := must(d.Hatch([]float64{20, 20}, []float64{30, 20}, []float64{30, 25}))
+	h.Boundaries[0].Bulges = []float64{0.5, 0, 0}
+	must(d.PolygonMesh(2, 3, [][]float64{{0, 50, 0}, {1, 50, 0}, {2, 50, 1}, {0, 51, 0}, {1, 51, 1}, {2, 51, 0}}, false, false))
+	must(d.Helix([]float64{40, 0, 0}, 2, 1, 2, true))
+	must(0, d.SaveAs(filepath.Join(out, "paths.dxf")))
+	type rec struct {
+		Type   string        `json:"type"`
+		Points [][][]float64 `json:"points"`
+		Min    []float64     `json:"min"`
+		Max    []float64     `json:"max"`
+	}
+	var recs []rec
+	for _, e := range d.Entities() {
+		r := rec{Type: dxf.TypeName(e)}
+		if ps, err := path.FromEntity(e); err == nil {
+			for _, p := range ps {
+				r.Points = append(r.Points, p.Flatten(0.0001))
+			}
+		}
+		r.Min, r.Max = dxf.Extents(d, entity.Entities{e}, 0.0001)
+		recs = append(recs, r)
+	}
+	b, _ := json.Marshal(recs)
+	must(0, os.WriteFile(filepath.Join(out, "paths.json"), b, 0644))
+	fmt.Println("written in", out)
+}
+
 // cubeSAT is minimal SAT data (the geometry is not checked).
 var cubeSAT = []string{"700 0 1 0", "@33 Open Design Alliance ACIS Builder @12 ACIS 32.0 NT @24 Thu Jan 01 00:00:00 2026 ", "1 9.9999999999999995e-07 1e-10 ", "End-of-ACIS-data"}
 
@@ -222,7 +257,22 @@ func transformEntities(uniform bool) *drawing.Drawing {
 	h.SetPattern("ANSI31", 0, 1)
 	ins := must(d.Insert("B", 2, -3, 0))
 	ins.Rotation = 90
+	// extrusion -Z (OCS X axis is -X)
+	cz := must(d.Circle(-3, 4, 0, 1.2))
+	cz.Direction = []float64{0, 0, -1}
+	az := must(d.Arc(2, 6, 0, 1.5, 20, 160))
+	az.Direction = []float64{0, 0, -1}
+	lz := must(d.LwPolyline(false, []float64{-6, 0}, []float64{-4, 0}, []float64{-4, 2}))
+	lz.Extrusion = []float64{0, 0, -1}
 	if uniform {
+		lb := must(d.LwPolyline(false, []float64{-6, 3}, []float64{-4, 3}, []float64{-4, 5}))
+		lb.Bulges[0] = 0.4
+		lb.Extrusion = []float64{0, 0, -1}
+		// tilted extrusion
+		ct := must(d.Circle(1, 2, 3, 1))
+		ct.Direction = []float64{0.6, 0, 0.8}
+		at := must(d.Arc(1, 2, 3, 2, 0, 120))
+		at.Direction = []float64{0, -0.6, 0.8}
 		lp := must(d.LwPolyline(false, []float64{0, 5}, []float64{3, 5}, []float64{3, 8}))
 		lp.Bulges[0], lp.Bulges[1] = 0.5, -0.3
 		ha := entity.NewHatch()
@@ -456,6 +506,10 @@ func main() {
 	}
 	if len(os.Args) >= 4 && os.Args[1] == "roundtrip" {
 		roundtrip(os.Args[2], os.Args[3])
+		return
+	}
+	if len(os.Args) >= 3 && os.Args[1] == "paths" {
+		pathSamples(os.Args[2])
 		return
 	}
 	if len(os.Args) >= 3 && os.Args[1] == "transform" {

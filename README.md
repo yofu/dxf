@@ -203,6 +203,23 @@ line.SetXDataValues("MYAPP", entity.XString("text"), entity.XReal(1.5)) // XData
 d.RevisionCloud(vertices, 2, true) // segment length, calligraphy
 ```
 
+### Analysis
+
+```go
+ps, _ := path.FromEntity(e)          // lines and cubic Bezier curves (WCS)
+pts := ps[0].Flatten(0.01)           // also Transform, ToLwPolyline, ToSpline, ToHatch
+ves, _ := dxf.VirtualEntities(d, e)  // block references, dimensions, leaders, polylines, ...
+lo, hi := dxf.Extents(d, es, 0.001)  // precise extents (arcs, splines, blocks)
+dxf.SelectWindow(d, es, min, max, false) // also SelectPoint, SelectPolygon
+dxf.Loops(es, 1e-6)                  // closed loops of connected edges
+dxf.GroupBy(es, func(e entity.Entity) string { return e.Layer().Name() })
+dxf.Query(es, `LINE CIRCLE[layer=="WALL" & color!=1]`)
+dxf.BlockReferenceCounts(d)          // also dxf.Purge(d): unused blocks and layers
+```
+
+The `geometry` package has bulge/arc conversions, intersections, polygon
+functions, convex hulls, Bezier curves and B-splines.
+
 ### Layouts and viewports
 
 ```go
@@ -272,8 +289,10 @@ mirrors (negative factors, `entity.MirrorBy`).
   that cannot keep their shape give `entity.ErrNonUniform`: polylines
   with arcs or widths, hatches with arcs, rotated text and block
   references whose axes would not stay orthogonal, dimensions and leaders.
-- Entities with an extrusion direction other than the Z axis cannot be
-  transformed (`entity.ErrTransform`).
+- Entities with an extrusion direction other than +Z are transformed in
+  their object coordinate system (OCS); for directions other than +Z and
+  -Z the scaling must be uniform. `entity.Upright` converts entities with
+  extrusion -Z (made by mirroring in CAD applications) to +Z.
 
 ## Files
 
@@ -371,6 +390,7 @@ or output:
 | `header/`, `class/`, `table/`, `block/`, `entity/`, `object/` | the sections and their records |
 | `format/` | ASCII and binary formatters, DXF versions |
 | `color/`, `codepage/`, `handle/`, `insunit/`, `geometry/` | color numbers and true colors, code pages, handles, units, geometry |
+| `path/` | paths of entities (lines and Bezier curves) |
 | `testdata/` | expected output of the tests |
 | `example/` | examples |
 | `tools/ezdxfcheck/` | validation with ezdxf |

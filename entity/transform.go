@@ -235,6 +235,9 @@ func checkZ(t Transform, e []float64) error {
 // non-uniform scaling (the new entity keeps the properties and the handle
 // of e).
 func TransformEntity(e Entity, t Transform) (Entity, error) {
+	if n := extrusionField(e); n != nil && !zAxis(n) {
+		return transformOCS(e, t, n)
+	}
 	if !t.Conformal() {
 		switch c := e.(type) {
 		case *Arc:
