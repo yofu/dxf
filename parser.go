@@ -812,7 +812,7 @@ func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
 	return nil
 }
 
-// ParseEntityFunc returns a function for parsing acoording to entity type string.
+// ParseEntityFunc returns a function for parsing according to entity type string.
 func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Entity, error), error) {
 	switch strings.ToUpper(strings.TrimSpace(t)) {
 	case "LINE":
@@ -1205,7 +1205,7 @@ func ParseVertex(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		case "30":
 			err = setFloat(dt, func(val float64) { v.Coord[2] = val })
 		case "42":
-			err = setFloat(dt, func(val float64) { v.Buldge = val })
+			err = setFloat(dt, func(val float64) { v.Bulge = val })
 		case "70":
 			err = setInt(dt, func(val int) { v.Flag = val })
 		case "40":

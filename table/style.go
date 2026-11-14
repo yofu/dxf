@@ -5,7 +5,8 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
-// Default Styles.
+// Default Styles. ST_STANDARD is a template: each Drawing has its own
+// "Standard" style in its STYLE table (Drawing.Style("Standard", ...)).
 var (
 	ST_STANDARD = NewStyle("Standard")
 )

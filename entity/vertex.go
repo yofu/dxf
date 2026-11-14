@@ -11,7 +11,7 @@ type Vertex struct {
 	Coord      []float64 // 10, 20, 30
 	StartWidth float64   // 40
 	EndWidth   float64   // 41
-	Buldge     float64   // 42
+	Bulge      float64   // 42
 	Tangent    float64   // 50: curve fit tangent direction (degrees)
 	Indices    []int     // 71, 72, 73, 74: vertex indices of a polyface mesh face (negative: invisible edge)
 }
@@ -49,8 +49,8 @@ func (v *Vertex) Format(f format.Formatter) {
 	if v.EndWidth != 0 {
 		f.WriteFloat(41, v.EndWidth)
 	}
-	if v.Buldge != 0 {
-		f.WriteFloat(42, v.Buldge)
+	if v.Bulge != 0 {
+		f.WriteFloat(42, v.Bulge)
 	}
 	f.WriteInt(70, v.Flag)
 	if v.Tangent != 0 {

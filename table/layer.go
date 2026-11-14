@@ -203,3 +203,14 @@ func (l *Layer) SourceHandle() string {
 func (l *Layer) SetSourceHandle(h string) {
 	l.src = handle.Parse(h)
 }
+
+// LineWeight returns the lineweight of the layer (code 370, 1/100 mm;
+// -3 is DEFAULT).
+func (l *Layer) LineWeight() int {
+	return l.lineWidth
+}
+
+// SetLineWeight sets the lineweight of the layer (see SetLineWidth).
+func (l *Layer) SetLineWeight(w int) int {
+	return l.SetLineWidth(w)
+}

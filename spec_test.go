@@ -135,7 +135,7 @@ func TestPolylineWithVertices(t *testing.T) {
 	if !ok {
 		t.Fatalf("want *entity.Polyline, got %T", es[0])
 	}
-	if len(p.Vertices) != 2 || p.Flag != 1 || p.Vertices[0].Buldge != 1 {
+	if len(p.Vertices) != 2 || p.Flag != 1 || p.Vertices[0].Bulge != 1 {
 		t.Errorf("unexpected polyline: flag %d, %d vertices", p.Flag, len(p.Vertices))
 	}
 	out := writeString(t, d)

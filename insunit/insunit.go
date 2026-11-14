@@ -142,11 +142,11 @@ func (t Type) String() string {
 	case Decimal:
 		return "decimal"
 	case Engineering:
-		return "engineering:"
+		return "engineering"
 	case Architectural:
-		return "architectural:"
+		return "architectural"
 	case Fractional:
-		return "fractional:"
+		return "fractional"
 	case WindowsDesktop:
 		return "windows desktop"
 	default:

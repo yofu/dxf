@@ -1,6 +1,14 @@
-// Package dxf is a DXF(Drawing Exchange Format) library for golang.
-// ACAD2000(AC1015), ASCII format is only supported.
-// http://www.autodesk.com/techpubs/autocad/acad2000/dxf/index.htm
+// Package dxf reads and writes DXF (Drawing Exchange Format) files.
+//
+// Drawings are written in the structure of AutoCAD 2000 (AC1015), as ASCII
+// or binary DXF. Files of AutoCAD R12 and later, ASCII or binary, can be
+// read; data not interpreted by this package is kept when a drawing read
+// is written again. See the README for an overview.
+//
+// The drawing model is in package drawing (sections, tables, blocks,
+// entities and objects), entities in package entity. This package has the
+// readers (FromFile, FromReader, ...) and editing functions that need the
+// reader (Copy, CopyEntities, Explode).
 package dxf
 
 import (
@@ -16,7 +24,9 @@ import (
 	"github.com/yofu/dxf/table"
 )
 
-// Default values.
+// Default values. DefaultLineType is a template: drawings have their own
+// linetypes (Drawing.LineType); layers refer to linetypes by name when
+// written.
 var (
 	DefaultColor    = color.White
 	DefaultLineType = table.LT_CONTINUOUS

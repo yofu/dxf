@@ -61,7 +61,7 @@ func checkKept(t *testing.T, d *drawing.Drawing) {
 	}
 	pl := es[4].(*entity.Polyline)
 	v := pl.Vertices[0]
-	if pl.Elevation != 5 || pl.StartWidth != 0.1 || pl.EndWidth != 0.2 || v.StartWidth != 0.3 || v.EndWidth != 0.4 || v.Buldge != 0.5 || v.Tangent != 45 {
+	if pl.Elevation != 5 || pl.StartWidth != 0.1 || pl.EndWidth != 0.2 || v.StartWidth != 0.3 || v.EndWidth != 0.4 || v.Bulge != 0.5 || v.Tangent != 45 {
 		t.Errorf("polyline: %+v vertex %+v", pl, v)
 	}
 	mesh := es[5].(*entity.Polyline)

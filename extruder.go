@@ -16,7 +16,7 @@ type Extruder interface { // 210 220 230
 	SetCoord([]float64)
 }
 
-// SetExtrusion sets new coord acoording to given direction.
+// SetExtrusion sets new coord according to given direction.
 func SetExtrusion(e Extruder, d []float64) {
 	dx, dy, err := geometry.ArbitraryAxis(d)
 	if err != nil {

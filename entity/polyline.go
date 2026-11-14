@@ -165,7 +165,7 @@ func (p Polyline) Bulge(index int) ([]float64, float64) {
 		return nil, 0
 	}
 
-	return bulge(p.Vertices[index].Buldge, p.Vertices[index].Coord, p.Vertices[index+1].Coord)
+	return bulge(p.Vertices[index].Bulge, p.Vertices[index].Coord, p.Vertices[index+1].Coord)
 }
 
 // SetEndSourceHandle sets the handle of SEQEND in the file it was read from.

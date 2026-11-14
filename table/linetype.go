@@ -7,7 +7,9 @@ import (
 	"github.com/yofu/dxf/handle"
 )
 
-// Default LineTypes.
+// Default LineTypes. They are templates: each Drawing has its own copies
+// in its LTYPE table (use Drawing.LineType), so changes to these variables
+// are not reflected in drawings.
 var (
 	LT_CONTINUOUS = NewLineType("Continuous", "Solid Line")
 	LT_BYLAYER    = NewLineType("ByLayer", "")
