@@ -648,6 +648,12 @@ func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
 				lt = table.NewLineType(name, "")
 			}
 			lp.SetLineType(lt)
+		case "67":
+			if sp, ok := e.(entity.SpaceSelector); ok {
+				if err := setInt(dt, func(val int) { sp.SetPaperSpace(val == 1) }); err != nil {
+					return err
+				}
+			}
 		case "39":
 			if th, ok := e.(entity.Thick); ok {
 				if err := setFloat(dt, func(val float64) { th.SetThickness(val) }); err != nil {
@@ -705,6 +711,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseAttdef, nil
 	case "ATTRIB":
 		return ParseAttrib, nil
+	case "VIEWPORT":
+		return ParseViewportEntity, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}

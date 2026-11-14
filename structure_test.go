@@ -202,6 +202,9 @@ func checkStructure(t *testing.T, d *drawing.Drawing) {
 		switch r.section {
 		case "ENTITIES":
 			want = records["*MODEL_SPACE"].handle()
+			if ps, _ := r.get(67); ps == "1" {
+				want = records["*PAPER_SPACE"].handle()
+			}
 		case "BLOCKS":
 			want = records[currentBlock].handle()
 		default:

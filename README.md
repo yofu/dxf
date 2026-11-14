@@ -119,6 +119,17 @@ dim.Text = "<> mm"            // "<>" is replaced by the measurement
 d.RegenerateDimension(dim)    // after changing a dimension
 ```
 
+### Paper space and viewports
+
+```go
+d.PaperSpace() // following entities are created in paper space (Layout1)
+d.LwPolyline(true, []float64{10, 10}, []float64{410, 10}, []float64{410, 287}, []float64{10, 287})
+// a viewport at (210, 148.5) of 380 x 250 on paper, showing model space
+// around (5000, 2500) with 6000 units in its height
+d.Viewport([]float64{210, 148.5, 0}, 380, 250, []float64{5000, 2500}, 6000)
+d.ModelSpace()
+```
+
 ### Multiline text (MTEXT)
 
 ```go

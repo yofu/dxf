@@ -67,6 +67,7 @@ type entity struct {
 	blockRecord handle.Handler  // 102 330
 	owner       handle.Handler  // 330
 	layer       *table.Layer    // 8
+	paperSpace  bool            // 67: entity is in paper space
 	lineType    *table.LineType // 6: nil = BYLAYER
 	color       int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
 	lineWeight  int             // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
@@ -101,6 +102,9 @@ func (e *entity) Format(f format.Formatter) {
 		f.WriteHex(330, e.owner.Handle())
 	}
 	f.WriteString(100, "AcDbEntity")
+	if e.paperSpace {
+		f.WriteInt(67, 1)
+	}
 	f.WriteString(8, e.layer.Name())
 	// 62 is omitted if BYLAYER (DXF reference, common group codes for entities)
 	// 6, 62 and 370 are omitted if BYLAYER
@@ -305,3 +309,21 @@ func (p *Polyline) SetThickness(t float64) { p.Thickness = t }
 
 // SetThickness sets the thickness.
 func (s *Solid) SetThickness(t float64) { s.Thickness = t }
+
+// SpaceSelector is implemented by all entities in this package.
+// Entities in the ENTITIES section with InPaperSpace belong to the paper
+// space layout (*Paper_Space, code 67 = 1).
+type SpaceSelector interface {
+	InPaperSpace() bool
+	SetPaperSpace(bool)
+}
+
+// InPaperSpace reports whether the entity is in paper space (code 67).
+func (e *entity) InPaperSpace() bool {
+	return e.paperSpace
+}
+
+// SetPaperSpace sets whether the entity is in paper space (code 67).
+func (e *entity) SetPaperSpace(p bool) {
+	e.paperSpace = p
+}

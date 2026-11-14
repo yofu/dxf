@@ -40,6 +40,7 @@ type Drawing struct {
 	savebuff *bytes.Buffer
 
 	currentBlock *block.Block // block being defined between BeginBlock and EndBlock
+	paperSpace   bool         // new entities are created in paper space
 }
 
 // New creates a new Drawing.
@@ -153,9 +154,14 @@ func (d *Drawing) linkOwners() {
 		}
 	}
 	model := record("*Model_Space")
+	paper := record("*Paper_Space")
 	for _, e := range d.Entities() {
 		if o, ok := e.(owned); ok {
-			o.SetOwner(model)
+			if sp, ok := e.(entity.SpaceSelector); ok && sp.InPaperSpace() {
+				o.SetOwner(paper)
+			} else {
+				o.SetOwner(model)
+			}
 		}
 	}
 }
@@ -646,6 +652,9 @@ func (d *Drawing) SetExt() {
 	mins := []float64{1e16, 1e16, 1e16}
 	maxs := []float64{-1e16, -1e16, -1e16}
 	for _, en := range d.Entities() {
+		if sp, ok := en.(entity.SpaceSelector); ok && sp.InPaperSpace() {
+			continue // $EXTMIN/$EXTMAX are model space extents
+		}
 		tmpmins, tmpmaxs := d.bbox(en, 0)
 		for i := 0; i < 3; i++ {
 			if tmpmins[i] < mins[i] {
@@ -828,6 +837,9 @@ func (d *Drawing) Hatch(vertices ...[]float64) (*entity.Hatch, error) {
 // header ($CECOLOR, $CELTYPE, $CELWEIGHT, $CELTSCALE) to a new entity.
 func (d *Drawing) applyCurrent(e entity.Entity) {
 	e.SetLayer(d.CurrentLayer)
+	if sp, ok := e.(entity.SpaceSelector); ok && d.currentBlock == nil {
+		sp.SetPaperSpace(d.paperSpace)
+	}
 	h := d.Header()
 	if h.CEColor != entity.ColorByLayer && h.CEColor >= 0 && h.CEColor <= 256 {
 		entity.SetColorIndex(e, h.CEColor)
