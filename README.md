@@ -179,6 +179,21 @@ For files without `$DWGCODEPAGE`, the code page can be given:
 d, err := dxf.FromFileWithCodePage("sjis.dxf", codepage.Japanese)
 ```
 
+### Editing
+
+```go
+walls := d.EntitiesOnLayer("WALL")                 // or d.Query(func(e entity.Entity) bool { ... })
+d.Move(100, 0, 0, walls...)                        // also Rotate(base, angle, ...), Scale(base, factor, ...)
+d.RemoveEntity(walls[0])
+copies, _ := dxf.CopyEntities(d, entity.Rotate([]float64{0, 0, 0}, 90), walls...)
+exploded, _ := dxf.Explode(d, insert)              // block reference -> entities
+d.RenameLayer("WALL", "A-WALL")                    // also RemoveLayer, RenameBlock, RemoveBlock
+```
+
+Transformations are moves, rotations about the Z axis and uniform scaling
+(`entity.Transform`); entities with an extrusion direction other than the
+Z axis cannot be transformed.
+
 ### Binary DXF
 
 ```go

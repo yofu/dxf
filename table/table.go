@@ -96,3 +96,16 @@ func (t *Table) Contains(name string) (SymbolTable, error) {
 func (t *Table) Entries() []SymbolTable {
 	return t.tables
 }
+
+// Remove removes the entry named name (case-insensitive).
+// It reports whether the entry existed.
+func (t *Table) Remove(name string) bool {
+	for i, st := range t.tables {
+		if strings.EqualFold(st.Name(), name) {
+			t.tables = append(t.tables[:i], t.tables[i+1:]...)
+			t.size--
+			return true
+		}
+	}
+	return false
+}

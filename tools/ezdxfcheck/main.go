@@ -112,6 +112,27 @@ func must2[A, B any](a A, b B, err error) (A, B) {
 	return a, b
 }
 
+// edited uses the editing API: explode, copy, transform, remove, rename.
+func edited() *drawing.Drawing {
+	d := blocks()
+	ins := d.Entities()[0].(*entity.Insert)
+	if _, err := dxf.Explode(d, ins); err != nil {
+		panic(err)
+	}
+	must(d.AddLayer("A", color.Red, dxf.DefaultLineType, true))
+	l := must(d.Line(0, 0, 0, 10, 0, 0))
+	c := must(d.Circle(5, 5, 0, 2))
+	h := must(d.Hatch([]float64{0, 0}, []float64{10, 0}, []float64{10, 10}))
+	must(0, h.SetPattern("ANSI37", 0, 1))
+	dim := must(d.LinearDimension([]float64{0, 0, 0}, []float64{10, 0, 0}, []float64{5, -5, 0}, 0))
+	must(dxf.CopyEntities(d, entity.Rotate([]float64{0, 0, 0}, 30), l, c, h, dim))
+	must(0, d.Scale([]float64{0, 0, 0}, 2, c, dim))
+	must(0, d.RenameLayer("A", "B"))
+	d.RemoveEntity(l)
+	must(0, d.RenameBlock("TITLE", "TITLE2"))
+	return d
+}
+
 func layouts() *drawing.Drawing {
 	d := dxf.NewDrawing()
 	must(d.Line(0, 0, 0, 1000, 500, 0))
@@ -130,7 +151,7 @@ func layouts() *drawing.Drawing {
 
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
-		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts,
+		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited,
 	}
 	for name, f := range files {
 		d := f()

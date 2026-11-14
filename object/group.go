@@ -114,3 +114,21 @@ func (g *Group) SetSelectable(s bool) {
 func (g *Group) Entities() []entity.Entity {
 	return g.entities
 }
+
+// RemoveEntity removes entities from the group.
+func (g *Group) RemoveEntity(es ...entity.Entity) {
+	kept := make([]entity.Entity, 0, len(g.entities))
+	for _, e := range g.entities {
+		remove := false
+		for _, r := range es {
+			if e == r {
+				remove = true
+				break
+			}
+		}
+		if !remove {
+			kept = append(kept, e)
+		}
+	}
+	g.entities = kept
+}

@@ -187,3 +187,8 @@ func (l *Layer) Lock() {
 func (l *Layer) UnLock() {
 	l.flag &= ^4
 }
+
+// SetName renames the layer. Use Drawing.RenameLayer for a layer of a drawing.
+func (l *Layer) SetName(name string) {
+	l.name = name
+}

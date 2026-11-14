@@ -133,8 +133,14 @@ func (d *Drawing) RegenerateDimension(dim *entity.Dimension) error {
 
 // anonymousDimensionBlock creates a new anonymous block "*Dn".
 func (d *Drawing) anonymousDimensionBlock() (*block.Block, error) {
+	return d.AddAnonymousBlock("*D")
+}
+
+// AddAnonymousBlock creates a new anonymous block named prefix + n
+// (e.g. "*D1" for dimensions, "*U1"), with the first unused n.
+func (d *Drawing) AddAnonymousBlock(prefix string) (*block.Block, error) {
 	for n := 1; ; n++ {
-		name := "*D" + strconv.Itoa(n)
+		name := prefix + strconv.Itoa(n)
 		if _, err := d.Block(name); err == nil {
 			continue
 		}
