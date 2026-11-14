@@ -8,6 +8,7 @@ import (
 // Viewport represents VPORT SymbolTable.
 type Viewport struct {
 	handle        int
+	src           int // handle in the file it was read from (kept when writing)
 	owner         handle.Handler
 	name          string // 2
 	LowerLeft     []float64
@@ -118,8 +119,7 @@ func (v *Viewport) Handle() int {
 
 // SetHandle sets a handle.
 func (v *Viewport) SetHandle(h *int) {
-	v.handle = *h
-	(*h)++
+	v.handle = handle.Next(v.src, h)
 }
 
 // SetOwner sets an owner.
@@ -135,4 +135,15 @@ func (v *Viewport) Name() string {
 // SetName sets a name to VPORT (code 2).
 func (v *Viewport) SetName(name string) {
 	v.name = name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (v *Viewport) SourceHandle() string {
+	return handle.Format(v.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (v *Viewport) SetSourceHandle(h string) {
+	v.src = handle.Parse(h)
 }

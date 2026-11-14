@@ -208,16 +208,18 @@ the code page of `$DWGCODEPAGE` as in ASCII DXF. Binary DXF of R12
 
 ### Reading and writing back
 
-When a file is read and written again, data this package does not
-interpret is kept: unknown header variables (`Header().Extra`), entities of
-unsupported types (`entity.Unknown`), extended data (`XData()` /
-`SetXData()`, APPIDs are registered when writing) and other values of
-LAYER, VIEW, UCS, DIMSTYLE and BLOCK_RECORD entries (`Extra`).
-Groups (`Groups`) and layouts (`Layouts()`) are read from the OBJECTS section.
+When a file is read and written again, the handles of the objects read
+are kept (new objects get handles above them), so references by handle stay
+valid. Data this package does not interpret is kept as well: unknown header
+variables (`Header().Extra`), entities of unsupported types
+(`entity.Unknown`, e.g. IMAGE, WIPEOUT, MLINE), extended data (`XData()` /
+`SetXData()`), extension dictionaries and reactors (102 groups), other
+values of table entries (`Extra`), the CLASSES section and the objects of
+the OBJECTS section (`RawObjects()`). Groups (`Groups`) and layouts
+(`Layouts()`) are read from the OBJECTS section.
 
-Not kept: handles (renumbered when writing) and references by handle,
-unsupported entities referring to other objects (e.g. IMAGE), the other
-objects of the OBJECTS section and the CLASSES section.
+Not kept: the plot settings of layouts and other values of LAYOUT objects
+(they are written by this package).
 
 ## Installation
 

@@ -19,6 +19,7 @@ var (
 // LineType represents LTYPE SymbolTable.
 type LineType struct {
 	handle      int
+	src         int // handle in the file it was read from (kept when writing)
 	owner       handle.Handler
 	name        string // 2
 	Description string // 3
@@ -83,8 +84,7 @@ func (lt *LineType) Handle() int {
 
 // SetHandle sets a handle.
 func (lt *LineType) SetHandle(v *int) {
-	lt.handle = *v
-	(*v)++
+	lt.handle = handle.Next(lt.src, v)
 }
 
 // SetOwner sets an owner.
@@ -120,4 +120,15 @@ func (lt *LineType) clone() *LineType {
 	ls := make([]float64, len(lt.lengths))
 	copy(ls, lt.lengths)
 	return NewLineType(lt.name, lt.Description, ls...)
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (lt *LineType) SourceHandle() string {
+	return handle.Format(lt.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (lt *LineType) SetSourceHandle(h string) {
+	lt.src = handle.Parse(h)
 }

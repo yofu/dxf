@@ -12,6 +12,7 @@ import (
 	"github.com/yofu/dxf/codepage"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
+	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
 )
 
@@ -98,7 +99,10 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 		}
 		return codepage.Unescape(raw)
 	}
+	maxHandle := 0
 	finish := func() {
+		// new objects get handles above the handles of the file
+		d.SetHandleBase(maxHandle + 1)
 		h := d.Header()
 		if !declared && codePage != "" {
 			h.CodePage = codePage
@@ -127,6 +131,11 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 			continue
 		}
 		value = decode(raw)
+		if (code == "5" || code == "105") && section != "HEADER" { // not $HANDSEED
+			if h := handle.Parse(value); h > maxHandle {
+				maxHandle = h
+			}
+		}
 		if section == "HEADER" {
 			switch code {
 			case "9":

@@ -8,6 +8,7 @@ import (
 // AcDbPlaceHolder represents ACDBPLACEHOLDER Object.
 type AcDbPlaceHolder struct {
 	handle int
+	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 }
 
@@ -56,6 +57,16 @@ func (p *AcDbPlaceHolder) Handle() int {
 
 // SetHandle sets a handle.
 func (p *AcDbPlaceHolder) SetHandle(v *int) {
-	p.handle = *v
-	(*v)++
+	p.handle = handle.Next(p.src, v)
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (p *AcDbPlaceHolder) SourceHandle() string {
+	return handle.Format(p.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (p *AcDbPlaceHolder) SetSourceHandle(h string) {
+	p.src = handle.Parse(h)
 }

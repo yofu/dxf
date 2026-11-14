@@ -17,6 +17,7 @@ var (
 // Layer represents LAYER SymbolTable.
 type Layer struct {
 	handle    int
+	src       int // handle in the file it was read from (kept when writing)
 	owner     handle.Handler
 	name      string
 	flag      int
@@ -108,8 +109,7 @@ func (l *Layer) Handle() int {
 
 // SetHandle sets a handle.
 func (l *Layer) SetHandle(v *int) {
-	l.handle = *v
-	(*v)++
+	l.handle = handle.Next(l.src, v)
 }
 
 // SetOwner sets an owner.
@@ -191,4 +191,15 @@ func (l *Layer) UnLock() {
 // SetName renames the layer. Use Drawing.RenameLayer for a layer of a drawing.
 func (l *Layer) SetName(name string) {
 	l.name = name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (l *Layer) SourceHandle() string {
+	return handle.Format(l.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (l *Layer) SetSourceHandle(h string) {
+	l.src = handle.Parse(h)
 }

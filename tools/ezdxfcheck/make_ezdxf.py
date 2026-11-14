@@ -56,6 +56,15 @@ psp.add_viewport(center=(100, 100), size=(150, 100), view_center_point=(5, 5), v
 lay2 = doc.layouts.new("Second")
 lay2.add_line((0, 0), (100, 100))
 lay2.add_viewport(center=(100, 100), size=(100, 100), view_center_point=(0, 0), view_height=30)
+# objects referred to by handle: image, wipeout, mline, extension dictionary
+image_def = doc.add_image_def(filename="plan.png", size_in_pixel=(640, 480))
+msp.add_image(insert=(0, 0), size_in_units=(6.4, 4.8), image_def=image_def, rotation=0)
+msp.add_wipeout([(0, 0), (5, 0), (5, 5)])
+msp.add_mline([(0, 0), (10, 0), (10, 10)])
+xl = msp.add_line((0, 0), (1, 1))
+xdict = xl.new_extension_dict()
+xrec = xdict.add_xrecord("MYDATA")
+xrec.extend([(1, "extension data"), (40, 1.5)])
 doc.saveas(os.path.join(out, "ez_r2000.dxf"))
 doc.saveas(os.path.join(out, "ez_r2000_bin.dxf"), fmt="bin")
 

@@ -44,6 +44,8 @@ func ParseViewportEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, e
 				}
 			case "1":
 				v.PlotStyle = dt[1]
+			case "331", "340", "345", "346":
+				v.References = append(v.References, [2]string{dt[0], dt[1]})
 			}
 		}
 		if err != nil {

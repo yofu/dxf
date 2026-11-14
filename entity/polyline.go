@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/yofu/dxf/format"
+	"github.com/yofu/dxf/handle"
 )
 
 // Polyline represents POLYLINE Entity.
@@ -21,6 +22,7 @@ type Polyline struct {
 	size       int
 	Vertices   []*Vertex
 	endhandle  int
+	endSrc     int // handle of SEQEND in the file read from
 }
 
 // IsEntity is for Entity interface.
@@ -133,8 +135,7 @@ func (p *Polyline) SetHandle(h *int) {
 	for _, v := range p.Vertices {
 		v.SetHandle(h)
 	}
-	p.endhandle = *h
-	(*h)++
+	p.endhandle = handle.Next(p.endSrc, h)
 }
 
 func (p *Polyline) BBox() ([]float64, []float64) {
@@ -165,4 +166,9 @@ func (p Polyline) Bulge(index int) ([]float64, float64) {
 	}
 
 	return bulge(p.Vertices[index].Buldge, p.Vertices[index].Coord, p.Vertices[index+1].Coord)
+}
+
+// SetEndSourceHandle sets the handle of SEQEND in the file it was read from.
+func (p *Polyline) SetEndSourceHandle(h string) {
+	p.endSrc = handle.Parse(h)
 }

@@ -8,12 +8,10 @@ import (
 // BlockRecord represents BLOCK_RECORD SymbolTable.
 type BlockRecord struct {
 	handle int
+	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 	name   string
 	layout handle.Handler // 340: LAYOUT object (model space and paper space)
-
-	// SourceHandle is the handle (code 5) in the file the record was read from.
-	SourceHandle string
 
 	InsUnits   int  // 70: insertion units
 	Explodable bool // 280
@@ -74,8 +72,7 @@ func (b *BlockRecord) Handle() int {
 
 // SetHandle sets a handle.
 func (b *BlockRecord) SetHandle(v *int) {
-	b.handle = *v
-	(*v)++
+	b.handle = handle.Next(b.src, v)
 }
 
 // SetOwner sets an owner.
@@ -101,4 +98,15 @@ func (b *BlockRecord) SetLayout(l handle.Handler) {
 // SetName sets the name of the block record.
 func (b *BlockRecord) SetName(name string) {
 	b.name = name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (b *BlockRecord) SourceHandle() string {
+	return handle.Format(b.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (b *BlockRecord) SetSourceHandle(h string) {
+	b.src = handle.Parse(h)
 }

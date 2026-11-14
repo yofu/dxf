@@ -8,6 +8,7 @@ import (
 // UCS represents UCS SymbolTable.
 type Ucs struct {
 	handle int
+	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 	name   string // 2
 	// Extra holds group codes read from a file that are not interpreted by
@@ -59,8 +60,7 @@ func (u *Ucs) Handle() int {
 
 // SetHandle sets a handle.
 func (u *Ucs) SetHandle(h *int) {
-	u.handle = *h
-	(*h)++
+	u.handle = handle.Next(u.src, h)
 }
 
 // SetOwner sets an owner.
@@ -71,4 +71,15 @@ func (u *Ucs) SetOwner(h handle.Handler) {
 // Name returns a name of UCS (code 2).
 func (u *Ucs) Name() string {
 	return u.name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (u *Ucs) SourceHandle() string {
+	return handle.Format(u.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (u *Ucs) SetSourceHandle(h string) {
+	u.src = handle.Parse(h)
 }

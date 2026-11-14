@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/yofu/dxf/block"
+	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
@@ -40,8 +41,20 @@ func setInt(data [2]string, f func(int)) error {
 
 // CLASSES
 
-// ParseClasses parses CLASSES section.
+// ParseClasses parses CLASSES section. The classes are kept as read: they
+// define the types of objects and entities kept as read (e.g. IMAGEDEF).
 func ParseClasses(d *drawing.Drawing, line int, data [][2]string) error {
+	var cs class.Classes
+	for _, dt := range data {
+		if dt[0] == "0" {
+			cs = append(cs, &class.Class{})
+			continue
+		}
+		if len(cs) > 0 {
+			cs[len(cs)-1].Data = append(cs[len(cs)-1].Data, dt)
+		}
+	}
+	d.Sections[drawing.CLASSES] = cs
 	return nil
 }
 
@@ -119,6 +132,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 				if err != nil {
 					return err
 				}
+				setSourceHandle(st, tmpdata)
 				t.Add(st)
 				register(d, st)
 				tmpdata = make([][2]string, 0)
@@ -127,6 +141,8 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 		default:
 			if add {
 				tmpdata = append(tmpdata, dt)
+			} else if dt[0] == "5" { // handle of the TABLE
+				t.SetSourceHandle(dt[1])
 			}
 		}
 	}
@@ -135,10 +151,25 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 		if err != nil {
 			return err
 		}
+		setSourceHandle(st, tmpdata)
 		t.Add(st)
 		register(d, st)
 	}
 	return nil
+}
+
+// setSourceHandle keeps the handle (5, or 105 for DIMSTYLE) of an object read from a file.
+func setSourceHandle(o interface{}, data [][2]string) {
+	sh, ok := o.(interface{ SetSourceHandle(string) })
+	if !ok {
+		return
+	}
+	for _, code := range []string{"5", "105"} {
+		if h, ok := value(data, code); ok {
+			sh.SetSourceHandle(h)
+			return
+		}
+	}
 }
 
 // register adds layers and styles read from TABLES to the drawing's lookup maps.
@@ -336,7 +367,7 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	l.SetFlag(flag)
 	l.SetLineWidth(lw)
 	l.SetPlotStyle(d.PlotStyle)
-	l.Extra = rawExtra(data, codes("2", "70", "62", "6", "370"), false)
+	l.Extra = rawExtra(data, codes("2", "70", "62", "6", "370", "390"), false)
 	return l, nil
 }
 
@@ -436,10 +467,7 @@ func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, 
 		}
 	}
 	b.SetName(name)
-	if h, ok := value(data, "5"); ok {
-		b.SourceHandle = strings.TrimSpace(h)
-	}
-	b.Extra = rawExtra(data, codes("2", "70", "280", "281"), false)
+	b.Extra = rawExtra(data, codes("2", "70", "280", "281", "340"), false)
 	return b, nil
 }
 
@@ -449,8 +477,13 @@ func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, 
 func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	tmpdata := make([][2]string, 0)
 	start := 0
-	add := false // skip ENDBLK and anything outside BLOCK ... ENDBLK
+	add := false           // skip ENDBLK and anything outside BLOCK ... ENDBLK
+	var ended *block.Block // block whose ENDBLK is being read
 	for i, dt := range data {
+		if !add && ended != nil && dt[0] == "5" {
+			ended.SetEndSourceHandle(dt[1])
+			ended = nil
+		}
 		if dt[0] == entityTypeCode {
 			switch strings.ToUpper(dt[1]) {
 			case "BLOCK":
@@ -459,9 +492,13 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 				tmpdata = make([][2]string, 0)
 				continue
 			case "ENDBLK":
+				ended = nil
 				if add {
 					if err := ParseBlock(d, tmpdata); err != nil {
 						return fmt.Errorf("line %d: %w", line+2*start, err)
+					}
+					if name, ok := value(tmpdata, "2"); ok {
+						ended, _ = d.Block(blockName(name))
 					}
 				}
 				tmpdata = make([][2]string, 0)
@@ -479,6 +516,18 @@ func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 		}
 	}
 	return nil
+}
+
+// blockName converts the R12 names of the model space and paper space
+// blocks ($MODEL_SPACE, $PAPER_SPACE).
+func blockName(name string) string {
+	switch strings.ToUpper(strings.TrimSpace(name)) {
+	case "$MODEL_SPACE":
+		return "*Model_Space"
+	case "$PAPER_SPACE":
+		return "*Paper_Space"
+	}
+	return name
 }
 
 // ParseBlock parses each BLOCK, which starts with "0\nBLOCK\n" and ends with "0\nENDBLK\n".
@@ -499,17 +548,11 @@ func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 			break
 		}
 	}
+	setSourceHandle(b, header)
 	for _, dt := range header {
 		switch dt[0] {
 		case "2":
-			b.Name = dt[1]
-			// R12 names of the model space and paper space blocks
-			switch strings.ToUpper(strings.TrimSpace(b.Name)) {
-			case "$MODEL_SPACE":
-				b.Name = "*Model_Space"
-			case "$PAPER_SPACE":
-				b.Name = "*Paper_Space"
-			}
+			b.Name = blockName(dt[1])
 		case "1":
 			b.XrefPath = dt[1]
 		case "4":
@@ -590,6 +633,13 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 		}
 		switch strings.ToUpper(strings.TrimSpace(chunk[0][1])) {
 		case "SEQEND":
+			if h, ok := value(chunk, "5"); ok {
+				if poly != nil {
+					poly.SetEndSourceHandle(h)
+				} else if ins != nil {
+					ins.SetEndSourceHandle(h)
+				}
+			}
 			poly = nil
 			ins = nil
 			return nil
@@ -599,6 +649,7 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 				return &entityError{start, err}
 			}
 			if ins != nil {
+				setSourceHandle(e, chunk)
 				ins.AddAttribute(e.(*entity.Attribute))
 			}
 			// an ATTRIB without INSERT is invalid and skipped
@@ -611,6 +662,7 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 			if err != nil {
 				return &entityError{start, err}
 			}
+			setSourceHandle(e, chunk)
 			if poly != nil {
 				poly.AppendVertex(e.(*entity.Vertex))
 			} else {
@@ -700,14 +752,13 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 // that are not handled by each entity parser (62: color number).
 func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
 	data, xdata := splitXData(data)
-	if x, ok := e.(entity.XDataHolder); ok && len(xdata) > 0 {
-		var kept [][2]string
-		for _, dt := range xdata {
-			if dt[0] != "1005" { // handle references cannot be kept
-				kept = append(kept, dt)
-			}
+	if g, ok := e.(interface{ SetExtensionGroups([][2]string) }); ok {
+		if gs := groups102(data); len(gs) > 0 {
+			g.SetExtensionGroups(gs)
 		}
-		x.SetXData(kept)
+	}
+	if x, ok := e.(entity.XDataHolder); ok && len(xdata) > 0 {
+		x.SetXData(append([][2]string(nil), xdata...))
 	}
 	lp, hasLine := e.(entity.LineProperties)
 	for _, dt := range data {

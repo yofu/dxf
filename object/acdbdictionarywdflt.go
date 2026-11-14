@@ -10,6 +10,7 @@ import (
 // AcDbDictionaryWDFLT represents ACDBDICTIONARYWDFLT Object.
 type AcDbDictionaryWDFLT struct {
 	handle        int
+	src           int // handle in the file it was read from (kept when writing)
 	item          map[string]handle.Handler
 	owner         handle.Handler
 	defaulthandle handle.Handler
@@ -74,8 +75,7 @@ func (d *AcDbDictionaryWDFLT) Handle() int {
 
 // SetHandle sets a handle.
 func (d *AcDbDictionaryWDFLT) SetHandle(v *int) {
-	d.handle = *v
-	(*v)++
+	d.handle = handle.Next(d.src, v)
 }
 
 // AddItem adds new a new item to AcDbDictionaryWDFLT.
@@ -85,4 +85,15 @@ func (d *AcDbDictionaryWDFLT) AddItem(key string, value handle.Handler) error {
 	}
 	d.item[key] = value
 	return nil
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (d *AcDbDictionaryWDFLT) SourceHandle() string {
+	return handle.Format(d.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (d *AcDbDictionaryWDFLT) SetSourceHandle(h string) {
+	d.src = handle.Parse(h)
 }

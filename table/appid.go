@@ -8,6 +8,7 @@ import (
 // AppID represents APPID SymbolTable.
 type AppID struct {
 	handle int
+	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 	name   string
 }
@@ -56,8 +57,7 @@ func (a *AppID) Handle() int {
 
 // SetHandle sets a handle.
 func (a *AppID) SetHandle(v *int) {
-	a.handle = *v
-	(*v)++
+	a.handle = handle.Next(a.src, v)
 }
 
 // SetOwner sets an owner.
@@ -68,4 +68,15 @@ func (a *AppID) SetOwner(h handle.Handler) {
 // Name returns a name of APPID (code 2).
 func (a *AppID) Name() string {
 	return a.name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (a *AppID) SourceHandle() string {
+	return handle.Format(a.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (a *AppID) SetSourceHandle(h string) {
+	a.src = handle.Parse(h)
 }

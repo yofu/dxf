@@ -10,6 +10,7 @@ import (
 // which is referred by its BLOCK_RECORD (code 340) and refers to it (code 330).
 type Layout struct {
 	handle      int
+	src         int            // handle in the file it was read from (kept when writing)
 	owner       handle.Handler // ACAD_LAYOUT dictionary
 	Name        string         // 1 (AcDbLayout)
 	TabOrder    int            // 71
@@ -133,8 +134,7 @@ func (l *Layout) Handle() int {
 
 // SetHandle sets a handle.
 func (l *Layout) SetHandle(v *int) {
-	l.handle = *v
-	(*v)++
+	l.handle = handle.Next(l.src, v)
 }
 
 // SetOwner sets the owner (ACAD_LAYOUT dictionary).
@@ -145,4 +145,15 @@ func (l *Layout) SetOwner(h handle.Handler) {
 // SetBlockRecord sets the BLOCK_RECORD of the layout's block (code 330).
 func (l *Layout) SetBlockRecord(h handle.Handler) {
 	l.blockRecord = h
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (l *Layout) SourceHandle() string {
+	return handle.Format(l.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (l *Layout) SetSourceHandle(h string) {
+	l.src = handle.Parse(h)
 }

@@ -1,38 +1,18 @@
 package dxf
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 )
 
-// isPointer reports whether code is a handle reference (soft/hard pointer
-// or owner, 320-369 and 390, or an XDATA handle 1005). Such references
-// cannot be kept because handles are renumbered when writing.
-func isPointer(code string) bool {
-	c, err := strconv.Atoi(strings.TrimSpace(code))
-	if err != nil {
-		return false
-	}
-	return (c >= 320 && c <= 369) || c == 390 || c == 1005
-}
-
-// isHardPointer reports whether code is a hard pointer or hard owner (340-349, 360-369).
-func isHardPointer(code string) bool {
-	c, err := strconv.Atoi(strings.TrimSpace(code))
-	if err != nil {
-		return false
-	}
-	return (c >= 340 && c <= 349) || (c >= 360 && c <= 369)
-}
-
 // rawExtra returns the group codes of data (a table entry or an entity,
-// without its 0 group) that are not handled: structural codes (handles,
-// owners, 102 groups, and subclass markers unless keepMarkers), handled
-// codes and handle references are removed. XDATA (1001 and after) is kept
-// as is, except handle references.
+// without its 0 group) that are not handled: handles (5, 105), 102 groups
+// and handled codes are removed; for table entries and the common part of
+// entities (keepMarkers false) also owners (330) and subclass markers.
+// References by handle are kept: handles of objects read are kept when
+// writing. XDATA (1001 and after) is kept as is.
 func rawExtra(data [][2]string, handled map[string]bool, keepMarkers bool) [][2]string {
 	var extra [][2]string
 	inGroup := false
@@ -43,9 +23,7 @@ func rawExtra(data [][2]string, handled map[string]bool, keepMarkers bool) [][2]
 			inXData = true
 		}
 		if inXData {
-			if code != "1005" {
-				extra = append(extra, [2]string{code, dt[1]})
-			}
+			extra = append(extra, [2]string{code, dt[1]})
 			continue
 		}
 		switch {
@@ -54,13 +32,33 @@ func rawExtra(data [][2]string, handled map[string]bool, keepMarkers bool) [][2]
 			continue
 		case inGroup:
 			continue
-		case code == "100" && keepMarkers:
-		case code == "0", code == "5", code == "105", code == "100", isPointer(code), handled[code]:
+		case (code == "100" || code == "330") && keepMarkers:
+		case code == "0", code == "5", code == "105", code == "100", code == "330", handled[code]:
 			continue
 		}
 		extra = append(extra, [2]string{code, dt[1]})
 	}
 	return extra
+}
+
+// groups102 returns the 102 groups ({ACAD_REACTORS ...}, {ACAD_XDICTIONARY
+// ...}) of data, as read.
+func groups102(data [][2]string) [][2]string {
+	var gs [][2]string
+	inGroup := false
+	for _, dt := range data {
+		code := strings.TrimSpace(dt[0])
+		if code == "102" {
+			v := strings.TrimSpace(dt[1])
+			gs = append(gs, [2]string{code, v})
+			inGroup = strings.HasPrefix(v, "{")
+			continue
+		}
+		if inGroup {
+			gs = append(gs, [2]string{code, dt[1]})
+		}
+	}
+	return gs
 }
 
 // codes returns a set of group codes.
@@ -87,19 +85,13 @@ func splitXData(data [][2]string) ([][2]string, [][2]string) {
 var commonEntityCodes = codes("8", "6", "62", "370", "48", "67", "60")
 
 // parseUnknown creates an Unknown entity from the group codes of an entity
-// type not supported by this package. Entities with hard pointers to
-// other objects (e.g. IMAGE to IMAGEDEF) are not preserved, since the
-// objects are not kept; ok is false then.
+// type not supported by this package. References by handle (e.g. IMAGE to
+// IMAGEDEF) are kept, as the handles and the objects read are kept.
 func parseUnknown(d *drawing.Drawing, data [][2]string) (*entity.Unknown, bool) {
 	if len(data) == 0 {
 		return nil, false
 	}
 	body, _ := splitXData(data[1:])
-	for _, dt := range body {
-		if isHardPointer(dt[0]) {
-			return nil, false
-		}
-	}
 	u := entity.NewUnknown(strings.TrimSpace(data[0][1]))
 	if name, ok := value(body, "8"); ok {
 		if l, err := d.Layer(name, false); err == nil {

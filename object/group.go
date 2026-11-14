@@ -11,6 +11,7 @@ type Group struct {
 	Name        string
 	Description string
 	handle      int
+	src         int // handle in the file it was read from (kept when writing)
 	owner       handle.Handler
 	entities    []entity.Entity
 	selectable  bool
@@ -88,8 +89,7 @@ func (g *Group) Handle() int {
 
 // SetHandle sets a handle.
 func (g *Group) SetHandle(v *int) {
-	g.handle = *v
-	(*v)++
+	g.handle = handle.Next(g.src, v)
 }
 
 // AddEntity adds entities to Group.
@@ -131,4 +131,15 @@ func (g *Group) RemoveEntity(es ...entity.Entity) {
 		}
 	}
 	g.entities = kept
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (g *Group) SourceHandle() string {
+	return handle.Format(g.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (g *Group) SetSourceHandle(h string) {
+	g.src = handle.Parse(h)
 }

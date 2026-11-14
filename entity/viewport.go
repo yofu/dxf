@@ -36,6 +36,9 @@ type Viewport struct {
 	UCSYAxis      []float64 // 112, 122, 132
 	OrthoType     int       // 79
 	Elevation     float64   // 146
+	// References holds references by handle as read: frozen layers (331),
+	// clipping boundary (340) and UCS (345, 346).
+	References [][2]string
 }
 
 // IsEntity is for Entity interface.
@@ -101,7 +104,9 @@ func (v *Viewport) Format(f format.Formatter) {
 	f.WriteFloat(50, v.SnapAngle)
 	f.WriteFloat(51, v.TwistAngle)
 	f.WriteInt(72, v.CircleZoom)
+	v.writeReferences(f, "331")
 	f.WriteInt(90, v.Flags)
+	v.writeReferences(f, "340")
 	f.WriteString(1, v.PlotStyle)
 	f.WriteInt(281, v.RenderMode)
 	f.WriteInt(71, v.UCSPerView)
@@ -109,6 +114,7 @@ func (v *Viewport) Format(f format.Formatter) {
 	writePoint(f, 110, v.UCSOrigin)
 	writePoint(f, 111, v.UCSXAxis)
 	writePoint(f, 112, v.UCSYAxis)
+	v.writeReferences(f, "345", "346")
 	f.WriteInt(79, v.OrthoType)
 	f.WriteFloat(146, v.Elevation)
 }
@@ -129,4 +135,14 @@ func (v *Viewport) FormatString(f format.Formatter) string {
 func (v *Viewport) BBox() ([]float64, []float64) {
 	return []float64{v.Center[0] - v.Width/2, v.Center[1] - v.Height/2, v.Center[2]},
 		[]float64{v.Center[0] + v.Width/2, v.Center[1] + v.Height/2, v.Center[2]}
+}
+
+func (v *Viewport) writeReferences(f format.Formatter, codes ...string) {
+	for _, r := range v.References {
+		for _, c := range codes {
+			if r[0] == c {
+				writeRaw(f, [][2]string{r})
+			}
+		}
+	}
 }

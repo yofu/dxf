@@ -7,22 +7,24 @@ import (
 
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/object"
 	"github.com/yofu/dxf/table"
 )
 
-// object is a record of the OBJECTS section.
-type object struct {
-	typ  string
+// objRecord is a record of the OBJECTS section.
+type objRecord struct {
+	typ  string // upper case
+	name string // as read
 	data [][2]string
 }
 
-func (o object) handle() string {
+func (o objRecord) handle() string {
 	h, _ := value(o.data, "5")
 	return strings.TrimSpace(h)
 }
 
 // dictionaryItems returns the items (3: name, 350/360: handle) of a DICTIONARY.
-func (o object) dictionaryItems() map[string]string {
+func (o objRecord) dictionaryItems() map[string]string {
 	items := map[string]string{}
 	name := ""
 	for _, dt := range o.data {
@@ -40,7 +42,7 @@ func (o object) dictionaryItems() map[string]string {
 }
 
 // after returns the group codes after the subclass marker (100) marker.
-func (o object) after(marker string) [][2]string {
+func (o objRecord) after(marker string) [][2]string {
 	for i, dt := range o.data {
 		if dt[0] == "100" && strings.TrimSpace(dt[1]) == marker {
 			return o.data[i+1:]
@@ -53,18 +55,18 @@ func (o object) after(marker string) [][2]string {
 // dictionary) and layouts (LAYOUT in the ACAD_LAYOUT dictionary).
 // Other objects are not kept.
 func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
-	var objects []object
+	var objects []objRecord
 	for _, dt := range data {
 		if dt[0] == "0" {
-			objects = append(objects, object{typ: strings.ToUpper(strings.TrimSpace(dt[1]))})
+			objects = append(objects, objRecord{typ: strings.ToUpper(strings.TrimSpace(dt[1])), name: strings.TrimSpace(dt[1])})
 			continue
 		}
 		if len(objects) > 0 {
 			objects[len(objects)-1].data = append(objects[len(objects)-1].data, dt)
 		}
 	}
-	byHandle := map[string]object{}
-	var root *object
+	byHandle := map[string]objRecord{}
+	var root *objRecord
 	for i, o := range objects {
 		byHandle[o.handle()] = o
 		if root == nil && o.typ == "DICTIONARY" {
@@ -74,30 +76,67 @@ func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	if root == nil {
 		return nil
 	}
+	// objects this package creates keep the handles of the file
+	modeled := map[string]bool{root.handle(): true}
+	d.SetObjectSourceHandle("", root.handle())
 	items := root.dictionaryItems()
+	for _, key := range []string{"ACAD_GROUP", "ACAD_LAYOUT", "ACAD_PLOTSTYLENAME"} {
+		if h, ok := items[key]; ok {
+			modeled[h] = true
+			d.SetObjectSourceHandle(key, h)
+		}
+	}
+	if h, ok := items["ACAD_PLOTSTYLENAME"]; ok {
+		if n, ok := byHandle[h].dictionaryItems()["Normal"]; ok {
+			modeled[n] = true
+			d.SetObjectSourceHandle("ACAD_PLOTSTYLENAME/Normal", n)
+		}
+	}
 	if h, ok := items["ACAD_LAYOUT"]; ok {
-		if err := parseLayouts(d, byHandle[h].dictionaryItems(), byHandle); err != nil {
+		if err := parseLayouts(d, byHandle[h].dictionaryItems(), byHandle, modeled); err != nil {
 			return err
 		}
 	}
 	if h, ok := items["ACAD_GROUP"]; ok {
-		if err := parseGroups(d, byHandle[h].dictionaryItems(), objects); err != nil {
+		if err := parseGroups(d, byHandle[h].dictionaryItems(), objects, modeled); err != nil {
 			return err
 		}
+	}
+	// the other objects are kept as read, with their handles
+	rootKeys := map[string]string{}
+	for name, h := range items {
+		rootKeys[h] = name
+	}
+	for _, o := range objects {
+		h := o.handle()
+		if modeled[h] || h == "" {
+			continue
+		}
+		data := make([][2]string, 0, len(o.data))
+		skipped := false
+		for _, dt := range o.data {
+			if dt[0] == "5" && !skipped {
+				skipped = true
+				continue
+			}
+			data = append(data, dt)
+		}
+		d.AddRawObject(object.NewRaw(o.name, h, data), rootKeys[h])
 	}
 	return nil
 }
 
-func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[string]object) error {
+func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[string]objRecord, modeled map[string]bool) error {
 	// BLOCK_RECORD handles in the file -> block names
 	blocks := map[string]string{}
 	for _, st := range d.Sections[drawing.TABLES].(table.Tables)[table.BLOCK_RECORD].Entries() {
-		if r, ok := st.(*table.BlockRecord); ok && r.SourceHandle != "" {
-			blocks[r.SourceHandle] = r.Name()
+		if r, ok := st.(*table.BlockRecord); ok && r.SourceHandle() != "" {
+			blocks[r.SourceHandle()] = r.Name()
 		}
 	}
 	type layout struct {
 		name, block    string
+		handle         string
 		tab            int
 		limMin, limMax []float64
 	}
@@ -108,7 +147,7 @@ func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[stri
 		if !ok || o.typ != "LAYOUT" {
 			continue
 		}
-		l := layout{name: name, limMin: []float64{0, 0}, limMax: []float64{420, 297}}
+		l := layout{name: name, handle: h, limMin: []float64{0, 0}, limMax: []float64{420, 297}}
 		for _, dt := range o.after("AcDbLayout") {
 			v := strings.TrimSpace(dt[1])
 			switch dt[0] {
@@ -145,13 +184,15 @@ func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[stri
 				return err
 			}
 			ol.LimMin, ol.LimMax = l.limMin, l.limMax
+			ol.SetSourceHandle(l.handle)
+			modeled[l.handle] = true
 		}
 	}
 	return nil
 }
 
 // parseGroups creates the groups in the order of the GROUP objects in the file.
-func parseGroups(d *drawing.Drawing, items map[string]string, objects []object) error {
+func parseGroups(d *drawing.Drawing, items map[string]string, objects []objRecord, modeled map[string]bool) error {
 	// entities by their handles in the file
 	entities := map[string]entity.Entity{}
 	add := func(es entity.Entities) {
@@ -198,6 +239,8 @@ func parseGroups(d *drawing.Drawing, items map[string]string, objects []object) 
 		}
 		g.Unnamed = unnamed
 		g.SetSelectable(selectable)
+		g.SetSourceHandle(o.handle())
+		modeled[o.handle()] = true
 	}
 	return nil
 }

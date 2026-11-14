@@ -43,6 +43,12 @@ def summary(doc):
         elif t == "DIMENSION": d += [e.dimtype, r(e.get_measurement()), len(e.get_geometry_block()) if e.get_geometry_block() else None, r(a.defpoint)]
         elif t == "LEADER": d += [r(list(e.vertices))]
         elif t == "INSERT": d += [a.name, r(a.insert), a.xscale, a.rotation, [(x.dxf.tag, x.dxf.text) for x in e.attribs]]
+        elif t == "IMAGE": d += [r(a.insert), e.image_def.dxf.filename if e.image_def else None]
+        elif t == "WIPEOUT": d += [r(a.insert), len(e.boundary_path)]
+        elif t == "MLINE": d += [len(e.vertices), e.style.dxf.name if e.style else None]
+        if e.has_extension_dict:
+            xd = e.get_extension_dict()
+            d += [sorted((k, v.dxftype()) for k, v in xd.items())]
         ents.append(tuple(str(x) for x in d))
     s["entities"] = ents
     vps = []

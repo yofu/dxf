@@ -16,7 +16,9 @@ type Block struct {
 	XrefPath    string          // 1 (only present if the Block is an Xref)
 	Entities    entity.Entities // entities between BLOCK and ENDBLK
 	handle      int
+	src         int // handle in the file it was read from (kept when writing)
 	endhandle   int
+	endSrc      int            // handle of ENDBLK in the file read from
 	record      handle.Handler // 330: BLOCK_RECORD of this block
 	layer       *table.Layer
 	Flag        int
@@ -94,13 +96,11 @@ func (b *Block) Handle() int {
 
 // SetHandle sets handles to BLOCK and ENDBLK.
 func (b *Block) SetHandle(v *int) {
-	b.handle = *v
-	(*v)++
+	b.handle = handle.Next(b.src, v)
 	for _, e := range b.Entities {
 		e.SetHandle(v)
 	}
-	b.endhandle = *v
-	(*v)++
+	b.endhandle = handle.Next(b.endSrc, v)
 }
 
 // Layer returns BLOCK's Layer.
@@ -131,4 +131,20 @@ func (b *Block) Record() handle.Handler {
 // isPaperSpace reports whether the block is a paper space block (*Paper_Space...).
 func (b *Block) isPaperSpace() bool {
 	return strings.HasPrefix(strings.ToUpper(b.Name), "*PAPER_SPACE")
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (b *Block) SourceHandle() string {
+	return handle.Format(b.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (b *Block) SetSourceHandle(h string) {
+	b.src = handle.Parse(h)
+}
+
+// SetEndSourceHandle sets the handle of ENDBLK in the file it was read from.
+func (b *Block) SetEndSourceHandle(h string) {
+	b.endSrc = handle.Parse(h)
 }

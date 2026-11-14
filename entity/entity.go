@@ -71,6 +71,7 @@ type entity struct {
 	typeName    string          // 0: entity type name of Unknown entities
 	srcHandle   string          // 5: handle in the file the entity was read from
 	xdata       [][2]string     // 1001-: extended data, kept as read
+	groups      [][2]string     // 102 groups (reactors, extension dictionary), kept as read
 	paperSpace  bool            // 67: entity is in paper space
 	invisible   bool            // 60: object visibility (1 = invisible)
 	lineType    *table.LineType // 6: nil = BYLAYER
@@ -102,11 +103,7 @@ func (e *entity) Format(f format.Formatter) {
 	}
 	f.WriteString(0, name)
 	f.WriteHex(5, e.handle)
-	if e.blockRecord != nil {
-		f.WriteString(102, "{ACAD_REACTORS")
-		f.WriteHex(330, e.blockRecord.Handle())
-		f.WriteString(102, "}")
-	}
+	e.writeGroups102(f)
 	if e.owner != nil {
 		f.WriteHex(330, e.owner.Handle())
 	}
@@ -152,8 +149,7 @@ func (e *entity) Handle() int {
 
 // SetHandle sets handles to TABLE itself and each SymbolTable.
 func (e *entity) SetHandle(v *int) {
-	e.handle = *v
-	(*v)++
+	e.handle = handle.Next(handle.Parse(e.srcHandle), v)
 }
 
 // SetBlockRecord sets BLOCK_RECORD to entity (code 330).
@@ -427,4 +423,46 @@ func (e *entity) SourceHandle() string {
 // SetSourceHandle sets the handle of the entity in the file it was read from.
 func (e *entity) SetSourceHandle(h string) {
 	e.srcHandle = h
+}
+
+// ExtensionGroups returns the 102 groups ({ACAD_REACTORS ...},
+// {ACAD_XDICTIONARY ...}) of the entity, as read.
+func (e *entity) ExtensionGroups() [][2]string {
+	return e.groups
+}
+
+// SetExtensionGroups sets the 102 groups of the entity (as read). The
+// reactor to the group of the entity is added when writing.
+func (e *entity) SetExtensionGroups(g [][2]string) {
+	e.groups = g
+}
+
+// writeGroups102 writes the 102 groups: those read, and the reactor to
+// the group (GROUP) of the entity.
+func (e *entity) writeGroups102(f format.Formatter) {
+	groupHandle := ""
+	if e.blockRecord != nil {
+		groupHandle = handle.Format(e.blockRecord.Handle())
+	}
+	wroteReactors := false
+	inReactors := false
+	for _, p := range e.groups {
+		if p[0] == "102" && strings.HasPrefix(p[1], "{") {
+			inReactors = strings.EqualFold(p[1], "{ACAD_REACTORS")
+			wroteReactors = wroteReactors || inReactors
+		} else if p[0] == "102" && inReactors {
+			if groupHandle != "" {
+				f.WriteString(330, groupHandle)
+			}
+			inReactors = false
+		} else if inReactors && p[0] == "330" && strings.EqualFold(strings.TrimSpace(p[1]), groupHandle) {
+			groupHandle = "" // already a reactor
+		}
+		writeRaw(f, [][2]string{p})
+	}
+	if !wroteReactors && groupHandle != "" {
+		f.WriteString(102, "{ACAD_REACTORS")
+		f.WriteString(330, groupHandle)
+		f.WriteString(102, "}")
+	}
 }

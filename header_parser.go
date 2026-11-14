@@ -103,7 +103,7 @@ func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 			}
 			continue
 		}
-		if _, known := vars[name]; known || name == "$HANDSEED" || name == "" || isPointer(dt[0]) {
+		if _, known := vars[name]; known || name == "$HANDSEED" || name == "" {
 			continue
 		}
 		// variables not interpreted by this package are kept as read

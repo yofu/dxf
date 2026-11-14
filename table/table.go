@@ -2,6 +2,7 @@ package table
 
 import (
 	"fmt"
+	"github.com/yofu/dxf/handle"
 	"strings"
 
 	"github.com/yofu/dxf/format"
@@ -11,6 +12,7 @@ import (
 type Table struct {
 	name   string // 2
 	handle int    // 5
+	src    int    // handle in the file it was read from (kept when writing)
 	size   int    // 70
 	tables []SymbolTable
 }
@@ -62,8 +64,7 @@ func (t *Table) Handle() int {
 
 // SetHandle sets handles to TABLE itself and each SymbolTable.
 func (t *Table) SetHandle(v *int) {
-	t.handle = *v
-	(*v)++
+	t.handle = handle.Next(t.src, v)
 	for i := 0; i < t.size; i++ {
 		t.tables[i].SetHandle(v)
 	}
@@ -108,4 +109,15 @@ func (t *Table) Remove(name string) bool {
 		}
 	}
 	return false
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (t *Table) SourceHandle() string {
+	return handle.Format(t.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (t *Table) SetSourceHandle(h string) {
+	t.src = handle.Parse(h)
 }

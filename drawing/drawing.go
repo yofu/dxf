@@ -34,6 +34,7 @@ type Drawing struct {
 	Sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
+	plotstyles   *object.AcDbDictionaryWDFLT
 	layouts      []*object.Layout // "Model" (*Model_Space), "Layout1" (*Paper_Space), ...
 	layoutdict   *object.Dictionary
 	PlotStyle    handle.Handler
@@ -42,6 +43,7 @@ type Drawing struct {
 
 	currentBlock  *block.Block // block being defined between BeginBlock and EndBlock
 	paperSpace    bool         // new entities are created in paper space
+	handleBase    int          // first handle for new objects (above the handles of the file read)
 	inLayoutBlock bool         // currentBlock is the block of a (non-active) layout
 }
 
@@ -73,6 +75,7 @@ func New() *Drawing {
 	d.dictionary = object.NewDictionary()
 	d.addObject(d.dictionary)
 	wd, ph := object.NewAcDbDictionaryWDFLT(d.dictionary)
+	d.plotstyles = wd
 	d.dictionary.AddItem("ACAD_PLOTSTYLENAME", wd)
 	d.addObject(wd)
 	d.addObject(ph)
@@ -167,7 +170,12 @@ func (d *Drawing) linkOwners() {
 
 // setHandle sets all the handles contained in Drawing.
 func (d *Drawing) setHandle() {
-	h := 1
+	// objects read from a file keep their handles; the others get handles
+	// from handleBase, above the handles of the file
+	h := d.handleBase
+	if h < 1 {
+		h = 1
+	}
 	for _, s := range d.Sections[1:] {
 		s.SetHandle(&h)
 	}
@@ -977,4 +985,55 @@ func (d *Drawing) ensureDefaults() {
 	if _, err := styles.Contains(h.DimStyle); err != nil && h.DimStyle != "" {
 		styles.Add(table.NewDimStyle(h.DimStyle))
 	}
+}
+
+// SetHandleBase sets the first handle for objects without a handle kept
+// from the file they were read from. Readers set it above the largest
+// handle of the file.
+func (d *Drawing) SetHandleBase(h int) {
+	if h > d.handleBase {
+		d.handleBase = h
+	}
+}
+
+// SetObjectSourceHandle sets the handle, in the file read from, of an
+// object this package creates: the root dictionary (key ""), the
+// dictionaries "ACAD_GROUP", "ACAD_LAYOUT", "ACAD_PLOTSTYLENAME" and the
+// default plot style "ACAD_PLOTSTYLENAME/Normal". References to them by
+// handle from objects kept as read stay valid.
+func (d *Drawing) SetObjectSourceHandle(key, h string) {
+	switch key {
+	case "":
+		d.dictionary.SetSourceHandle(h)
+	case "ACAD_GROUP":
+		d.groupdict.SetSourceHandle(h)
+	case "ACAD_LAYOUT":
+		d.layoutdict.SetSourceHandle(h)
+	case "ACAD_PLOTSTYLENAME":
+		d.plotstyles.SetSourceHandle(h)
+	case "ACAD_PLOTSTYLENAME/Normal":
+		if p, ok := d.PlotStyle.(interface{ SetSourceHandle(string) }); ok {
+			p.SetSourceHandle(h)
+		}
+	}
+}
+
+// AddRawObject adds an object kept as read to the OBJECTS section; with
+// a key, it is also an item of the root dictionary.
+func (d *Drawing) AddRawObject(r *object.Raw, key string) {
+	d.addObject(r)
+	if key != "" {
+		d.dictionary.AddItem(key, r)
+	}
+}
+
+// RawObjects returns the objects kept as read.
+func (d *Drawing) RawObjects() []*object.Raw {
+	var rs []*object.Raw
+	for _, o := range d.Sections[OBJECTS].(object.Objects) {
+		if r, ok := o.(*object.Raw); ok {
+			rs = append(rs, r)
+		}
+	}
+	return rs
 }

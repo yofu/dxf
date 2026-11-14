@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/yofu/dxf/handle"
 	"math"
 	"strings"
 
@@ -21,6 +22,7 @@ type Insert struct {
 	Direction     []float64    // 210, 220, 230: extrusion direction
 	Attributes    []*Attribute // ATTRIB entities following the INSERT (66 = 1), ended by SEQEND
 	endhandle     int
+	endSrc        int // handle of SEQEND in the file read from
 }
 
 // IsEntity is for Entity interface.
@@ -140,8 +142,7 @@ func (i *Insert) SetHandle(v *int) {
 		a.SetOwner(i)
 		a.SetHandle(v)
 	}
-	i.endhandle = *v
-	(*v)++
+	i.endhandle = handle.Next(i.endSrc, v)
 }
 
 // AddAttribute appends an attribute (ATTRIB) to the INSERT.
@@ -169,4 +170,9 @@ func (i *Insert) SetAttribute(tag, value string) bool {
 	}
 	a.Value = value
 	return true
+}
+
+// SetEndSourceHandle sets the handle of SEQEND in the file it was read from.
+func (i *Insert) SetEndSourceHandle(h string) {
+	i.endSrc = handle.Parse(h)
 }

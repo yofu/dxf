@@ -13,6 +13,7 @@ var (
 // Style represents STYLE SymbolTable.
 type Style struct {
 	handle          int
+	src             int // handle in the file it was read from (kept when writing)
 	owner           handle.Handler
 	name            string  // 2
 	FontName        string  // 3
@@ -81,8 +82,7 @@ func (st *Style) Handle() int {
 
 // SetHandle sets a handle.
 func (st *Style) SetHandle(v *int) {
-	st.handle = *v
-	(*v)++
+	st.handle = handle.Next(st.src, v)
 }
 
 // SetOwner sets an owner.
@@ -106,4 +106,15 @@ func (st *Style) clone() *Style {
 // SetName sets the name of the style.
 func (st *Style) SetName(name string) {
 	st.name = name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (st *Style) SourceHandle() string {
+	return handle.Format(st.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (st *Style) SetSourceHandle(h string) {
+	st.src = handle.Parse(h)
 }

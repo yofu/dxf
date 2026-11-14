@@ -8,6 +8,7 @@ import (
 // DimStyle represents DIMSTYLE SymbolTable.
 type DimStyle struct {
 	handle int
+	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 	name   string
 
@@ -96,8 +97,7 @@ func (d *DimStyle) Handle() int {
 
 // SetHandle sets a handle.
 func (d *DimStyle) SetHandle(v *int) {
-	d.handle = *v
-	(*v)++
+	d.handle = handle.Next(d.src, v)
 }
 
 // SetOwner sets an owner.
@@ -113,4 +113,15 @@ func (d *DimStyle) Name() string {
 // SetName sets the name of the dimension style.
 func (d *DimStyle) SetName(name string) {
 	d.name = name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (d *DimStyle) SourceHandle() string {
+	return handle.Format(d.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (d *DimStyle) SetSourceHandle(h string) {
+	d.src = handle.Parse(h)
 }

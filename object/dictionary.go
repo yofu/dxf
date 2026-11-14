@@ -11,6 +11,7 @@ import (
 // Dictionary represents DICTIONARY Object.
 type Dictionary struct {
 	handle int
+	src    int            // handle in the file it was read from (kept when writing)
 	owner  handle.Handler // nil: root dictionary (owner 0)
 	item   map[string]handle.Handler
 }
@@ -79,8 +80,7 @@ func (d *Dictionary) Handle() int {
 
 // SetHandle sets a handle.
 func (d *Dictionary) SetHandle(v *int) {
-	d.handle = *v
-	(*v)++
+	d.handle = handle.Next(d.src, v)
 	for _, val := range d.item {
 		val.SetHandle(v)
 	}
@@ -103,4 +103,15 @@ func (d *Dictionary) SetOwner(h handle.Handler) {
 // RemoveItem removes the item with key.
 func (d *Dictionary) RemoveItem(key string) {
 	delete(d.item, key)
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (d *Dictionary) SourceHandle() string {
+	return handle.Format(d.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (d *Dictionary) SetSourceHandle(h string) {
+	d.src = handle.Parse(h)
 }

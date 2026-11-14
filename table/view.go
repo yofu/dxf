@@ -8,6 +8,7 @@ import (
 // View represents VIEW SymbolTable.
 type View struct {
 	handle int
+	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 	name   string // 2
 	// Extra holds group codes read from a file that are not interpreted by
@@ -59,8 +60,7 @@ func (v *View) Handle() int {
 
 // SetHandle sets a handle.
 func (v *View) SetHandle(h *int) {
-	v.handle = *h
-	(*h)++
+	v.handle = handle.Next(v.src, h)
 }
 
 // SetOwner sets an owner.
@@ -71,4 +71,15 @@ func (v *View) SetOwner(h handle.Handler) {
 // Name returns a name of VIEW (code 2).
 func (v *View) Name() string {
 	return v.name
+}
+
+// SourceHandle returns the handle in the file it was read from ("" if new).
+func (v *View) SourceHandle() string {
+	return handle.Format(v.src)
+}
+
+// SetSourceHandle sets the handle in the file it was read from;
+// it is kept when the drawing is written.
+func (v *View) SetSourceHandle(h string) {
+	v.src = handle.Parse(h)
 }
