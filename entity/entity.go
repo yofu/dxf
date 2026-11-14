@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/yofu/dxf/color"
@@ -67,6 +68,8 @@ type entity struct {
 	blockRecord handle.Handler  // 102 330
 	owner       handle.Handler  // 330
 	layer       *table.Layer    // 8
+	typeName    string          // 0: entity type name of Unknown entities
+	xdata       [][2]string     // 1001-: extended data, kept as read
 	paperSpace  bool            // 67: entity is in paper space
 	lineType    *table.LineType // 6: nil = BYLAYER
 	color       int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
@@ -91,7 +94,11 @@ func NewEntity(t EntityType) *entity {
 
 // Format writes data to formatter.
 func (e *entity) Format(f format.Formatter) {
-	f.WriteString(0, EntityTypeString(e.Type))
+	name := EntityTypeString(e.Type)
+	if e.typeName != "" {
+		name = e.typeName
+	}
+	f.WriteString(0, name)
 	f.WriteHex(5, e.handle)
 	if e.blockRecord != nil {
 		f.WriteString(102, "{ACAD_REACTORS")
@@ -326,4 +333,50 @@ func (e *entity) InPaperSpace() bool {
 // SetPaperSpace sets whether the entity is in paper space (code 67).
 func (e *entity) SetPaperSpace(p bool) {
 	e.paperSpace = p
+}
+
+// XData returns the extended data (XDATA, group codes 1001 and after) of
+// the entity as group code/value pairs.
+func (e *entity) XData() [][2]string {
+	return e.xdata
+}
+
+// SetXData sets the extended data (XDATA). It must start with 1001
+// (registered application name); the application is added to the APPID
+// table when the drawing is written.
+func (e *entity) SetXData(x [][2]string) {
+	e.xdata = x
+}
+
+func (e *entity) writeXData(f format.Formatter) {
+	writeRaw(f, e.xdata)
+}
+
+// XDataHolder is implemented by all entities in this package.
+type XDataHolder interface {
+	XData() [][2]string
+	SetXData([][2]string)
+}
+
+// FormatEntity writes an entity followed by its extended data.
+// POLYLINE and INSERT write their extended data themselves, before their
+// VERTEX / ATTRIB entities.
+func FormatEntity(f format.Formatter, e Entity) {
+	e.Format(f)
+	switch e.(type) {
+	case *Polyline, *Insert:
+		return
+	}
+	if x, ok := e.(interface{ writeXData(format.Formatter) }); ok {
+		x.writeXData(f)
+	}
+}
+
+// writeRaw writes group code/value pairs kept as read.
+func writeRaw(f format.Formatter, pairs [][2]string) {
+	for _, p := range pairs {
+		if c, err := strconv.Atoi(p[0]); err == nil {
+			f.WriteString(c, p[1])
+		}
+	}
 }

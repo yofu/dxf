@@ -101,7 +101,7 @@ func TestBulgeCenter(t *testing.T) {
 	}
 }
 
-func TestUnsupportedEntitiesAreSkipped(t *testing.T) {
+func TestUnsupportedEntitiesArePreserved(t *testing.T) {
 	src := entitiesSection("0\nLINE\n8\n0\n10\n0\n20\n0\n11\n1\n21\n1\n" +
 		"0\nACAD_PROXY_ENTITY\n8\n0\n90\n498\n91\n0\n" +
 		"0\nPOINT\n8\n0\n10\n3\n20\n4\n")
@@ -109,8 +109,11 @@ func TestUnsupportedEntitiesAreSkipped(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n := len(d.Entities()); n != 2 {
-		t.Errorf("want 2 entities (LINE, POINT), got %d", n)
+	if n := len(d.Entities()); n != 3 {
+		t.Fatalf("want 3 entities (LINE, ACAD_PROXY_ENTITY, POINT), got %d", n)
+	}
+	if u, ok := d.Entities()[1].(*entity.Unknown); !ok || u.TypeName() != "ACAD_PROXY_ENTITY" || len(u.Data) != 2 {
+		t.Errorf("unknown entity: %+v", d.Entities()[1])
 	}
 }
 

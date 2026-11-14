@@ -25,6 +25,7 @@ const (
 	ATTRIB
 	VIEWPORT
 	LEADER
+	UNKNOWN // entity types not supported by this package (see Unknown)
 )
 
 // EntityTypeString converts EntityType to string.

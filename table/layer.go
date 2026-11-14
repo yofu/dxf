@@ -25,6 +25,9 @@ type Layer struct {
 	LineType  *LineType
 	lineWidth int
 	PlotStyle handle.Handler
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewLayer creates a new Layer.
@@ -68,6 +71,7 @@ func (l *Layer) Format(f format.Formatter) {
 	if l.PlotStyle != nil {
 		f.WriteHex(390, l.PlotStyle.Handle())
 	}
+	writeRaw(f, l.Extra)
 }
 
 // On turns the layer on.

@@ -91,3 +91,8 @@ func (t *Table) Contains(name string) (SymbolTable, error) {
 	}
 	return nil, fmt.Errorf("%s doesn't exist", name)
 }
+
+// Entries returns the entries (symbol table records) of the table.
+func (t *Table) Entries() []SymbolTable {
+	return t.tables
+}

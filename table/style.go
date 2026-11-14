@@ -100,3 +100,8 @@ func (st *Style) clone() *Style {
 	c.owner = nil
 	return &c
 }
+
+// SetName sets the name of the style.
+func (st *Style) SetName(name string) {
+	st.name = name
+}

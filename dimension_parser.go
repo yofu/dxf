@@ -157,5 +157,6 @@ func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 		}
 	}
 	ds.SetName(name)
+	ds.Extra = rawExtra(data, codes("2", "70", "40", "41", "42", "44", "73", "74", "77", "140", "147", "271"), false)
 	return ds, nil
 }

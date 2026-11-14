@@ -21,7 +21,7 @@ func (es Entities) Format(f format.Formatter) {
 	f.WriteString(0, "SECTION")
 	f.WriteString(2, "ENTITIES")
 	for _, e := range es {
-		e.Format(f)
+		FormatEntity(f, e)
 	}
 	f.WriteString(0, "ENDSEC")
 }

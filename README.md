@@ -172,6 +172,19 @@ For files without `$DWGCODEPAGE`, the code page can be given:
 d, err := dxf.FromFileWithCodePage("sjis.dxf", codepage.Japanese)
 ```
 
+### Reading and writing back
+
+When a file is read and written again, data this package does not
+interpret is kept: unknown header variables (`Header().Extra`), entities of
+unsupported types (`entity.Unknown`), extended data (`XData()` /
+`SetXData()`, APPIDs are registered when writing) and other values of
+LAYER, VIEW, UCS and DIMSTYLE entries (`Extra`).
+
+Not kept: handles (renumbered when writing) and references by handle,
+unsupported entities referring to other objects (e.g. IMAGE), the OBJECTS
+and CLASSES sections (except the dictionaries and layouts this package
+creates).
+
 ## Installation
 
 ```

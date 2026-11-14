@@ -595,6 +595,8 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 		return 0, nil
 	}
 	d.syncHeader()
+	d.ensureDefaults()
+	d.ensureAppIDs()
 	d.linkOwners()
 	d.setHandle()
 	d.formatter.Reset()
@@ -868,5 +870,67 @@ func (d *Drawing) syncHeader() {
 	}
 	if d.CurrentStyle != nil {
 		h.TextStyle = d.CurrentStyle.Name()
+	}
+}
+
+// ensureAppIDs adds the applications of extended data (1001) of entities
+// and table entries to the APPID table if they are not registered.
+func (d *Drawing) ensureAppIDs() {
+	apps := d.Sections[TABLES].(table.Tables)[table.APPID]
+	register := func(x [][2]string) {
+		for _, p := range x {
+			if p[0] != "1001" {
+				continue
+			}
+			name := strings.TrimSpace(p[1])
+			if _, err := apps.Contains(name); err != nil && name != "" {
+				apps.Add(table.NewAppID(name))
+			}
+		}
+	}
+	visit := func(es entity.Entities) {
+		for _, e := range es {
+			if x, ok := e.(entity.XDataHolder); ok {
+				register(x.XData())
+			}
+			switch c := e.(type) {
+			case *entity.Polyline:
+				for _, v := range c.Vertices {
+					register(v.XData())
+				}
+			case *entity.Insert:
+				for _, a := range c.Attributes {
+					register(a.XData())
+				}
+			}
+		}
+	}
+	visit(d.Entities())
+	for _, b := range d.Blocks() {
+		visit(b.Entities)
+	}
+	for _, t := range d.Sections[TABLES].(table.Tables) {
+		for _, st := range t.Entries() {
+			switch r := st.(type) {
+			case *table.Layer:
+				register(r.Extra)
+			case *table.View:
+				register(r.Extra)
+			case *table.Ucs:
+				register(r.Extra)
+			case *table.DimStyle:
+				register(r.Extra)
+			}
+		}
+	}
+}
+
+// ensureDefaults adds the dimension style of $DIMSTYLE if it is not in the
+// DIMSTYLE table (e.g. a file without it was read).
+func (d *Drawing) ensureDefaults() {
+	h := d.Header()
+	styles := d.Sections[TABLES].(table.Tables)[table.DIMSTYLE]
+	if _, err := styles.Contains(h.DimStyle); err != nil && h.DimStyle != "" {
+		styles.Add(table.NewDimStyle(h.DimStyle))
 	}
 }

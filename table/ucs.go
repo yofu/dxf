@@ -10,6 +10,9 @@ type Ucs struct {
 	handle int
 	owner  handle.Handler
 	name   string // 2
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewUCS creates a new Ucs.
@@ -34,6 +37,7 @@ func (u *Ucs) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbUCSTableRecord")
 	f.WriteString(2, u.name)
+	writeRaw(f, u.Extra)
 }
 
 // String outputs data using default formatter.

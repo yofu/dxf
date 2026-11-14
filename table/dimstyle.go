@@ -21,6 +21,9 @@ type DimStyle struct {
 	TextHeight            float64 // 140 DIMTXT
 	TextGap               float64 // 147 DIMGAP: gap between text and dimension line
 	Decimals              int     // 271 DIMDEC: decimal places of measurement
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewDimStyle creates a new DimStyle with metric (ISO-25 like) values.
@@ -64,6 +67,7 @@ func (d *DimStyle) Format(f format.Formatter) {
 	f.WriteFloat(140, d.TextHeight)
 	f.WriteFloat(147, d.TextGap)
 	f.WriteInt(271, d.Decimals)
+	writeRaw(f, d.Extra)
 }
 
 func boolInt(b bool) int {

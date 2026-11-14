@@ -87,17 +87,36 @@ func headerVars(h *header.Header) map[string]map[string]func(string) error {
 func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 	h := d.Header()
 	vars := headerVars(h)
+	h.Extra = nil
 	var name string
 	for _, dt := range data {
 		if dt[0] == "9" {
 			name = strings.TrimSpace(dt[1])
+			if _, known := vars[name]; !known && name != "$HANDSEED" {
+				h.Extra = append(h.Extra, [2]string{"9", name})
+			}
 			continue
 		}
 		if set, ok := vars[name][dt[0]]; ok {
 			if err := set(dt[1]); err != nil {
 				return fmt.Errorf("%s code %s: %w", name, dt[0], err)
 			}
+			continue
 		}
+		if _, known := vars[name]; known || name == "$HANDSEED" || name == "" || isPointer(dt[0]) {
+			continue
+		}
+		// variables not interpreted by this package are kept as read
+		h.Extra = append(h.Extra, [2]string{strings.TrimSpace(dt[0]), dt[1]})
 	}
+	// drop variables left without values (e.g. only handle references)
+	var extra [][2]string
+	for i, p := range h.Extra {
+		if p[0] == "9" && (i+1 == len(h.Extra) || h.Extra[i+1][0] == "9") {
+			continue
+		}
+		extra = append(extra, p)
+	}
+	h.Extra = extra
 	return nil
 }

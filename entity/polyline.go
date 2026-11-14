@@ -42,8 +42,10 @@ func (p *Polyline) Format(f format.Formatter) {
 	f.WriteString(30, "0.0")
 	writeThickness(f, p.Thickness)
 	f.WriteInt(70, p.Flag)
+	p.writeXData(f)
 	for _, v := range p.Vertices {
 		v.Format(f)
+		v.writeXData(f)
 	}
 	f.WriteString(0, "SEQEND")
 	f.WriteHex(5, p.endhandle)

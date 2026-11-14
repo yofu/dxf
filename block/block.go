@@ -60,7 +60,7 @@ func (b *Block) Format(f format.Formatter) {
 		f.WriteString(4, b.Description)
 	}
 	for _, e := range b.Entities {
-		e.Format(f)
+		entity.FormatEntity(f, e)
 	}
 	f.WriteString(0, "ENDBLK")
 	f.WriteHex(5, b.endhandle)

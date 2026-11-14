@@ -2,6 +2,8 @@
 package header
 
 import (
+	"strconv"
+
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/insunit"
 )
@@ -44,6 +46,11 @@ type Header struct {
 	AngDir      int     // $ANGDIR: 0 counterclockwise, 1 clockwise
 	PdMode      int     // $PDMODE: point display mode
 	PdSize      float64 // $PDSIZE: point display size
+
+	// Extra holds header variables read from a file that are not
+	// interpreted by this package, as group code/value pairs including
+	// the variable names (9). They are written after the other variables.
+	Extra [][2]string
 
 	handseed int
 }
@@ -145,6 +152,11 @@ func (h *Header) Format(f format.Formatter) {
 	f.WriteInt(70, h.Measurement)
 	writeVar(f, "$CELWEIGHT")
 	f.WriteInt(370, h.CELWeight)
+	for _, p := range h.Extra {
+		if c, err := strconv.Atoi(p[0]); err == nil {
+			f.WriteString(c, p[1])
+		}
+	}
 	f.WriteString(0, "ENDSEC")
 }
 

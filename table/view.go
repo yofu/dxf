@@ -10,6 +10,9 @@ type View struct {
 	handle int
 	owner  handle.Handler
 	name   string // 2
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewView creates a new View.
@@ -34,6 +37,7 @@ func (v *View) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbViewTableRecord")
 	f.WriteString(2, v.name)
+	writeRaw(f, v.Extra)
 }
 
 // String outputs data using default formatter.

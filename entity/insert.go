@@ -78,9 +78,11 @@ func (i *Insert) Format(f format.Formatter) {
 			f.WriteFloat(200+(j+1)*10, i.Direction[j])
 		}
 	}
+	i.writeXData(f)
 	if len(i.Attributes) > 0 {
 		for _, a := range i.Attributes {
 			a.Format(f)
+			a.writeXData(f)
 		}
 		f.WriteString(0, "SEQEND")
 		f.WriteHex(5, i.endhandle)

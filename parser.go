@@ -336,25 +336,37 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	l.SetFlag(flag)
 	l.SetLineWidth(lw)
 	l.SetPlotStyle(d.PlotStyle)
+	l.Extra = rawExtra(data, codes("2", "70", "62", "6", "370"), false)
 	return l, nil
 }
 
 // ParseStyle parses STYLE tables.
 func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	var name, font, bigfont string
+	s := table.NewStyle("")
+	name := ""
 	for _, dt := range data {
+		var err error
 		switch dt[0] {
 		case "2":
 			name = dt[1]
 		case "3":
-			font = dt[1]
+			s.FontName = dt[1]
 		case "4":
-			bigfont = dt[1]
+			s.BigFontName = dt[1]
+		case "40":
+			err = setFloat(dt, func(val float64) { s.FixedTextHeight = val })
+		case "41":
+			err = setFloat(dt, func(val float64) { s.WidthFactor = val })
+		case "42":
+			err = setFloat(dt, func(val float64) { s.LastHeightUsed = val })
+		case "50":
+			err = setFloat(dt, func(val float64) { s.ObliqueAngle = val })
+		}
+		if err != nil {
+			return s, err
 		}
 	}
-	s := table.NewStyle(name)
-	s.FontName = font
-	s.BigFontName = bigfont
+	s.SetName(name)
 	return s, nil
 }
 
@@ -368,6 +380,7 @@ func ParseView(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) 
 		}
 	}
 	v := table.NewView(name)
+	v.Extra = rawExtra(data, codes("2"), false)
 	return v, nil
 }
 
@@ -381,6 +394,7 @@ func ParseUCS(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 		}
 	}
 	u := table.NewUCS(name)
+	u.Extra = rawExtra(data, codes("2"), false)
 	return u, nil
 }
 
@@ -582,6 +596,17 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 		ins = nil
 		e, err := ParseEntity(d, chunk)
 		if errors.Is(err, ErrUnknownEntity) {
+			u, ok := parseUnknown(d, chunk)
+			if !ok {
+				return nil // not preserved (refers to other objects)
+			}
+			if err := parseCommon(d, u, chunk); err != nil {
+				return &entityError{start, err}
+			}
+			es = es.Add(u)
+			if h, ok := value(chunk, "5"); ok {
+				handles[strings.TrimSpace(h)] = u
+			}
 			return nil
 		}
 		if err != nil {
@@ -644,6 +669,16 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 // parseCommon parses group codes common to all entities
 // that are not handled by each entity parser (62: color number).
 func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
+	data, xdata := splitXData(data)
+	if x, ok := e.(entity.XDataHolder); ok && len(xdata) > 0 {
+		var kept [][2]string
+		for _, dt := range xdata {
+			if dt[0] != "1005" { // handle references cannot be kept
+				kept = append(kept, dt)
+			}
+		}
+		x.SetXData(kept)
+	}
 	lp, hasLine := e.(entity.LineProperties)
 	for _, dt := range data {
 		switch dt[0] {
