@@ -65,6 +65,20 @@ ins.Scale = []float64{2.0, 2.0, 1.0}
 ins.Rotation = 45.0
 ```
 
+Attributes: define them in the block; `Insert` creates the attributes with
+default values.
+
+```go
+d.BeginBlock("TITLE", 0.0, 0.0, 0.0)
+d.AttributeDefinition("NAME", "Drawing name", "untitled", 10.0, 5.0, 0.0, 3.0) // tag, prompt, default
+d.EndBlock()
+
+ins, _ := d.Insert("TITLE", 1000.0, 500.0, 0.0)
+ins.SetAttribute("NAME", "Floor plan")
+ins.Rotation = 90.0
+d.SyncAttributes(ins) // after changing the insertion point, scale or rotation
+```
+
 ### Entity properties
 
 Color, linetype and lineweight are BYLAYER by default.

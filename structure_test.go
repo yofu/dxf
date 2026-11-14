@@ -207,16 +207,36 @@ func checkStructure(t *testing.T, d *drawing.Drawing) {
 		default:
 			continue
 		}
-		if r.typ == "VERTEX" || r.typ == "SEQEND" {
-			continue // owned by POLYLINE
+		if r.typ == "VERTEX" || r.typ == "SEQEND" || r.typ == "ATTRIB" {
+			continue // owned by POLYLINE or INSERT
 		}
 		if r.owner() != want {
 			t.Errorf("%s %s in %s: owner %s, want %s", r.typ, r.handle(), r.section, r.owner(), want)
 		}
 	}
-	for _, r := range recs {
-		if (r.typ == "VERTEX" || r.typ == "SEQEND") && handles[r.owner()].typ != "POLYLINE" {
-			t.Errorf("%s %s should be owned by POLYLINE, got %s", r.typ, r.handle(), r.owner())
+	for i, r := range recs {
+		owner := handles[r.owner()].typ
+		switch r.typ {
+		case "VERTEX":
+			if owner != "POLYLINE" {
+				t.Errorf("VERTEX %s should be owned by POLYLINE, got %s", r.handle(), r.owner())
+			}
+		case "ATTRIB":
+			if owner != "INSERT" {
+				t.Errorf("ATTRIB %s should be owned by INSERT, got %s", r.handle(), r.owner())
+			}
+		case "SEQEND":
+			if owner != "POLYLINE" && owner != "INSERT" {
+				t.Errorf("SEQEND %s should be owned by POLYLINE or INSERT, got %s", r.handle(), r.owner())
+			}
+			// the owner is the entity that starts the sequence
+			j := i - 1
+			for j >= 0 && (recs[j].typ == "VERTEX" || recs[j].typ == "ATTRIB") {
+				j--
+			}
+			if j < 0 || recs[j].handle() != r.owner() {
+				t.Errorf("SEQEND %s: owner %s is not the preceding POLYLINE/INSERT", r.handle(), r.owner())
+			}
 		}
 	}
 }

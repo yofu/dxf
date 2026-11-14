@@ -529,7 +529,7 @@ func TestInsertExtents(t *testing.T) {
 }
 
 func TestInsertWithAttributesFromFile(t *testing.T) {
-	// ATTRIB entities are not supported yet: they and SEQEND are skipped.
+	// ATTRIB entities are attached to the INSERT; SEQEND ends them.
 	src := entitiesSection("0\nINSERT\n8\n0\n66\n1\n2\nB\n10\n1\n20\n2\n" +
 		"0\nATTRIB\n8\n0\n10\n1\n20\n2\n40\n1\n1\nVALUE\n2\nTAG\n70\n0\n" +
 		"0\nSEQEND\n8\n0\n" +
@@ -541,7 +541,8 @@ func TestInsertWithAttributesFromFile(t *testing.T) {
 	if len(d.Entities()) != 2 {
 		t.Fatalf("want INSERT and POINT, got %d entities", len(d.Entities()))
 	}
-	if ins := d.Entities()[0].(*entity.Insert); ins.BlockName != "B" || ins.Coord[1] != 2 {
+	if ins := d.Entities()[0].(*entity.Insert); ins.BlockName != "B" || ins.Coord[1] != 2 ||
+		len(ins.Attributes) != 1 || ins.Attribute("TAG").Value != "VALUE" {
 		t.Errorf("insert: %+v", ins)
 	}
 }

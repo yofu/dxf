@@ -21,6 +21,8 @@ const (
 	HATCH
 	SOLID
 	DIMENSION
+	ATTDEF
+	ATTRIB
 )
 
 // EntityTypeString converts EntityType to string.
@@ -59,6 +61,10 @@ func EntityTypeString(t EntityType) string {
 		return "SOLID"
 	case DIMENSION:
 		return "DIMENSION"
+	case ATTDEF:
+		return "ATTDEF"
+	case ATTRIB:
+		return "ATTRIB"
 	default:
 		return ""
 	}
@@ -100,6 +106,10 @@ func EntityTypeValue(t string) EntityType {
 		return SOLID
 	case "DIMENSION":
 		return DIMENSION
+	case "ATTDEF":
+		return ATTDEF
+	case "ATTRIB":
+		return ATTRIB
 	default:
 		return -1
 	}

@@ -608,6 +608,7 @@ func (e *entityError) Unwrap() error { return e.err }
 func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, error) {
 	es := entity.New()
 	var poly *entity.Polyline
+	var ins *entity.Insert // INSERT followed by ATTRIB entities
 	start := 0
 	flush := func(end int) error {
 		chunk := data[start:end]
@@ -617,6 +618,17 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 		switch strings.ToUpper(strings.TrimSpace(chunk[0][1])) {
 		case "SEQEND":
 			poly = nil
+			ins = nil
+			return nil
+		case "ATTRIB":
+			e, err := ParseEntity(d, chunk)
+			if err != nil {
+				return &entityError{start, err}
+			}
+			if ins != nil {
+				ins.AddAttribute(e.(*entity.Attribute))
+			}
+			// an ATTRIB without INSERT is invalid and skipped
 			return nil
 		case "VERTEX":
 			e, err := ParseVertex(d, chunk)
@@ -634,6 +646,7 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 			return nil
 		}
 		poly = nil
+		ins = nil
 		e, err := ParseEntity(d, chunk)
 		if errors.Is(err, ErrUnknownEntity) {
 			return nil
@@ -641,8 +654,11 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 		if err != nil {
 			return &entityError{start, err}
 		}
-		if p, ok := e.(*entity.Polyline); ok {
-			poly = p
+		switch c := e.(type) {
+		case *entity.Polyline:
+			poly = c
+		case *entity.Insert:
+			ins = c
 		}
 		es = es.Add(e)
 		return nil
@@ -748,6 +764,10 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseSolid, nil
 	case "DIMENSION":
 		return ParseDimension, nil
+	case "ATTDEF":
+		return ParseAttdef, nil
+	case "ATTRIB":
+		return ParseAttrib, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}
@@ -1093,56 +1113,120 @@ func ParsePoint(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 // ParseText parses TEXT entities.
 func ParseText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	t := entity.NewText()
-	var err error
 	for _, dt := range data {
-		switch dt[0] {
-		default:
-			continue
-		case "8":
-			layer, err := d.Layer(dt[1], false)
-			if err == nil {
-				t.SetLayer(layer)
-			}
-		case "48":
-			err = setFloat(dt, func(val float64) { t.SetLtscale(val) })
-		case "10":
-			err = setFloat(dt, func(val float64) { t.Coord1[0] = val })
-		case "20":
-			err = setFloat(dt, func(val float64) { t.Coord1[1] = val })
-		case "30":
-			err = setFloat(dt, func(val float64) { t.Coord1[2] = val })
-		case "11":
-			err = setFloat(dt, func(val float64) { t.Coord2[0] = val })
-		case "21":
-			err = setFloat(dt, func(val float64) { t.Coord2[1] = val })
-		case "31":
-			err = setFloat(dt, func(val float64) { t.Coord2[2] = val })
-		case "40":
-			err = setFloat(dt, func(val float64) { t.Height = val })
-		case "50":
-			err = setFloat(dt, func(val float64) { t.Rotation = val })
-		case "41":
-			err = setFloat(dt, func(val float64) { t.WidthFactor = val })
-		case "51":
-			err = setFloat(dt, func(val float64) { t.ObliqueAngle = val })
-		case "1":
-			t.Value = dt[1]
-		case "7":
-			if s, ok := findStyle(d, dt[1]); ok {
-				t.Style = s
-			}
-		case "71":
-			err = setInt(dt, func(val int) { t.GenFlag = val })
-		case "72":
-			err = setInt(dt, func(val int) { t.HorizontalFlag = val })
-		case "73":
+		var err error
+		if dt[0] == "73" {
 			err = setInt(dt, func(val int) { t.VerticalFlag = val })
+		} else {
+			err = parseTextCode(d, t, dt)
 		}
 		if err != nil {
 			return t, err
 		}
 	}
 	return t, nil
+}
+
+// parseTextCode parses a group code of TEXT shared with ATTDEF and ATTRIB
+// (all except the vertical justification, 73 in TEXT and 74 in attributes).
+func parseTextCode(d *drawing.Drawing, t *entity.Text, dt [2]string) error {
+	var err error
+	switch dt[0] {
+	case "8":
+		if layer, lerr := d.Layer(dt[1], false); lerr == nil {
+			t.SetLayer(layer)
+		}
+	case "48":
+		err = setFloat(dt, func(val float64) { t.SetLtscale(val) })
+	case "10":
+		err = setFloat(dt, func(val float64) { t.Coord1[0] = val })
+	case "20":
+		err = setFloat(dt, func(val float64) { t.Coord1[1] = val })
+	case "30":
+		err = setFloat(dt, func(val float64) { t.Coord1[2] = val })
+	case "11":
+		err = setFloat(dt, func(val float64) { t.Coord2[0] = val })
+	case "21":
+		err = setFloat(dt, func(val float64) { t.Coord2[1] = val })
+	case "31":
+		err = setFloat(dt, func(val float64) { t.Coord2[2] = val })
+	case "40":
+		err = setFloat(dt, func(val float64) { t.Height = val })
+	case "50":
+		err = setFloat(dt, func(val float64) { t.Rotation = val })
+	case "41":
+		err = setFloat(dt, func(val float64) { t.WidthFactor = val })
+	case "51":
+		err = setFloat(dt, func(val float64) { t.ObliqueAngle = val })
+	case "1":
+		t.Value = dt[1]
+	case "7":
+		if s, ok := findStyle(d, dt[1]); ok {
+			t.Style = s
+		}
+	case "71":
+		err = setInt(dt, func(val int) { t.GenFlag = val })
+	case "72":
+		err = setInt(dt, func(val int) { t.HorizontalFlag = val })
+	}
+	return err
+}
+
+// ParseAttdef parses ATTDEF entities.
+func ParseAttdef(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	a := entity.NewAttributeDefinition("", "", "")
+	if s, ok := findStyle(d, "Standard"); ok {
+		a.Style = s
+	}
+	for _, dt := range data {
+		var err error
+		switch dt[0] {
+		case "2":
+			a.Tag = dt[1]
+		case "3":
+			a.Prompt = dt[1]
+		case "70":
+			err = setInt(dt, func(val int) { a.Flags = val })
+		case "73":
+			err = setInt(dt, func(val int) { a.FieldLength = val })
+		case "74":
+			err = setInt(dt, func(val int) { a.VerticalFlag = val })
+		default:
+			err = parseTextCode(d, a.Text, dt)
+		}
+		if err != nil {
+			return a, err
+		}
+	}
+	return a, nil
+}
+
+// ParseAttrib parses ATTRIB entities.
+// They are attached to the preceding INSERT by ParseEntities.
+func ParseAttrib(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	a := entity.NewAttribute("", "")
+	if s, ok := findStyle(d, "Standard"); ok {
+		a.Style = s
+	}
+	for _, dt := range data {
+		var err error
+		switch dt[0] {
+		case "2":
+			a.Tag = dt[1]
+		case "70":
+			err = setInt(dt, func(val int) { a.Flags = val })
+		case "73":
+			err = setInt(dt, func(val int) { a.FieldLength = val })
+		case "74":
+			err = setInt(dt, func(val int) { a.VerticalFlag = val })
+		default:
+			err = parseTextCode(d, a.Text, dt)
+		}
+		if err != nil {
+			return a, err
+		}
+	}
+	return a, nil
 }
 
 // OBJECTS

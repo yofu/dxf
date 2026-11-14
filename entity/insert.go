@@ -2,6 +2,7 @@ package entity
 
 import (
 	"math"
+	"strings"
 
 	"github.com/yofu/dxf/format"
 )
@@ -9,15 +10,17 @@ import (
 // Insert represents INSERT Entity (block reference).
 type Insert struct {
 	*entity
-	BlockName     string    // 2
-	Coord         []float64 // 10, 20, 30: insertion point
-	Scale         []float64 // 41, 42, 43: X, Y, Z scale factors (default 1)
-	Rotation      float64   // 50: rotation angle in degrees
-	Columns       int       // 70: column count (default 1)
-	Rows          int       // 71: row count (default 1)
-	ColumnSpacing float64   // 44
-	RowSpacing    float64   // 45
-	Direction     []float64 // 210, 220, 230: extrusion direction
+	BlockName     string       // 2
+	Coord         []float64    // 10, 20, 30: insertion point
+	Scale         []float64    // 41, 42, 43: X, Y, Z scale factors (default 1)
+	Rotation      float64      // 50: rotation angle in degrees
+	Columns       int          // 70: column count (default 1)
+	Rows          int          // 71: row count (default 1)
+	ColumnSpacing float64      // 44
+	RowSpacing    float64      // 45
+	Direction     []float64    // 210, 220, 230: extrusion direction
+	Attributes    []*Attribute // ATTRIB entities following the INSERT (66 = 1), ended by SEQEND
+	endhandle     int
 }
 
 // IsEntity is for Entity interface.
@@ -43,6 +46,9 @@ func NewInsert(name string) *Insert {
 func (i *Insert) Format(f format.Formatter) {
 	i.entity.Format(f)
 	f.WriteString(100, "AcDbBlockReference")
+	if len(i.Attributes) > 0 {
+		f.WriteInt(66, 1)
+	}
 	f.WriteString(2, i.BlockName)
 	for j := 0; j < 3; j++ {
 		f.WriteFloat((j+1)*10, i.Coord[j])
@@ -71,6 +77,16 @@ func (i *Insert) Format(f format.Formatter) {
 		for j := 0; j < 3; j++ {
 			f.WriteFloat(200+(j+1)*10, i.Direction[j])
 		}
+	}
+	if len(i.Attributes) > 0 {
+		for _, a := range i.Attributes {
+			a.Format(f)
+		}
+		f.WriteString(0, "SEQEND")
+		f.WriteHex(5, i.endhandle)
+		f.WriteHex(330, i.Handle()) // owner: INSERT
+		f.WriteString(100, "AcDbEntity")
+		f.WriteString(8, i.Layer().Name())
 	}
 }
 
@@ -110,4 +126,45 @@ func (i *Insert) Transform(p, base []float64, c, r int) []float64 {
 		i.Coord[1] + x*sin + y*cos,
 		i.Coord[2] + z,
 	}
+}
+
+// SetHandle sets handles to the INSERT, its attributes and SEQEND.
+func (i *Insert) SetHandle(v *int) {
+	i.entity.SetHandle(v)
+	if len(i.Attributes) == 0 {
+		return
+	}
+	for _, a := range i.Attributes {
+		a.SetOwner(i)
+		a.SetHandle(v)
+	}
+	i.endhandle = *v
+	(*v)++
+}
+
+// AddAttribute appends an attribute (ATTRIB) to the INSERT.
+func (i *Insert) AddAttribute(a *Attribute) {
+	a.SetOwner(i)
+	i.Attributes = append(i.Attributes, a)
+}
+
+// Attribute returns the attribute with tag (case-insensitive), or nil.
+func (i *Insert) Attribute(tag string) *Attribute {
+	for _, a := range i.Attributes {
+		if strings.EqualFold(a.Tag, tag) {
+			return a
+		}
+	}
+	return nil
+}
+
+// SetAttribute sets the value of the attribute with tag.
+// It returns false if there is no such attribute.
+func (i *Insert) SetAttribute(tag, value string) bool {
+	a := i.Attribute(tag)
+	if a == nil {
+		return false
+	}
+	a.Value = value
+	return true
 }

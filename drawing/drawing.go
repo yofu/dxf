@@ -354,8 +354,79 @@ func (d *Drawing) Insert(name string, x, y, z float64) (*entity.Insert, error) {
 	i := entity.NewInsert(b.Name)
 	i.Coord = []float64{x, y, z}
 	i.SetLayer(d.CurrentLayer)
+	if err := d.SyncAttributes(i); err != nil {
+		return nil, err
+	}
 	d.AddEntity(i)
 	return i, nil
+}
+
+// AttributeDefinition creates a new ATTDEF with tag, prompt and default value
+// at (x, y, z) with given height. Create it between BeginBlock and EndBlock
+// (or add it with Block.AddEntity) so that inserts of the block get the
+// attribute (see Insert and SyncAttributes).
+func (d *Drawing) AttributeDefinition(tag, prompt, defaultValue string, x, y, z, height float64) (*entity.AttributeDefinition, error) {
+	if tag == "" || strings.ContainsAny(tag, " ") {
+		return nil, fmt.Errorf("invalid attribute tag %q", tag)
+	}
+	a := entity.NewAttributeDefinition(tag, prompt, defaultValue)
+	a.Coord1 = []float64{x, y, z}
+	a.Coord2 = []float64{x, y, z}
+	a.Height = height
+	a.SetLayer(d.CurrentLayer)
+	a.Style = d.CurrentStyle
+	a.WidthFactor = a.Style.WidthFactor
+	d.AddEntity(a)
+	return a, nil
+}
+
+// SyncAttributes creates the attributes (ATTRIB) of ins from the attribute
+// definitions (ATTDEF, except constant ones) of its block, and updates the
+// position, height and rotation of existing attributes according to the
+// insertion point, scale and rotation of ins. Values of existing attributes
+// are kept. Insert calls it; call it again after changing ins.
+func (d *Drawing) SyncAttributes(ins *entity.Insert) error {
+	b, err := d.Block(ins.BlockName)
+	if err != nil {
+		return err
+	}
+	for _, e := range b.Entities {
+		def, ok := e.(*entity.AttributeDefinition)
+		if !ok || def.IsConstant() {
+			continue
+		}
+		a := ins.Attribute(def.Tag)
+		if a == nil {
+			a = entity.NewAttribute(def.Tag, def.Value)
+			ins.AddAttribute(a)
+		}
+		a.Flags = def.Flags
+		a.FieldLength = def.FieldLength
+		a.Coord1 = ins.Transform(def.Coord1, b.Coord, 0, 0)
+		align := def.Coord2
+		if len(align) < 3 {
+			align = def.Coord1
+		}
+		a.Coord2 = ins.Transform(align, b.Coord, 0, 0)
+		a.Height = def.Height * math.Abs(ins.Scale[1])
+		a.WidthFactor = def.WidthFactor
+		if ins.Scale[1] != 0 {
+			a.WidthFactor *= math.Abs(ins.Scale[0] / ins.Scale[1])
+		}
+		a.Rotation = def.Rotation + ins.Rotation
+		a.ObliqueAngle = def.ObliqueAngle
+		a.Style = def.Style
+		a.GenFlag = def.GenFlag
+		a.HorizontalFlag = def.HorizontalFlag
+		a.VerticalFlag = def.VerticalFlag
+		// attributes defined on layer "0" take the layer of the insert
+		if def.Layer().Name() == "0" {
+			a.SetLayer(ins.Layer())
+		} else {
+			a.SetLayer(def.Layer())
+		}
+	}
+	return nil
 }
 
 // Point creates a new POINT at (x, y, z).
@@ -626,6 +697,9 @@ func (d *Drawing) bbox(en entity.Entity, depth int) ([]float64, []float64) {
 	bmins := []float64{math.Inf(1), math.Inf(1), math.Inf(1)}
 	bmaxs := []float64{math.Inf(-1), math.Inf(-1), math.Inf(-1)}
 	for _, e := range b.Entities {
+		if _, ok := e.(*entity.AttributeDefinition); ok {
+			continue // not displayed in block references (ATTRIBs are)
+		}
 		emins, emaxs := d.bbox(e, depth+1)
 		for i := 0; i < 3; i++ {
 			bmins[i] = math.Min(bmins[i], emins[i])
@@ -659,6 +733,13 @@ func (d *Drawing) bbox(en entity.Entity, depth int) ([]float64, []float64) {
 					maxs[i] = math.Max(maxs[i], p[i])
 				}
 			}
+		}
+	}
+	for _, a := range ins.Attributes {
+		amins, amaxs := a.BBox()
+		for i := 0; i < 3; i++ {
+			mins[i] = math.Min(mins[i], amins[i])
+			maxs[i] = math.Max(maxs[i], amaxs[i])
 		}
 	}
 	return mins, maxs
