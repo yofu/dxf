@@ -27,3 +27,35 @@ var LineWidth = map[int]float64{
 	200: 2.00,
 	211: 2.11,
 }
+
+// Special lineweight values (code 370).
+const (
+	LineWeightByLayer = -1
+	LineWeightByBlock = -2
+	LineWeightDefault = -3
+)
+
+// NearestLineWeight returns a valid lineweight (code 370, 1/100 mm) for w:
+// w itself if it is valid or one of the special values (BYLAYER, BYBLOCK,
+// DEFAULT), otherwise the smallest valid value greater than w (211 at most).
+// Other negative values are treated as BYLAYER.
+func NearestLineWeight(w int) int {
+	switch {
+	case w == LineWeightByLayer || w == LineWeightByBlock || w == LineWeightDefault:
+		return w
+	case w < 0:
+		return LineWeightByLayer
+	case w > 211:
+		return 211
+	}
+	if _, ok := LineWidth[w]; ok {
+		return w
+	}
+	best := 211
+	for k := range LineWidth {
+		if k > w && k < best {
+			best = k
+		}
+	}
+	return best
+}

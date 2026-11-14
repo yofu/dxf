@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"strings"
+
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
@@ -41,16 +43,34 @@ type Colored interface {
 	IsColorByLayer() bool
 }
 
+// LineProperties is implemented by all entities in this package.
+// It gives access to the linetype (code 6) and the lineweight (code 370).
+type LineProperties interface {
+	// LineType returns the linetype; nil means BYLAYER.
+	LineType() *table.LineType
+	// LineTypeName returns the linetype name ("ByLayer" if BYLAYER).
+	LineTypeName() string
+	// SetLineType sets the linetype; nil means BYLAYER.
+	SetLineType(*table.LineType)
+	// LineWeight returns the lineweight in 1/100 mm, or
+	// table.LineWeightByLayer, table.LineWeightByBlock, table.LineWeightDefault.
+	LineWeight() int
+	// SetLineWeight sets the lineweight (see table.NearestLineWeight) and returns the value set.
+	SetLineWeight(int) int
+}
+
 // entity is common part of Entities.
 // It is embedded in each entities to implement Entity interface.
 type entity struct {
-	Type        EntityType     // 0
-	handle      int            // 5
-	blockRecord handle.Handler // 102 330
-	owner       handle.Handler // 330
-	layer       *table.Layer   // 8
-	color       int            // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
-	ltscale     float64        // 48
+	Type        EntityType      // 0
+	handle      int             // 5
+	blockRecord handle.Handler  // 102 330
+	owner       handle.Handler  // 330
+	layer       *table.Layer    // 8
+	lineType    *table.LineType // 6: nil = BYLAYER
+	color       int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
+	lineWeight  int             // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
+	ltscale     float64         // 48
 }
 
 // NewEntity creates a new entity.
@@ -62,6 +82,7 @@ func NewEntity(t EntityType) *entity {
 		owner:       nil,
 		layer:       table.LY_0,
 		color:       ColorByLayer,
+		lineWeight:  table.LineWeightByLayer,
 		ltscale:     1.0,
 	}
 	return e
@@ -82,8 +103,15 @@ func (e *entity) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbEntity")
 	f.WriteString(8, e.layer.Name())
 	// 62 is omitted if BYLAYER (DXF reference, common group codes for entities)
+	// 6, 62 and 370 are omitted if BYLAYER
+	if e.lineType != nil && !strings.EqualFold(e.lineType.Name(), "BYLAYER") {
+		f.WriteString(6, e.lineType.Name())
+	}
 	if e.color != ColorByLayer {
 		f.WriteInt(62, e.color)
+	}
+	if e.lineWeight != table.LineWeightByLayer {
+		f.WriteInt(370, e.lineWeight)
 	}
 	if e.ltscale != 1.0 {
 		f.WriteFloat(48, e.ltscale)
@@ -193,3 +221,42 @@ func SetColorIndex(e Entity, c int) bool {
 }
 
 var _ Colored = &entity{}
+
+// LineType returns the linetype; nil means BYLAYER.
+func (e *entity) LineType() *table.LineType {
+	return e.lineType
+}
+
+// LineTypeName returns the linetype name ("ByLayer" if BYLAYER).
+func (e *entity) LineTypeName() string {
+	if e.lineType == nil {
+		return table.LT_BYLAYER.Name()
+	}
+	return e.lineType.Name()
+}
+
+// SetLineType sets the linetype; nil means BYLAYER.
+// Use the linetypes of the drawing (Drawing.LineType) so that they are
+// defined in the LTYPE table.
+func (e *entity) SetLineType(lt *table.LineType) {
+	if lt != nil && strings.EqualFold(lt.Name(), "BYLAYER") {
+		lt = nil
+	}
+	e.lineType = lt
+}
+
+// LineWeight returns the lineweight in 1/100 mm, or
+// table.LineWeightByLayer (default), table.LineWeightByBlock, table.LineWeightDefault.
+func (e *entity) LineWeight() int {
+	return e.lineWeight
+}
+
+// SetLineWeight sets the lineweight in 1/100 mm. Values that are not valid
+// lineweights are rounded up to the next valid value (see table.NearestLineWeight).
+// It returns the value set.
+func (e *entity) SetLineWeight(w int) int {
+	e.lineWeight = table.NearestLineWeight(w)
+	return e.lineWeight
+}
+
+var _ LineProperties = &entity{}

@@ -634,7 +634,7 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 		case "VERTEX":
 			e, err := ParseVertex(d, chunk)
 			if err == nil {
-				err = parseCommon(e, chunk)
+				err = parseCommon(d, e, chunk)
 			}
 			if err != nil {
 				return &entityError{start, err}
@@ -690,16 +690,35 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	if err != nil {
 		return e, err
 	}
-	return e, parseCommon(e, data)
+	return e, parseCommon(d, e, data)
 }
 
 // parseCommon parses group codes common to all entities
 // that are not handled by each entity parser (62: color number).
-func parseCommon(e entity.Entity, data [][2]string) error {
+func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
+	lp, hasLine := e.(entity.LineProperties)
 	for _, dt := range data {
 		switch dt[0] {
 		case "62":
 			if err := setInt(dt, func(val int) { entity.SetColorIndex(e, val) }); err != nil {
+				return err
+			}
+		case "6":
+			if !hasLine {
+				continue
+			}
+			name := strings.TrimSpace(dt[1])
+			lt, err := d.LineType(name)
+			if err != nil {
+				// keep the reference even if the linetype is not defined
+				lt = table.NewLineType(name, "")
+			}
+			lp.SetLineType(lt)
+		case "370":
+			if !hasLine {
+				continue
+			}
+			if err := setInt(dt, func(val int) { lp.SetLineWeight(val) }); err != nil {
 				return err
 			}
 		}

@@ -65,6 +65,18 @@ ins.Scale = []float64{2.0, 2.0, 1.0}
 ins.Rotation = 45.0
 ```
 
+### Entity properties
+
+Color, linetype and lineweight are BYLAYER by default.
+
+```go
+l, _ := d.Line(0.0, 0.0, 0.0, 100.0, 0.0, 0.0)
+l.SetColor(color.Red)       // 62 (SetColorByBlock / SetColorByLayer)
+lt, _ := d.LineType("HIDDEN")
+l.SetLineType(lt)           // 6 (nil: BYLAYER)
+l.SetLineWeight(35)         // 370: 0.35 mm (table.LineWeightByBlock, ...)
+```
+
 ### Multiline text (MTEXT)
 
 ```go
