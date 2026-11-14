@@ -65,6 +65,18 @@ ins.Scale = []float64{2.0, 2.0, 1.0}
 ins.Rotation = 45.0
 ```
 
+### Multiline text (MTEXT)
+
+```go
+d := dxf.NewDrawing()
+// "\n" is converted to the paragraph break \P; width 0 means no wrapping.
+mt, _ := d.MText("first line\nsecond line", 0.0, 0.0, 0.0, 2.5, 0.0)
+mt.Attachment = entity.MTEXT_MIDDLE_CENTER
+mt.Rotation = 30.0 // degrees
+
+fmt.Println(mt.PlainText()) // text without MTEXT formatting codes
+```
+
 ### Text encoding (non-ASCII text)
 
 Up to AC1018, text in DXF files is stored in the code page of `$DWGCODEPAGE`.

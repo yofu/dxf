@@ -409,6 +409,23 @@ func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error
 	return t, nil
 }
 
+// MText creates a new MTEXT str at (x, y, z) with given height.
+// The insertion point is the top left corner (see MText.Attachment).
+// Line breaks ("\n", "\r\n") in str are converted to paragraph breaks (\P);
+// other MTEXT formatting codes in str are written as they are.
+// width is the reference rectangle width for word wrapping (0: no wrapping).
+func (d *Drawing) MText(str string, x, y, z, height, width float64) (*entity.MText, error) {
+	t := entity.NewMText()
+	t.Coord = []float64{x, y, z}
+	t.Height = height
+	t.Width = width
+	t.Value = strings.NewReplacer("\r\n", `\P`, "\n", `\P`).Replace(str)
+	t.SetLayer(d.CurrentLayer)
+	t.Style = d.CurrentStyle
+	d.AddEntity(t)
+	return t, nil
+}
+
 func (d *Drawing) addObject(o object.Object) {
 	d.Sections[5] = d.Sections[5].(object.Objects).Add(o)
 }
