@@ -16,6 +16,7 @@ var (
 
 // Layer represents LAYER SymbolTable.
 type Layer struct {
+	ExtGroups
 	handle       int
 	src          int // handle in the file it was read from (kept when writing)
 	owner        handle.Handler
@@ -54,6 +55,7 @@ func (l *Layer) IsSymbolTable() bool {
 func (l *Layer) Format(f format.Formatter) {
 	f.WriteString(0, "LAYER")
 	f.WriteHex(5, l.handle)
+	l.writeGroups(f)
 	if l.owner != nil {
 		f.WriteHex(330, l.owner.Handle())
 	}

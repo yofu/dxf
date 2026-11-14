@@ -7,6 +7,7 @@ import (
 
 // BlockRecord represents BLOCK_RECORD SymbolTable.
 type BlockRecord struct {
+	ExtGroups
 	handle int
 	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
@@ -38,6 +39,7 @@ func (b *BlockRecord) IsSymbolTable() bool {
 func (b *BlockRecord) Format(f format.Formatter) {
 	f.WriteString(0, "BLOCK_RECORD")
 	f.WriteHex(5, b.handle)
+	b.writeGroups(f)
 	if b.owner != nil {
 		f.WriteHex(330, b.owner.Handle())
 	}

@@ -201,3 +201,28 @@ for v in ["R2010", "R2018"]:
     mb.add_leader_line(mlr.ConnectionSide.left, [Vec2(-10, -10)])
     mb.build(insert=Vec2(20, 20))
     bd.saveas(os.path.join(out, f"ez_phaseb_{v}.dxf"))
+
+# phase C: XRECORD, DICTIONARYVAR, draw order, XCLIP, GEODATA, page setup,
+# image and wipeout variables
+from ezdxf import xclip as ezxclip
+cd = ezdxf.new("R2018", setup=True)
+cm = cd.modelspace()
+cl = cm.add_line((0, 0), (1, 0))
+xd = cl.new_extension_dict()
+xr = xd.add_xrecord("MYAPP")
+xr.reset([(1, "data"), (40, 1.5), (90, 7)])
+cd.rootdict.get_required_dict("AcDbVariableDictionary").add_dict_var("XCLIPFRAME", "2")
+cc = cm.add_circle((0, 0), 1)
+cp = cm.add_point((0, 0))
+cm.set_redraw_order([(cp.dxf.handle, "100"), (cc.dxf.handle, "101"), (cl.dxf.handle, "102")])
+cb = cd.blocks.new("B")
+cb.add_line((0, 0), (10, 10))
+ci = cm.add_blockref("B", (100, 0), dxfattribs={"rotation": 90})
+ezxclip.XClip(ci).set_wcs_clipping_path([(99, 1), (101, 5)])
+geo = cm.new_geodata()
+geo.dxf.design_point = (10, 20, 0)
+geo.dxf.reference_point = (139.7, 35.7, 0)
+cd.layouts.get("Layout1").page_setup(size=(420, 297), margins=(10, 10, 10, 20), units="mm", rotation=1, scale=50)
+cd.set_raster_variables(frame=1, quality=1, units="mm")
+cd.set_wipeout_variables(frame=2)
+cd.saveas(os.path.join(out, "ez_phasec.dxf"))

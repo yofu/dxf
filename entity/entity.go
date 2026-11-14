@@ -72,6 +72,7 @@ type entity struct {
 	srcHandle    string          // 5: handle in the file the entity was read from
 	xdata        [][2]string     // 1001-: extended data, kept as read
 	groups       [][2]string     // 102 groups (reactors, extension dictionary), kept as read
+	xdict        handle.Handler  // extension dictionary set (replaces the one read)
 	paperSpace   bool            // 67: entity is in paper space
 	invisible    bool            // 60: object visibility (1 = invisible)
 	lineType     *table.LineType // 6: nil = BYLAYER
@@ -461,7 +462,16 @@ func (e *entity) writeGroups102(f format.Formatter) {
 	}
 	wroteReactors := false
 	inReactors := false
+	skip := false
 	for _, p := range e.groups {
+		if e.xdict != nil && p[0] == "102" && strings.EqualFold(strings.TrimSpace(p[1]), "{ACAD_XDICTIONARY") {
+			skip = true
+			continue
+		}
+		if skip {
+			skip = p[0] != "102"
+			continue
+		}
 		if p[0] == "102" && strings.HasPrefix(p[1], "{") {
 			inReactors = strings.EqualFold(p[1], "{ACAD_REACTORS")
 			wroteReactors = wroteReactors || inReactors
@@ -480,6 +490,36 @@ func (e *entity) writeGroups102(f format.Formatter) {
 		f.WriteString(330, groupHandle)
 		f.WriteString(102, "}")
 	}
+	if e.xdict != nil {
+		f.WriteString(102, "{ACAD_XDICTIONARY")
+		f.WriteHex(360, e.xdict.Handle())
+		f.WriteString(102, "}")
+	}
+}
+
+// SetExtensionDictionary sets the extension dictionary of the entity
+// (written as 102 {ACAD_XDICTIONARY 360 ...}; Drawing.ExtensionDictionary
+// creates it).
+func (e *entity) SetExtensionDictionary(h handle.Handler) { e.xdict = h }
+
+// ExtensionDictionary returns the extension dictionary set (nil if none).
+func (e *entity) ExtensionDictionary() handle.Handler { return e.xdict }
+
+// ExtensionDictionaryHandle returns the handle of the extension dictionary
+// as read ("" if none).
+func (e *entity) ExtensionDictionaryHandle() string {
+	in := false
+	for _, p := range e.groups {
+		switch {
+		case p[0] == "102" && strings.EqualFold(strings.TrimSpace(p[1]), "{ACAD_XDICTIONARY"):
+			in = true
+		case p[0] == "102":
+			in = false
+		case in && p[0] == "360":
+			return strings.TrimSpace(p[1])
+		}
+	}
+	return ""
 }
 
 // TransparencyByBlock is the value of code 440 for BYBLOCK.

@@ -7,6 +7,7 @@ import (
 
 // View represents VIEW SymbolTable.
 type View struct {
+	ExtGroups
 	handle int
 	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
@@ -32,6 +33,7 @@ func (v *View) IsSymbolTable() bool {
 func (v *View) Format(f format.Formatter) {
 	f.WriteString(0, "VIEW")
 	f.WriteHex(5, v.handle)
+	v.writeGroups(f)
 	if v.owner != nil {
 		f.WriteHex(330, v.owner.Handle())
 	}

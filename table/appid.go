@@ -7,6 +7,7 @@ import (
 
 // AppID represents APPID SymbolTable.
 type AppID struct {
+	ExtGroups
 	handle int
 	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
@@ -32,6 +33,7 @@ func (a *AppID) IsSymbolTable() bool {
 func (a *AppID) Format(f format.Formatter) {
 	f.WriteString(0, "APPID")
 	f.WriteHex(5, a.handle)
+	a.writeGroups(f)
 	if a.owner != nil {
 		f.WriteHex(330, a.owner.Handle())
 	}

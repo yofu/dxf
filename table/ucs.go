@@ -7,6 +7,7 @@ import (
 
 // UCS represents UCS SymbolTable.
 type Ucs struct {
+	ExtGroups
 	handle int
 	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
@@ -32,6 +33,7 @@ func (u *Ucs) IsSymbolTable() bool {
 func (u *Ucs) Format(f format.Formatter) {
 	f.WriteString(0, "UCS")
 	f.WriteHex(5, u.handle)
+	u.writeGroups(f)
 	if u.owner != nil {
 		f.WriteHex(330, u.owner.Handle())
 	}

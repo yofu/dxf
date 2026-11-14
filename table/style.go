@@ -13,6 +13,7 @@ var (
 
 // Style represents STYLE SymbolTable.
 type Style struct {
+	ExtGroups
 	handle          int
 	src             int // handle in the file it was read from (kept when writing)
 	owner           handle.Handler
@@ -51,6 +52,7 @@ func (st *Style) IsSymbolTable() bool {
 func (st *Style) Format(f format.Formatter) {
 	f.WriteString(0, "STYLE")
 	f.WriteHex(5, st.handle)
+	st.writeGroups(f)
 	if st.owner != nil {
 		f.WriteHex(330, st.owner.Handle())
 	}

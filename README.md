@@ -188,7 +188,31 @@ d.AddLayout("Section") // its entities are in the block *Paper_Space0
 d.UseLayout("Section")
 d.Text("Section", 20, 20, 0, 5)
 d.UseLayout("Model")
+
+// page setup: A3 landscape in mm, margins (top, right, bottom, left), rotation, 1:50
+d.Layouts()[1].PageSetup(420, 297, object.PLOT_MILLIMETERS, [4]float64{10, 10, 10, 20}, 0, 50, "DWG To PDF.pc3")
 ```
+
+### Objects
+
+```go
+// XRECORD in the extension dictionary of an entity or a table entry
+d.SetXRecord(line, "MYAPP", [][2]string{{"1", "data"}, {"40", "1.5"}})
+x, _ := d.XRecord(line, "MYAPP") // x.Tags()
+d.SetVariable("XCLIPFRAME", "2")  // DICTIONARYVAR of AcDbVariableDictionary
+d.SetDrawOrder("", line)          // draw line on top (SORTENTSTABLE); d.DrawOrder("")
+d.ClipBlockReference(insert, [][]float64{{0, 0}, {10, 5}}) // XCLIP (SPATIAL_FILTER)
+d.SetRasterVariables(1, 1, 1)     // image frame, quality, units (ACAD_IMAGE_VARS)
+d.SetWipeoutVariables(2)          // wipeout frame (ACAD_WIPEOUT_VARS)
+for _, o := range d.Objects() {   // typed objects: *object.XRecord, *object.GeoData, ...
+	_ = o
+}
+```
+
+Objects read keep their group codes; the typed objects (XRECORD,
+DICTIONARY, DICTIONARYVAR, SORTENTSTABLE, SPATIAL_FILTER, IDBUFFER,
+LAYER_FILTER, FIELDLIST, FIELD, GEODATA, SUN, MATERIAL, VISUALSTYLE,
+PLOTSETTINGS, RASTERVARIABLES, WIPEOUTVARIABLES) read and change them.
 
 ### Editing
 

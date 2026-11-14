@@ -21,6 +21,11 @@ type Layout struct {
 	// "*Model_Space", "*Paper_Space" (the active paper space layout),
 	// "*Paper_Space0", "*Paper_Space1", ...
 	Block string
+	// PlotSettings is the page setup (AcDbPlotSettings; nil: defaults).
+	PlotSettings *PlotSettings
+	// LayoutData holds the other group codes of AcDbLayout as read
+	// (flags, UCS, extents, references; nil: defaults).
+	LayoutData [][2]string
 }
 
 // IsObject is for Object interface.
@@ -53,43 +58,47 @@ func (l *Layout) Format(f format.Formatter) {
 		f.WriteString(102, "}")
 		f.WriteHex(330, l.owner.Handle())
 	}
-	// plot settings (default values)
-	f.WriteString(100, "AcDbPlotSettings")
-	f.WriteString(1, "")
-	f.WriteString(2, "none_device")
-	f.WriteString(4, "")
-	f.WriteString(6, "")
-	for _, code := range []int{40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 140, 141} {
-		f.WriteFloat(code, 0.0)
+	ps := l.PlotSettings
+	if ps == nil {
+		ps = DefaultPlotSettings(l.IsModel())
 	}
-	f.WriteFloat(142, 1.0)
-	f.WriteFloat(143, 1.0)
-	if l.IsModel() {
-		f.WriteInt(70, 1712)
-	} else {
-		f.WriteInt(70, 688)
-	}
-	f.WriteInt(72, 1) // millimeters
-	f.WriteInt(73, 0)
-	if l.IsModel() {
-		f.WriteInt(74, 0) // last screen display
-	} else {
-		f.WriteInt(74, 5) // layout
-	}
-	f.WriteString(7, "")
-	f.WriteInt(75, 0)
-	f.WriteFloat(147, 1.0)
-	f.WriteFloat(148, 0.0)
-	f.WriteFloat(149, 0.0)
+	ps.format(f)
 
 	f.WriteString(100, "AcDbLayout")
 	f.WriteString(1, l.Name)
-	f.WriteInt(70, 1)
+	flags := "1"
+	for _, p := range l.LayoutData {
+		if p[0] == "70" {
+			flags = p[1]
+			break
+		}
+	}
+	f.WriteString(70, flags)
 	f.WriteInt(71, l.TabOrder)
 	f.WriteFloat(10, l.LimMin[0])
 	f.WriteFloat(20, l.LimMin[1])
 	f.WriteFloat(11, l.LimMax[0])
 	f.WriteFloat(21, l.LimMax[1])
+	if l.LayoutData != nil {
+		wroteRecord := false
+		for _, p := range l.LayoutData {
+			switch p[0] {
+			case "70":
+				continue
+			case "330":
+				if l.blockRecord != nil && !wroteRecord {
+					f.WriteHex(330, l.blockRecord.Handle())
+					wroteRecord = true
+					continue
+				}
+			}
+			writeRawPair(f, p)
+		}
+		if !wroteRecord && l.blockRecord != nil {
+			f.WriteHex(330, l.blockRecord.Handle())
+		}
+		return
+	}
 	for _, code := range []int{12, 22, 32} { // insertion base point
 		f.WriteFloat(code, 0.0)
 	}

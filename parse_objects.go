@@ -129,7 +129,12 @@ func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 			}
 			data = append(data, dt)
 		}
-		d.AddRawObject(object.NewRaw(o.name, h, data), rootKeys[h])
+		raw := object.NewRaw(o.name, h, data)
+		var obj object.Object = object.Wrap(raw)
+		if o.typ == "SORTENTSTABLE" {
+			obj = object.SortEntsTableFrom(raw)
+		}
+		d.AddObject(obj, rootKeys[h])
 	}
 	return nil
 }
@@ -147,6 +152,8 @@ func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[stri
 		handle         string
 		tab            int
 		limMin, limMax []float64
+		plot           *object.PlotSettings
+		data           [][2]string
 	}
 	var layouts []layout
 	for _, name := range sortedKeys(items) {
@@ -156,8 +163,26 @@ func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[stri
 			continue
 		}
 		l := layout{name: name, handle: h, limMin: []float64{0, 0}, limMax: []float64{420, 297}}
+		if ps := o.after("AcDbPlotSettings"); ps != nil {
+			end := len(ps)
+			for i, dt := range ps {
+				if dt[0] == "100" {
+					end = i
+					break
+				}
+			}
+			l.plot = object.PlotSettingsFrom(ps[:end])
+		}
+		l.data = [][2]string{}
 		for _, dt := range o.after("AcDbLayout") {
 			v := strings.TrimSpace(dt[1])
+			switch dt[0] {
+			case "1", "71", "10", "20", "11", "21":
+			default:
+				if dt[0] != "1001" && !(len(l.data) > 0 && l.data[len(l.data)-1][0] == "1001") {
+					l.data = append(l.data, dt)
+				}
+			}
 			switch dt[0] {
 			case "1":
 				l.name = dt[1]
@@ -192,6 +217,8 @@ func parseLayouts(d *drawing.Drawing, items map[string]string, byHandle map[stri
 				return err
 			}
 			ol.LimMin, ol.LimMax = l.limMin, l.limMax
+			ol.PlotSettings = l.plot
+			ol.LayoutData = l.data
 			ol.SetSourceHandle(l.handle)
 			modeled[l.handle] = true
 		}

@@ -20,6 +20,7 @@ var (
 
 // LineType represents LTYPE SymbolTable.
 type LineType struct {
+	ExtGroups
 	handle      int
 	src         int // handle in the file it was read from (kept when writing)
 	owner       handle.Handler
@@ -140,6 +141,7 @@ func (lt *LineType) IsSymbolTable() bool {
 func (lt *LineType) Format(f format.Formatter) {
 	f.WriteString(0, "LTYPE")
 	f.WriteHex(5, lt.handle)
+	lt.writeGroups(f)
 	if lt.owner != nil {
 		f.WriteHex(330, lt.owner.Handle())
 	}

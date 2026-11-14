@@ -19,6 +19,7 @@ import (
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/format"
+	"github.com/yofu/dxf/object"
 	"github.com/yofu/dxf/table"
 )
 
@@ -116,6 +117,30 @@ func phaseB() *drawing.Drawing {
 	must(d.MLine("WALL", [][]float64{{0, 0}, {4, 0}, {4, 4}, {0, 4}}, true, 1, entity.MLINE_TOP))
 	must(d.MultiLeaderText(`Note\Psecond line`, []float64{10, 10, 0}, 2.5,
 		[][]float64{{0, 0, 0}, {5, 8, 0}}, [][]float64{{30, 0, 0}}))
+	return d
+}
+
+// phaseC uses XRECORD (entity and layer), DICTIONARYVAR, draw order,
+// XCLIP, a page setup and image/wipeout variables.
+func phaseC() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	l := must(d.Line(0, 0, 0, 1, 0, 0))
+	must(d.SetXRecord(l, "MYAPP", [][2]string{{"1", "data"}, {"40", "1.5"}, {"90", "7"}}))
+	must(d.SetXRecord(d.Layers["0"], "LAYERDATA", [][2]string{{"1", "on layer"}}))
+	d.SetVariable("XCLIPFRAME", "2")
+	c := must(d.Circle(0, 0, 0, 1))
+	must(d.Point(0, 0, 0))
+	must(0, d.SetDrawOrder("", l))
+	_ = c
+	d.BeginBlock("B", 0, 0, 0)
+	must(d.Line(0, 0, 0, 10, 10, 0))
+	d.EndBlock()
+	ins := must(d.Insert("B", 100, 0, 0))
+	ins.Rotation = 90
+	must(d.ClipBlockReference(ins, [][]float64{{99, 1}, {101, 5}}))
+	d.Layouts()[1].PageSetup(420, 297, object.PLOT_MILLIMETERS, [4]float64{10, 10, 10, 20}, 1, 50, "")
+	d.SetRasterVariables(1, 1, 1)
+	d.SetWipeoutVariables(2)
 	return d
 }
 
@@ -340,7 +365,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
-		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more, "phaseb": phaseB,
+		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more, "phaseb": phaseB, "phasec": phaseC,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {

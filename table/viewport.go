@@ -7,6 +7,7 @@ import (
 
 // Viewport represents VPORT SymbolTable.
 type Viewport struct {
+	ExtGroups
 	handle        int
 	src           int // handle in the file it was read from (kept when writing)
 	owner         handle.Handler
@@ -63,6 +64,7 @@ func (v *Viewport) IsSymbolTable() bool {
 func (v *Viewport) Format(f format.Formatter) {
 	f.WriteString(0, "VPORT")
 	f.WriteHex(5, v.handle)
+	v.writeGroups(f)
 	if v.owner != nil {
 		f.WriteHex(330, v.owner.Handle())
 	}

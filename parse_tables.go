@@ -85,6 +85,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 					return err
 				}
 				setSourceHandle(st, tmpdata)
+				setExtensionGroups(st, tmpdata)
 				t.Add(st)
 				register(d, st)
 				tmpdata = make([][2]string, 0)
@@ -104,6 +105,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 			return err
 		}
 		setSourceHandle(st, tmpdata)
+		setExtensionGroups(st, tmpdata)
 		t.Add(st)
 		register(d, st)
 	}
@@ -524,4 +526,14 @@ func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 	ds.SetName(name)
 	ds.Extra = rawExtra(data, codes("2", "70", "40", "41", "42", "44", "73", "74", "77", "140", "147", "271"), false)
 	return ds, nil
+}
+
+// setExtensionGroups keeps the 102 groups of a table entry (extension
+// dictionary, reactors).
+func setExtensionGroups(st interface{}, data [][2]string) {
+	if g, ok := st.(interface{ SetExtensionGroups([][2]string) }); ok {
+		if gs := groups102(data); len(gs) > 0 {
+			g.SetExtensionGroups(gs)
+		}
+	}
 }

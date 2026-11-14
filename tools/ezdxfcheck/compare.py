@@ -35,6 +35,26 @@ def summary(doc):
     s["linetypes"] = sorted((lt.dxf.name, ltype_pattern(doc, lt)) for lt in doc.linetypes)
     s["styles"] = sorted((st.dxf.name, st.dxf.font) for st in doc.styles)
     s["dimstyles"] = sorted(ds.dxf.name for ds in doc.dimstyles)
+    # phase C: extension dictionaries, variables, draw order, XCLIP, page setups, ...
+    from ezdxf import xclip as ezxclip
+    xrecs = []
+    for e in doc.modelspace():
+        if e.has_extension_dict:
+            for k, v in e.get_extension_dict().items():
+                if v.dxftype() == "XRECORD":
+                    xrecs.append((e.dxftype(), k, [(t.code, r(t.value)) for t in v.tags]))
+        if e.dxftype() == "INSERT":
+            x = ezxclip.XClip(e)
+            if x.has_clipping_path:
+                xrecs.append(("XCLIP", r(list(x.get_wcs_clipping_path().vertices))))
+    s["xrecords"] = xrecs
+    vd = doc.rootdict.get("AcDbVariableDictionary")
+    s["variables"] = sorted((k, v.dxf.value) for k, v in vd.items()) if vd else []
+    s["draw order"] = [e.dxftype() for e in doc.modelspace().entities_in_redraw_order()]
+    s["page setups"] = sorted((l.name, l.dxf.get("paper_width"), l.dxf.get("paper_height"), l.dxf.get("plot_rotation"), l.dxf.get("scale_denominator"), l.dxf.get("left_margin")) for l in doc.layouts)
+    s["root objects"] = sorted((k, v.dxftype()) for k, v in doc.rootdict.items())
+    geo = doc.modelspace().get_geodata()
+    s["geodata"] = (r(geo.dxf.design_point), r(geo.dxf.reference_point)) if geo else None
     s["blocks"] = sorted((b.name, len(b)) for b in doc.blocks if not b.name.lower().startswith("*paper_space"))
     s["groups"] = sorted((n, len(g)) for n, g in doc.groups)
     ents = []

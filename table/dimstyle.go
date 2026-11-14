@@ -7,6 +7,7 @@ import (
 
 // DimStyle represents DIMSTYLE SymbolTable.
 type DimStyle struct {
+	ExtGroups
 	handle int
 	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
@@ -51,6 +52,7 @@ func (d *DimStyle) IsSymbolTable() bool {
 func (d *DimStyle) Format(f format.Formatter) {
 	f.WriteString(0, "DIMSTYLE")
 	f.WriteHex(105, d.handle)
+	d.writeGroups(f)
 	if d.owner != nil {
 		f.WriteHex(330, d.owner.Handle())
 	}
