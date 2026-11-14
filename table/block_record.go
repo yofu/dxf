@@ -10,6 +10,7 @@ type BlockRecord struct {
 	handle int
 	owner  handle.Handler
 	name   string
+	layout handle.Handler // 340: LAYOUT object (model space and paper space)
 }
 
 // NewBlockRecord creates a new BlockRecord.
@@ -34,6 +35,9 @@ func (b *BlockRecord) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbBlockTableRecord")
 	f.WriteString(2, b.name)
+	if b.layout != nil {
+		f.WriteHex(340, b.layout.Handle())
+	}
 	f.WriteInt(70, 0)
 	f.WriteInt(280, 1)
 	f.WriteInt(281, 0)
@@ -70,4 +74,14 @@ func (b *BlockRecord) SetOwner(h handle.Handler) {
 // Name returns a name of BLOCK_RECORD (code 2).
 func (b *BlockRecord) Name() string {
 	return b.name
+}
+
+// Layout returns the associated LAYOUT object (nil for ordinary blocks).
+func (b *BlockRecord) Layout() handle.Handler {
+	return b.layout
+}
+
+// SetLayout sets the associated LAYOUT object (code 340).
+func (b *BlockRecord) SetLayout(l handle.Handler) {
+	b.layout = l
 }

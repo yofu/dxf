@@ -10,10 +10,9 @@ type Blocks []*Block
 
 // New creates a new Blocks.
 func New() Blocks {
-	b := make([]*Block, 3)
+	b := make([]*Block, 2)
 	b[0] = NewBlock("*Model_Space", "")
 	b[1] = NewBlock("*Paper_Space", "")
-	b[2] = NewBlock("*Paper_Space0", "")
 	return b
 }
 

@@ -27,6 +27,7 @@ func (t *Table) Format(f format.Formatter) {
 	f.WriteString(0, "TABLE")
 	f.WriteString(2, t.name)
 	f.WriteHex(5, t.handle)
+	f.WriteString(330, "0") // owner: none
 	f.WriteString(100, "AcDbSymbolTable")
 	f.WriteInt(70, t.size)
 	if t.name == "DIMSTYLE" {

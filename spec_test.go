@@ -202,8 +202,8 @@ func TestBlocksAreKept(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if n := len(d2.Sections[drawing.BLOCKS].(block.Blocks)); n != 4 {
-		t.Errorf("round trip: want 4 blocks, got %d", n)
+	if n := len(d2.Sections[drawing.BLOCKS].(block.Blocks)); n != 3 { // *Model_Space, *Paper_Space, MYBLK
+		t.Errorf("round trip: want 3 blocks, got %d", n)
 	}
 }
 

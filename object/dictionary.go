@@ -11,6 +11,7 @@ import (
 // Dictionary represents DICTIONARY Object.
 type Dictionary struct {
 	handle int
+	owner  handle.Handler // nil: root dictionary (owner 0)
 	item   map[string]handle.Handler
 }
 
@@ -33,6 +34,14 @@ func NewDictionary() *Dictionary {
 func (d *Dictionary) Format(f format.Formatter) {
 	f.WriteString(0, "DICTIONARY")
 	f.WriteHex(5, d.handle)
+	if d.owner != nil {
+		f.WriteString(102, "{ACAD_REACTORS")
+		f.WriteHex(330, d.owner.Handle())
+		f.WriteString(102, "}")
+		f.WriteHex(330, d.owner.Handle())
+	} else {
+		f.WriteString(330, "0")
+	}
 	f.WriteString(100, "AcDbDictionary")
 	f.WriteInt(281, 1)
 	keys := make([]string, len(d.item))
@@ -84,4 +93,9 @@ func (d *Dictionary) AddItem(key string, value handle.Handler) error {
 	}
 	d.item[key] = value
 	return nil
+}
+
+// SetOwner sets the owner dictionary.
+func (d *Dictionary) SetOwner(h handle.Handler) {
+	d.owner = h
 }

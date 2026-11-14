@@ -34,6 +34,7 @@ type Drawing struct {
 	Sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
+	layouts      []*object.Layout // "Model" (*Model_Space), "Layout1" (*Paper_Space)
 	PlotStyle    handle.Handler
 	// savebuff is used internally for the io.Reader options.
 	savebuff *bytes.Buffer
@@ -73,8 +74,20 @@ func New() *Drawing {
 	d.addObject(wd)
 	d.addObject(ph)
 	d.groupdict = object.NewDictionary()
+	d.groupdict.SetOwner(d.dictionary)
 	d.addObject(d.groupdict)
 	d.dictionary.AddItem("ACAD_GROUP", d.groupdict)
+	layoutdict := object.NewDictionary()
+	layoutdict.SetOwner(d.dictionary)
+	d.addObject(layoutdict)
+	d.dictionary.AddItem("ACAD_LAYOUT", layoutdict)
+	for i, name := range []string{"Model", "Layout1"} {
+		l := object.NewLayout(name, i)
+		l.SetOwner(layoutdict)
+		layoutdict.AddItem(name, l)
+		d.addObject(l)
+		d.layouts = append(d.layouts, l)
+	}
 	d.PlotStyle = ph
 	d.Layers["0"].SetPlotStyle(d.PlotStyle)
 	return d
@@ -103,6 +116,48 @@ func (d *Drawing) Save() error {
 func (d *Drawing) SaveAs(filename string) error {
 	d.FileName = filename
 	return d.saveFile(filename)
+}
+
+// linkOwners sets the owner references required by AC1015 before writing:
+// BLOCK_RECORD <-> LAYOUT for model/paper space, BLOCK/ENDBLK -> BLOCK_RECORD,
+// and entities -> BLOCK_RECORD of the block (or *Model_Space) containing them.
+// A BLOCK_RECORD is added for blocks without one.
+func (d *Drawing) linkOwners() {
+	records := d.Sections[TABLES].(table.Tables)[table.BLOCK_RECORD]
+	record := func(name string) *table.BlockRecord {
+		r, err := records.Contains(name)
+		if err != nil {
+			br := table.NewBlockRecord(name)
+			records.Add(br)
+			return br
+		}
+		return r.(*table.BlockRecord)
+	}
+	for i, name := range []string{"*Model_Space", "*Paper_Space"} {
+		r := record(name)
+		if r.Layout() == nil {
+			r.SetLayout(d.layouts[i])
+		}
+		if r.Layout() == d.layouts[i] {
+			d.layouts[i].SetBlockRecord(r)
+		}
+	}
+	type owned interface{ SetOwner(handle.Handler) }
+	for _, b := range d.Blocks() {
+		r := record(b.Name)
+		b.SetRecord(r)
+		for _, e := range b.Entities {
+			if o, ok := e.(owned); ok {
+				o.SetOwner(r)
+			}
+		}
+	}
+	model := record("*Model_Space")
+	for _, e := range d.Entities() {
+		if o, ok := e.(owned); ok {
+			o.SetOwner(model)
+		}
+	}
 }
 
 // setHandle sets all the handles contained in Drawing.
@@ -462,6 +517,7 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	if d == nil {
 		return 0, nil
 	}
+	d.linkOwners()
 	d.setHandle()
 	d.formatter.Reset()
 	for _, s := range d.Sections {

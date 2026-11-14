@@ -14,6 +14,7 @@ func New() Tables {
 	// handles, owners and plot styles are not shared between drawings.
 	t := make([]*Table, 9)
 	t[0] = NewTable("VPORT")
+	t[0].Add(NewViewport("*Active")) // the active viewport of model space
 	t[1] = NewTable("LTYPE")
 	var continuous *LineType
 	for _, lt := range []*LineType{LT_BYLAYER, LT_BYBLOCK, LT_CONTINUOUS, LT_HIDDEN, LT_DASHDOT} {
@@ -32,10 +33,10 @@ func New() Tables {
 	t[6] = NewTable("APPID")
 	t[6].Add(NewAppID("ACAD"))
 	t[7] = NewTable("DIMSTYLE")
+	t[7].Add(NewDimStyle("Standard"))
 	t[8] = NewTable("BLOCK_RECORD")
 	t[8].Add(NewBlockRecord("*Model_Space"))
 	t[8].Add(NewBlockRecord("*Paper_Space"))
-	t[8].Add(NewBlockRecord("*Paper_Space0"))
 	return t
 }
 

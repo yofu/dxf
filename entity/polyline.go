@@ -45,6 +45,7 @@ func (p *Polyline) Format(f format.Formatter) {
 	}
 	f.WriteString(0, "SEQEND")
 	f.WriteHex(5, p.endhandle)
+	f.WriteHex(330, p.Handle()) // owner: POLYLINE
 	f.WriteString(100, "AcDbEntity")
 	f.WriteString(8, p.Layer().Name())
 }

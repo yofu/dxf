@@ -1,8 +1,11 @@
 package block
 
 import (
+	"strings"
+
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/format"
+	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
 )
 
@@ -14,6 +17,7 @@ type Block struct {
 	Entities    entity.Entities // entities between BLOCK and ENDBLK
 	handle      int
 	endhandle   int
+	record      handle.Handler // 330: BLOCK_RECORD of this block
 	layer       *table.Layer
 	Flag        int
 	Coord       []float64
@@ -36,7 +40,13 @@ func NewBlock(name, desc string) *Block {
 func (b *Block) Format(f format.Formatter) {
 	f.WriteString(0, "BLOCK")
 	f.WriteHex(5, b.handle)
+	if b.record != nil {
+		f.WriteHex(330, b.record.Handle())
+	}
 	f.WriteString(100, "AcDbEntity")
+	if b.isPaperSpace() {
+		f.WriteInt(67, 1)
+	}
 	f.WriteString(8, b.layer.Name())
 	f.WriteString(100, "AcDbBlockBegin")
 	f.WriteString(2, b.Name)
@@ -54,7 +64,13 @@ func (b *Block) Format(f format.Formatter) {
 	}
 	f.WriteString(0, "ENDBLK")
 	f.WriteHex(5, b.endhandle)
+	if b.record != nil {
+		f.WriteHex(330, b.record.Handle())
+	}
 	f.WriteString(100, "AcDbEntity")
+	if b.isPaperSpace() {
+		f.WriteInt(67, 1)
+	}
 	f.WriteString(8, b.layer.Name())
 	f.WriteString(100, "AcDbBlockEnd")
 }
@@ -100,4 +116,19 @@ func (b *Block) SetLayer(layer *table.Layer) {
 // AddEntity adds entities to the block.
 func (b *Block) AddEntity(es ...entity.Entity) {
 	b.Entities = append(b.Entities, es...)
+}
+
+// SetRecord sets the BLOCK_RECORD of the block (owner, code 330).
+func (b *Block) SetRecord(r handle.Handler) {
+	b.record = r
+}
+
+// Record returns the BLOCK_RECORD of the block.
+func (b *Block) Record() handle.Handler {
+	return b.record
+}
+
+// isPaperSpace reports whether the block is a paper space block (*Paper_Space...).
+func (b *Block) isPaperSpace() bool {
+	return strings.HasPrefix(strings.ToUpper(b.Name), "*PAPER_SPACE")
 }
