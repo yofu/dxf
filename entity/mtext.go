@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/table"
 )
@@ -35,6 +36,13 @@ const (
 	MTEXT_EXACT    = 2
 )
 
+// Background fill flags of MTEXT (code 90).
+const (
+	MTEXT_BG_COLOR      = 1  // fill with the background color (63, 421, 431)
+	MTEXT_BG_CANVAS     = 2  // fill with the drawing window color
+	MTEXT_BG_TEXT_FRAME = 16 // draw a text frame
+)
+
 // mtextChunk is the maximum length of a text chunk in group codes 1 and 3.
 const mtextChunk = 250
 
@@ -55,6 +63,14 @@ type MText struct {
 	LineSpacingStyle  int          // 73: MTEXT_AT_LEAST or MTEXT_EXACT
 	LineSpacingFactor float64      // 44: 0.25 to 4.00
 	Extrusion         []float64    // 210, 220, 230
+
+	// Background fill (AC1018 or later)
+	BackgroundFill         int     // 90: MTEXT_BG_* flags (0: off)
+	BackgroundScale        float64 // 45: fill box scale (border around the text, 1 to 5)
+	BackgroundColor        int     // 63: color number
+	BackgroundTrueColor    int     // 421: true color value (-1: not set)
+	BackgroundColorName    string  // 431: color name
+	BackgroundTransparency int     // 441: raw transparency value (0: not set)
 }
 
 // IsEntity is for Entity interface.
@@ -74,6 +90,9 @@ func NewMText() *MText {
 		LineSpacingStyle:  MTEXT_AT_LEAST,
 		LineSpacingFactor: 1.0,
 		Extrusion:         []float64{0.0, 0.0, 1.0},
+
+		BackgroundScale:     1.5,
+		BackgroundTrueColor: -1,
 	}
 }
 
@@ -109,6 +128,72 @@ func (t *MText) Format(f format.Formatter) {
 	}
 	f.WriteInt(73, t.LineSpacingStyle)
 	f.WriteFloat(44, t.LineSpacingFactor)
+	if t.BackgroundFill != 0 && format.AtLeast(f, format.R2004) {
+		if t.BackgroundFill&(MTEXT_BG_COLOR|MTEXT_BG_CANVAS) == 0 {
+			// text frame only: 45 and 63 are not written
+			f.WriteInt(90, t.BackgroundFill)
+			return
+		}
+		f.WriteFloat(45, t.BackgroundScale)
+		f.WriteInt(90, t.BackgroundFill)
+		f.WriteInt(63, t.BackgroundColor)
+		if t.BackgroundTrueColor >= 0 {
+			f.WriteInt(421, t.BackgroundTrueColor)
+		}
+		if t.BackgroundColorName != "" {
+			f.WriteString(431, t.BackgroundColorName)
+		}
+		if t.BackgroundTransparency != 0 {
+			f.WriteInt(441, t.BackgroundTransparency)
+		}
+	}
+}
+
+// SetBackgroundColor fills the background with color number aci.
+// scale is the fill box scale (border around the text based on the text
+// height, 1 to 5; AutoCAD's default is 1.5).
+func (t *MText) SetBackgroundColor(aci color.ColorNumber, scale float64) {
+	t.setBackground(MTEXT_BG_COLOR, int(aci), -1, scale)
+}
+
+// SetBackgroundTrueColor fills the background with a true color.
+// The nearest color number is also written (63).
+func (t *MText) SetBackgroundTrueColor(r, g, b uint8, scale float64) {
+	t.setBackground(MTEXT_BG_COLOR, int(color.Nearest(r, g, b)), color.RGB(r, g, b), scale)
+}
+
+// SetBackgroundCanvas fills the background with the drawing window color
+// (a background mask; 90 = MTEXT_BG_COLOR|MTEXT_BG_CANVAS as written by
+// AutoCAD for "Use drawing background color").
+func (t *MText) SetBackgroundCanvas(scale float64) {
+	t.setBackground(MTEXT_BG_COLOR|MTEXT_BG_CANVAS, 0, -1, scale)
+}
+
+// SetTextFrame sets or clears the text frame flag.
+func (t *MText) SetTextFrame(frame bool) {
+	if frame {
+		t.BackgroundFill |= MTEXT_BG_TEXT_FRAME
+	} else {
+		t.BackgroundFill &^= MTEXT_BG_TEXT_FRAME
+	}
+}
+
+// ClearBackground removes the background fill (the text frame is kept).
+func (t *MText) ClearBackground() {
+	t.BackgroundFill &= MTEXT_BG_TEXT_FRAME
+	t.BackgroundColor = 0
+	t.BackgroundTrueColor = -1
+	t.BackgroundColorName = ""
+	t.BackgroundTransparency = 0
+	t.BackgroundScale = 1.5
+}
+
+func (t *MText) setBackground(flag, aci, rgb int, scale float64) {
+	t.ClearBackground()
+	t.BackgroundFill |= flag
+	t.BackgroundColor = aci
+	t.BackgroundTrueColor = rgb
+	t.BackgroundScale = scale
 }
 
 // splitText splits s into chunks of at most n characters.

@@ -78,6 +78,17 @@ ln = m10.add_line((0, 0), (10, 0), dxfattribs={"layer": "GLASS"})
 ln.rgb = (255, 128, 0)
 ln.transparency = 0.5
 m10.add_circle((0, 0), 5, dxfattribs={"true_color": ezdxf.colors.rgb2int((1, 2, 3)), "color_name": "BOOK$NAME"})
+# gradient hatch and MTEXT background fill
+gh = m10.add_hatch()
+gh.paths.add_polyline_path([(0, 0), (10, 0), (10, 5), (0, 5)])
+gh.set_gradient((255, 0, 0), (0, 0, 255), rotation=30, name="CYLINDER")
+gh1 = m10.add_hatch()
+gh1.paths.add_polyline_path([(20, 0), (30, 0), (30, 5)])
+gh1.set_gradient((0, 128, 0), (191, 191, 191), rotation=0, centered=1, one_color=1, tint=0.75, name="SPHERICAL")
+m10.add_mtext("bg color").set_bg_color(2, scale=1.2)
+m10.add_mtext("bg rgb").set_bg_color((10, 20, 30), scale=2, text_frame=True)
+m10.add_mtext("bg canvas").set_bg_color("canvas")
+m10.add_mtext("frame").set_bg_color(None, text_frame=True)
 c10.saveas(os.path.join(out, "ez_r2010.dxf"))
 
 # other versions: Japanese text (UTF-8 for R2007 and later), true color, image, mline

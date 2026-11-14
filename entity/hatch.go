@@ -255,6 +255,7 @@ type Hatch struct {
 	Double       bool                // 77
 	PatternLines []*HatchPatternLine // 78, ...
 	Seeds        [][]float64         // 98, 10, 20
+	Gradient     *HatchGradient      // 450, ... (AC1018 or later; nil: no gradient)
 }
 
 // IsEntity is for Entity interface.
@@ -316,6 +317,7 @@ func (h *Hatch) SetSolid() {
 	h.PatternScale = 1
 	h.Double = false
 	h.PatternLines = nil
+	h.Gradient = nil
 }
 
 // predefined patterns (acadiso.pat): angle, base x, base y, offset x, offset y, dashes...
@@ -350,6 +352,7 @@ func (h *Hatch) SetPattern(name string, angle, scale float64) error {
 	h.PatternScale = scale
 	h.Double = false
 	h.PatternLines = patternLines(def, angle, scale)
+	h.Gradient = nil
 	return nil
 }
 
@@ -367,6 +370,7 @@ func (h *Hatch) SetUserPattern(angle, spacing float64, double bool) {
 		def = append(def, []float64{90, 0, 0, 0, 1})
 	}
 	h.PatternLines = patternLines(def, angle, spacing)
+	h.Gradient = nil
 }
 
 // patternLines transforms pattern definitions (.pat format: offset in the
@@ -432,6 +436,9 @@ func (h *Hatch) Format(f format.Formatter) {
 	for _, s := range h.Seeds {
 		f.WriteFloat(10, s[0])
 		f.WriteFloat(20, s[1])
+	}
+	if h.Gradient != nil && format.AtLeast(f, format.R2004) {
+		h.Gradient.format(f)
 	}
 }
 

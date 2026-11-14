@@ -113,7 +113,8 @@ func must2[A, B any](a A, b B, err error) (A, B) {
 	return a, b
 }
 
-// colors uses true colors and transparency (AC1024).
+// colors uses true colors, transparency, gradient hatches and MTEXT
+// background fill (AC1024).
 func colors() *drawing.Drawing {
 	d := dxf.NewDrawing()
 	must(0, d.SetVersion(format.R2010))
@@ -127,6 +128,21 @@ func colors() *drawing.Drawing {
 	c.SetTrueColor(1, 2, 3)
 	c.SetColorName("BOOK$NAME")
 	c.SetTransparencyByBlock()
+
+	// gradient hatches and MTEXT background fill
+	h := must(d.Hatch([]float64{0, 0}, []float64{10, 0}, []float64{10, 5}, []float64{0, 5}))
+	h.SetGradient(entity.GRADIENT_CYLINDER, color.RGB(255, 0, 0), color.RGB(0, 0, 255), 30)
+	h = must(d.Hatch([]float64{20, 0}, []float64{30, 0}, []float64{30, 5}))
+	h.SetOneColorGradient(entity.GRADIENT_SPHERICAL, color.RGB(0, 128, 0), 0.75, 0).Centered = 1
+	m := must(d.MText("bg color", 0, 10, 0, 1, 10))
+	m.SetBackgroundColor(color.Yellow, 1.2)
+	m = must(d.MText("bg rgb", 0, 15, 0, 1, 10))
+	m.SetBackgroundTrueColor(10, 20, 30, 2)
+	m.SetTextFrame(true)
+	m = must(d.MText("bg canvas", 0, 20, 0, 1, 10))
+	m.SetBackgroundCanvas(1.5)
+	m = must(d.MText("frame", 0, 25, 0, 1, 10))
+	m.SetTextFrame(true)
 	return d
 }
 

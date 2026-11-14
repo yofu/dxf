@@ -1611,6 +1611,18 @@ func ParseMText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setInt(dt, func(val int) { t.LineSpacingStyle = val })
 		case "44":
 			err = setFloat(dt, func(val float64) { t.LineSpacingFactor = val })
+		case "90":
+			err = setInt(dt, func(val int) { t.BackgroundFill = val })
+		case "45":
+			err = setFloat(dt, func(val float64) { t.BackgroundScale = val })
+		case "63":
+			err = setInt(dt, func(val int) { t.BackgroundColor = val })
+		case "421":
+			err = setInt(dt, func(val int) { t.BackgroundTrueColor = val })
+		case "431":
+			t.BackgroundColorName = dt[1]
+		case "441":
+			err = setInt(dt, func(val int) { t.BackgroundTransparency = val })
 		case "210":
 			err = setFloat(dt, func(val float64) { t.Extrusion[0] = val })
 		case "220":

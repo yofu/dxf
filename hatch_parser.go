@@ -2,6 +2,7 @@ package dxf
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -79,7 +80,7 @@ func (r *groupReader) point2(xcode, ycode string) ([]float64, error) {
 }
 
 // ParseHatch parses HATCH entities.
-// Source boundary objects (330 in paths) and gradient data are skipped.
+// Source boundary objects (330 in paths) are skipped.
 func ParseHatch(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	h := entity.NewHatch()
 	h.PatternName = ""
@@ -166,6 +167,8 @@ func ParseHatch(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 					h.Seeds = append(h.Seeds, p)
 				}
 			}
+		case "450":
+			h.Gradient, err = parseHatchGradient(r)
 		default:
 			r.next()
 		}
@@ -174,6 +177,61 @@ func ParseHatch(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		}
 	}
 	return h, nil
+}
+
+// parseHatchGradient parses gradient data starting with 450.
+// It returns nil if 450 is 0 (not a gradient fill).
+func parseHatchGradient(r *groupReader) (*entity.HatchGradient, error) {
+	kind, err := r.int("450", 0)
+	if err != nil {
+		return nil, err
+	}
+	g := &entity.HatchGradient{}
+	for !r.done() && err == nil {
+		switch r.peek() {
+		case "451":
+			r.next()
+		case "452":
+			var v int
+			v, err = r.int("452", 0)
+			g.OneColor = v == 1
+		case "453":
+			var n int
+			if n, err = r.int("453", 0); err != nil {
+				break
+			}
+			for i := 0; i < n && err == nil; i++ {
+				c := entity.GradientColor{}
+				if c.Value, err = r.float("463", 0); err != nil {
+					break
+				}
+				if c.ACI, err = r.int("63", 0); err != nil {
+					break
+				}
+				c.RGB, err = r.int("421", 0)
+				g.Colors = append(g.Colors, c)
+			}
+		case "460":
+			var v float64
+			v, err = r.float("460", 0)
+			g.Rotation = v * 180.0 / math.Pi
+		case "461":
+			g.Centered, err = r.float("461", 0)
+		case "462":
+			g.Tint, err = r.float("462", 0)
+		case "470":
+			g.Name = r.next()[1]
+		default:
+			if kind != 1 {
+				return nil, nil
+			}
+			return g, nil
+		}
+	}
+	if err != nil || kind != 1 {
+		return nil, err
+	}
+	return g, nil
 }
 
 func parseHatchBoundary(r *groupReader) (*entity.HatchBoundary, error) {

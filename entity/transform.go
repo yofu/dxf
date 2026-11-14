@@ -369,6 +369,9 @@ func (h *Hatch) ApplyTransform(t Transform) error {
 			l.Dashes[k] = t.Length(l.Dashes[k])
 		}
 	}
+	if h.Gradient != nil {
+		h.Gradient.Rotation += t.Angle
+	}
 	if !h.Solid {
 		h.PatternAngle += t.Angle
 		h.PatternScale = t.Length(h.PatternScale)

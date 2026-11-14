@@ -34,7 +34,7 @@ def summary(doc):
         elif t == "CIRCLE": d += [r(a.center), a.radius]
         elif t == "ARC": d += [r(a.center), a.radius, a.start_angle, a.end_angle]
         elif t == "TEXT": d += [a.text, r(a.insert), r(a.get("align_point")), a.halign, a.valign, a.style]
-        elif t == "MTEXT": d += [e.text, r(a.insert), a.char_height, a.width]
+        elif t == "MTEXT": d += [e.text, r(a.insert), a.char_height, a.width, a.get("bg_fill"), a.get("bg_fill_color"), a.get("bg_fill_true_color"), r(a.get("box_fill_scale"))]
         elif t == "LWPOLYLINE": d += [r(list(e.get_points("xyseb"))), e.closed, a.get("elevation", 0)]
         elif t == "POLYLINE": d += [e.get_mode(), len(e.vertices), r(a.elevation), [r(v.dxf.location) for v in e.vertices], [tuple(v.dxf.get(k, 0) for k in ("vtx0", "vtx1", "vtx2", "vtx3")) for v in e.vertices]]
         elif t == "SPLINE": d += [r(list(e.control_points)), r(list(e.weights)), r(list(e.fit_points)), r(list(e.knots)), a.flags]
@@ -42,7 +42,8 @@ def summary(doc):
         elif t == "POINT": d += [r(a.location), a.get("angle", 0)]
         elif t in ("SOLID", "TRACE", "3DFACE"): d += [r(a.vtx0), r(a.vtx1), r(a.vtx2), r(a.vtx3)]
         elif t in ("XLINE", "RAY"): d += [r(a.start), r(a.unit_vector)]
-        elif t == "HATCH": d += [a.pattern_name, a.solid_fill, len(e.paths), [type(p).__name__ for p in e.paths], r([(l.angle, *l.offset) for l in e.pattern.lines]) if e.pattern else None]
+        elif t == "HATCH": d += [a.pattern_name, a.solid_fill, len(e.paths), [type(p).__name__ for p in e.paths], r([(l.angle, *l.offset) for l in e.pattern.lines]) if e.pattern else None,
+                                (e.gradient.name, e.gradient.color1, e.gradient.color2, r(e.gradient.rotation), e.gradient.centered, e.gradient.one_color, r(e.gradient.tint)) if e.gradient else None]
         elif t == "DIMENSION": d += [e.dimtype, r(e.get_measurement()), len(e.get_geometry_block()) if e.get_geometry_block() else None, r(a.defpoint)]
         elif t == "LEADER": d += [r(list(e.vertices))]
         elif t == "INSERT": d += [a.name, r(a.insert), a.xscale, a.rotation, [(x.dxf.tag, x.dxf.text) for x in e.attribs]]

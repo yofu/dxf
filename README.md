@@ -92,6 +92,8 @@ d.SyncAttributes(ins) // after changing the insertion point, scale or rotation
 mt, _ := d.MText("first line\nsecond line", 0, 0, 0, 2.5, 0) // "\n" -> \P
 mt.Attachment = entity.MTEXT_MIDDLE_CENTER
 fmt.Println(mt.PlainText()) // without MTEXT formatting codes
+mt.SetBackgroundColor(color.Yellow, 1.5) // background fill (AC1018 or later);
+// also SetBackgroundTrueColor, SetBackgroundCanvas, SetTextFrame, ClearBackground
 
 // the graphics are generated in an anonymous block *Dn with the
 // dimension style (d.DimStyle("Standard"): arrow size, text height, ...)
@@ -104,6 +106,9 @@ d.LeaderText("Note", 0, []float64{0, 0, 0}, []float64{10, 10, 0})
 
 h, _ := d.Hatch([]float64{0, 0}, []float64{100, 0}, []float64{100, 50}) // solid fill
 h.SetPattern("ANSI31", 0, 1) // or SetUserPattern(angle, spacing, double)
+// gradient fill (AC1018 or later; a solid fill for older versions)
+h.SetGradient(entity.GRADIENT_LINEAR, color.RGB(255, 0, 0), color.RGB(0, 0, 255), 30)
+// or SetOneColorGradient(name, rgb, tint, rotation)
 
 e, _ := d.Ellipse([]float64{0, 0, 0}, []float64{10, 0, 0}, 0.5)
 e.Start, e.End = 0, math.Pi // elliptical arc
@@ -156,7 +161,8 @@ d.SetVersion(format.R2010) // R2000 (AC1015), R2004, R2007, R2010, R2013, R2018 
 
 Files of later versions keep their version when read and written again.
 The structure written is that of AC1015 with the additions of later
-versions this package knows (true color and transparency from AC1018,
+versions this package knows (true color, transparency, HATCH gradients
+and MTEXT background fill from AC1018,
 BLOCK_RECORD units/explodability from AC1021, class instance counts from
 AC1018); output of each version is validated with ezdxf. Objects and
 entities of later versions read from a file are kept as read.
