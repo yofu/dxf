@@ -436,6 +436,9 @@ func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, 
 		}
 	}
 	b.SetName(name)
+	if h, ok := value(data, "5"); ok {
+		b.SourceHandle = strings.TrimSpace(h)
+	}
 	b.Extra = rawExtra(data, codes("2", "70", "280", "281"), false)
 	return b, nil
 }
@@ -622,6 +625,7 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 			es = es.Add(u)
 			if h, ok := value(chunk, "5"); ok {
 				handles[strings.TrimSpace(h)] = u
+				u.SetSourceHandle(strings.TrimSpace(h))
 			}
 			return nil
 		}
@@ -640,6 +644,9 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 		}
 		if h, ok := value(chunk, "5"); ok {
 			handles[strings.TrimSpace(h)] = e
+			if sh, ok := e.(interface{ SetSourceHandle(string) }); ok {
+				sh.SetSourceHandle(strings.TrimSpace(h))
+			}
 		}
 		es = es.Add(e)
 		return nil
@@ -1329,11 +1336,6 @@ func ParseAttrib(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 }
 
 // OBJECTS
-
-// ParseObjects parses OBJECTS section.
-func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
-	return nil
-}
 
 // ParseSpline parses SPLINE entities.
 func ParseSpline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {

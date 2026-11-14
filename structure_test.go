@@ -186,6 +186,16 @@ func checkStructure(t *testing.T, d *drawing.Drawing) {
 			t.Errorf("BLOCK_RECORD %s: 340 -> %s %s which refers to %s", name, l.typ, lh, l.last(330))
 		}
 	}
+	// every LAYOUT refers to a BLOCK_RECORD which refers back to it
+	for _, r := range recs {
+		if r.typ != "LAYOUT" {
+			continue
+		}
+		rec := handles[r.last(330)]
+		if back, _ := rec.get(340); rec.typ != "BLOCK_RECORD" || back != r.handle() {
+			t.Errorf("LAYOUT %s: 330 -> %s %s, which refers to %s", r.handle(), rec.typ, r.last(330), back)
+		}
+	}
 
 	// entities: owner is the BLOCK_RECORD of the containing block
 	currentBlock := ""

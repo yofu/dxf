@@ -69,6 +69,7 @@ type entity struct {
 	owner       handle.Handler  // 330
 	layer       *table.Layer    // 8
 	typeName    string          // 0: entity type name of Unknown entities
+	srcHandle   string          // 5: handle in the file the entity was read from
 	xdata       [][2]string     // 1001-: extended data, kept as read
 	paperSpace  bool            // 67: entity is in paper space
 	invisible   bool            // 60: object visibility (1 = invisible)
@@ -414,4 +415,16 @@ func writeExtrusion(f format.Formatter, e []float64) {
 // Ltscale returns the linetype scale (code 48).
 func (e *entity) Ltscale() float64 {
 	return e.ltscale
+}
+
+// SourceHandle returns the handle (code 5) of the entity in the file it
+// was read from, or "" for new entities. Handles are renumbered when a
+// drawing is written; this is for resolving references while reading.
+func (e *entity) SourceHandle() string {
+	return e.srcHandle
+}
+
+// SetSourceHandle sets the handle of the entity in the file it was read from.
+func (e *entity) SetSourceHandle(h string) {
+	e.srcHandle = h
 }

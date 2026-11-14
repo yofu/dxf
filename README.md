@@ -136,6 +136,13 @@ d.LwPolyline(true, []float64{10, 10}, []float64{410, 10}, []float64{410, 287}, [
 // around (5000, 2500) with 6000 units in its height
 d.Viewport([]float64{210, 148.5, 0}, 380, 250, []float64{5000, 2500}, 6000)
 d.ModelSpace()
+
+// other layouts (their entities are in the blocks *Paper_Space0, ...)
+d.RenameLayout("Layout1", "Plan")
+d.AddLayout("Section")
+d.UseLayout("Section") // following entities are created in "Section"
+d.Viewport([]float64{210, 148.5, 0}, 380, 250, []float64{0, 0}, 3000)
+d.UseLayout("Model")
 ```
 
 ### Multiline text (MTEXT)
@@ -178,12 +185,12 @@ When a file is read and written again, data this package does not
 interpret is kept: unknown header variables (`Header().Extra`), entities of
 unsupported types (`entity.Unknown`), extended data (`XData()` /
 `SetXData()`, APPIDs are registered when writing) and other values of
-LAYER, VIEW, UCS and DIMSTYLE entries (`Extra`).
+LAYER, VIEW, UCS, DIMSTYLE and BLOCK_RECORD entries (`Extra`).
+Groups (`Groups`) and layouts (`Layouts()`) are read from the OBJECTS section.
 
 Not kept: handles (renumbered when writing) and references by handle,
-unsupported entities referring to other objects (e.g. IMAGE), the OBJECTS
-and CLASSES sections (except the dictionaries and layouts this package
-creates).
+unsupported entities referring to other objects (e.g. IMAGE), the other
+objects of the OBJECTS section and the CLASSES section.
 
 ## Installation
 

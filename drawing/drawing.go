@@ -34,13 +34,15 @@ type Drawing struct {
 	Sections     []Section
 	dictionary   *object.Dictionary
 	groupdict    *object.Dictionary
-	layouts      []*object.Layout // "Model" (*Model_Space), "Layout1" (*Paper_Space)
+	layouts      []*object.Layout // "Model" (*Model_Space), "Layout1" (*Paper_Space), ...
+	layoutdict   *object.Dictionary
 	PlotStyle    handle.Handler
 	// savebuff is used internally for the io.Reader options.
 	savebuff *bytes.Buffer
 
-	currentBlock *block.Block // block being defined between BeginBlock and EndBlock
-	paperSpace   bool         // new entities are created in paper space
+	currentBlock  *block.Block // block being defined between BeginBlock and EndBlock
+	paperSpace    bool         // new entities are created in paper space
+	inLayoutBlock bool         // currentBlock is the block of a (non-active) layout
 }
 
 // New creates a new Drawing.
@@ -78,14 +80,15 @@ func New() *Drawing {
 	d.groupdict.SetOwner(d.dictionary)
 	d.addObject(d.groupdict)
 	d.dictionary.AddItem("ACAD_GROUP", d.groupdict)
-	layoutdict := object.NewDictionary()
-	layoutdict.SetOwner(d.dictionary)
-	d.addObject(layoutdict)
-	d.dictionary.AddItem("ACAD_LAYOUT", layoutdict)
+	d.layoutdict = object.NewDictionary()
+	d.layoutdict.SetOwner(d.dictionary)
+	d.addObject(d.layoutdict)
+	d.dictionary.AddItem("ACAD_LAYOUT", d.layoutdict)
 	for i, name := range []string{"Model", "Layout1"} {
 		l := object.NewLayout(name, i)
-		l.SetOwner(layoutdict)
-		layoutdict.AddItem(name, l)
+		l.Block = []string{"*Model_Space", "*Paper_Space"}[i]
+		l.SetOwner(d.layoutdict)
+		d.layoutdict.AddItem(name, l)
 		d.addObject(l)
 		d.layouts = append(d.layouts, l)
 	}
@@ -134,14 +137,10 @@ func (d *Drawing) linkOwners() {
 		}
 		return r.(*table.BlockRecord)
 	}
-	for i, name := range []string{"*Model_Space", "*Paper_Space"} {
-		r := record(name)
-		if r.Layout() == nil {
-			r.SetLayout(d.layouts[i])
-		}
-		if r.Layout() == d.layouts[i] {
-			d.layouts[i].SetBlockRecord(r)
-		}
+	for _, l := range d.layouts {
+		r := record(l.Block)
+		r.SetLayout(l)
+		l.SetBlockRecord(r)
 	}
 	type owned interface{ SetOwner(handle.Handler) }
 	for _, b := range d.Blocks() {
@@ -340,6 +339,9 @@ func (d *Drawing) BeginBlock(name string, x, y, z float64) (*block.Block, error)
 
 // EndBlock ends the block definition started by BeginBlock.
 func (d *Drawing) EndBlock() error {
+	if d.inLayoutBlock {
+		return errors.New("no block is being defined (a layout is in use; call UseLayout or ModelSpace)")
+	}
 	if d.currentBlock == nil {
 		return errors.New("no block is being defined")
 	}
@@ -839,7 +841,7 @@ func (d *Drawing) Hatch(vertices ...[]float64) (*entity.Hatch, error) {
 // header ($CECOLOR, $CELTYPE, $CELWEIGHT, $CELTSCALE) to a new entity.
 func (d *Drawing) applyCurrent(e entity.Entity) {
 	e.SetLayer(d.CurrentLayer)
-	if sp, ok := e.(entity.SpaceSelector); ok && d.currentBlock == nil {
+	if sp, ok := e.(entity.SpaceSelector); ok && (d.currentBlock == nil || d.inLayoutBlock) {
 		sp.SetPaperSpace(d.paperSpace)
 	}
 	h := d.Header()

@@ -16,6 +16,10 @@ type Layout struct {
 	blockRecord handle.Handler // 330 (AcDbLayout)
 	LimMin      []float64      // 10, 20
 	LimMax      []float64      // 11, 21
+	// Block is the name of the block of the layout:
+	// "*Model_Space", "*Paper_Space" (the active paper space layout),
+	// "*Paper_Space0", "*Paper_Space1", ...
+	Block string
 }
 
 // IsObject is for Object interface.

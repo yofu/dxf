@@ -99,3 +99,8 @@ func (d *Dictionary) AddItem(key string, value handle.Handler) error {
 func (d *Dictionary) SetOwner(h handle.Handler) {
 	d.owner = h
 }
+
+// RemoveItem removes the item with key.
+func (d *Dictionary) RemoveItem(key string) {
+	delete(d.item, key)
+}

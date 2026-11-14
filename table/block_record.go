@@ -12,6 +12,9 @@ type BlockRecord struct {
 	name   string
 	layout handle.Handler // 340: LAYOUT object (model space and paper space)
 
+	// SourceHandle is the handle (code 5) in the file the record was read from.
+	SourceHandle string
+
 	InsUnits   int  // 70: insertion units
 	Explodable bool // 280
 	Scalable   bool // 281: uniform scaling only if false

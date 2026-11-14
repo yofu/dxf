@@ -14,6 +14,7 @@ type Group struct {
 	owner       handle.Handler
 	entities    []entity.Entity
 	selectable  bool
+	Unnamed     bool // 70: unnamed (anonymous) group, named *An
 }
 
 // IsObject is for Object interface.
@@ -53,7 +54,11 @@ func (g *Group) Format(f format.Formatter) {
 	f.WriteHex(330, g.owner.Handle())
 	f.WriteString(100, "AcDbGroup")
 	f.WriteString(300, g.Description)
-	f.WriteInt(70, 0)
+	if g.Unnamed {
+		f.WriteInt(70, 1)
+	} else {
+		f.WriteInt(70, 0)
+	}
 	if g.selectable {
 		f.WriteInt(71, 1)
 	} else {
@@ -93,4 +98,19 @@ func (g *Group) AddEntity(es ...entity.Entity) {
 		e.SetBlockRecord(g)
 	}
 	g.entities = append(g.entities, es...)
+}
+
+// Selectable reports whether the group is selectable (code 71).
+func (g *Group) Selectable() bool {
+	return g.selectable
+}
+
+// SetSelectable sets whether the group is selectable (code 71).
+func (g *Group) SetSelectable(s bool) {
+	g.selectable = s
+}
+
+// Entities returns the entities of the group.
+func (g *Group) Entities() []entity.Entity {
+	return g.entities
 }
