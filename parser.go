@@ -724,6 +724,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseText, nil
 	case "SPLINE":
 		return ParseSpline, nil
+	case "INSERT":
+		return ParseInsert, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}
@@ -1188,4 +1190,58 @@ func ParseSpline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		}
 	}
 	return s, nil
+}
+
+// ParseInsert parses INSERT entities.
+// ATTRIB entities following an INSERT are not supported yet and are skipped.
+func ParseInsert(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	ins := entity.NewInsert("")
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		default:
+			continue
+		case "2":
+			ins.BlockName = dt[1]
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				ins.SetLayer(layer)
+			}
+		case "48":
+			err = setFloat(dt, func(val float64) { ins.SetLtscale(val) })
+		case "10":
+			err = setFloat(dt, func(val float64) { ins.Coord[0] = val })
+		case "20":
+			err = setFloat(dt, func(val float64) { ins.Coord[1] = val })
+		case "30":
+			err = setFloat(dt, func(val float64) { ins.Coord[2] = val })
+		case "41":
+			err = setFloat(dt, func(val float64) { ins.Scale[0] = val })
+		case "42":
+			err = setFloat(dt, func(val float64) { ins.Scale[1] = val })
+		case "43":
+			err = setFloat(dt, func(val float64) { ins.Scale[2] = val })
+		case "50":
+			err = setFloat(dt, func(val float64) { ins.Rotation = val })
+		case "70":
+			err = setInt(dt, func(val int) { ins.Columns = val })
+		case "71":
+			err = setInt(dt, func(val int) { ins.Rows = val })
+		case "44":
+			err = setFloat(dt, func(val float64) { ins.ColumnSpacing = val })
+		case "45":
+			err = setFloat(dt, func(val float64) { ins.RowSpacing = val })
+		case "210":
+			err = setFloat(dt, func(val float64) { ins.Direction[0] = val })
+		case "220":
+			err = setFloat(dt, func(val float64) { ins.Direction[1] = val })
+		case "230":
+			err = setFloat(dt, func(val float64) { ins.Direction[2] = val })
+		}
+		if err != nil {
+			return ins, err
+		}
+	}
+	return ins, nil
 }

@@ -51,6 +51,20 @@ func main() {
 
 ![Torus](example/torus/torus.png)
 
+### Blocks
+
+```go
+d := dxf.NewDrawing()
+d.BeginBlock("BOLT", 0.0, 0.0, 0.0) // entities below are added to the block
+d.Circle(0.0, 0.0, 0.0, 5.0)
+d.Line(-5.0, 0.0, 0.0, 5.0, 0.0, 0.0)
+d.EndBlock()
+
+ins, _ := d.Insert("BOLT", 100.0, 50.0, 0.0) // INSERT (block reference)
+ins.Scale = []float64{2.0, 2.0, 1.0}
+ins.Rotation = 45.0
+```
+
 ## Installation
 
 ```

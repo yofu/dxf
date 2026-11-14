@@ -96,3 +96,8 @@ func (b *Block) Layer() *table.Layer {
 func (b *Block) SetLayer(layer *table.Layer) {
 	b.layer = layer
 }
+
+// AddEntity adds entities to the block.
+func (b *Block) AddEntity(es ...entity.Entity) {
+	b.Entities = append(b.Entities, es...)
+}

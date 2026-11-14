@@ -103,7 +103,7 @@ func TestBulgeCenter(t *testing.T) {
 
 func TestUnsupportedEntitiesAreSkipped(t *testing.T) {
 	src := entitiesSection("0\nLINE\n8\n0\n10\n0\n20\n0\n11\n1\n21\n1\n" +
-		"0\nINSERT\n8\n0\n2\nB\n10\n0\n20\n0\n" +
+		"0\nHATCH\n8\n0\n2\nSOLID\n10\n0\n20\n0\n" +
 		"0\nPOINT\n8\n0\n10\n3\n20\n4\n")
 	d, err := FromStringData(src)
 	if err != nil {
@@ -424,5 +424,124 @@ func TestEntityColorFromFile(t *testing.T) {
 	}
 	if !d.Entities()[1].(entity.Colored).IsColorByLayer() {
 		t.Error("default color should be BYLAYER")
+	}
+}
+
+func TestBlockAndInsert(t *testing.T) {
+	d := NewDrawing()
+	if _, err := d.BeginBlock("BOLT", 1, 1, 0); err != nil {
+		t.Fatal(err)
+	}
+	d.Line(1, 1, 0, 2, 1, 0)
+	d.Circle(1, 1, 0, 0.5)
+	if err := d.EndBlock(); err != nil {
+		t.Fatal(err)
+	}
+	if len(d.Entities()) != 0 {
+		t.Fatalf("entities between BeginBlock/EndBlock must go to the block, got %d in ENTITIES", len(d.Entities()))
+	}
+	if _, err := d.AddBlock("bolt", 0, 0, 0); err == nil {
+		t.Error("duplicate block name (case-insensitive) should be an error")
+	}
+	if _, err := d.Insert("NUT", 0, 0, 0); err == nil {
+		t.Error("insert of undefined block should be an error")
+	}
+	if d.EndBlock() == nil {
+		t.Error("EndBlock without BeginBlock should be an error")
+	}
+
+	ins, err := d.Insert("BOLT", 10, 20, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ins.Scale = []float64{2, 3, 1}
+	ins.Rotation = 90
+	ins.Columns, ins.Rows = 2, 3
+	ins.ColumnSpacing, ins.RowSpacing = 5, 6
+	ins.SetColor(color.Red)
+
+	out := writeString(t, d)
+	if !strings.Contains(out, "\n0\nBLOCK_RECORD\n") || !strings.Contains(out, "\n2\nBOLT\n70\n0\n280\n") {
+		t.Error("BLOCK_RECORD for BOLT should be written")
+	}
+	if !strings.Contains(out, "AcDbBlockReference\n2\nBOLT\n") {
+		t.Error("INSERT should be written with AcDbBlockReference")
+	}
+
+	d2, err := FromStringData(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := d2.Block("BOLT")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(b.Entities) != 2 || b.Coord[0] != 1 || b.Coord[1] != 1 {
+		t.Errorf("block: %d entities, base %v", len(b.Entities), b.Coord)
+	}
+	got := d2.Entities()[0].(*entity.Insert)
+	if got.BlockName != "BOLT" || got.Coord[0] != 10 || got.Coord[1] != 20 ||
+		got.Scale[0] != 2 || got.Scale[1] != 3 || got.Scale[2] != 1 || got.Rotation != 90 ||
+		got.Columns != 2 || got.Rows != 3 || got.ColumnSpacing != 5 || got.RowSpacing != 6 ||
+		got.ColorIndex() != int(color.Red) {
+		t.Errorf("insert round trip: %+v", got)
+	}
+}
+
+func TestInsertExtents(t *testing.T) {
+	d := NewDrawing()
+	d.BeginBlock("L", 0, 0, 0)
+	d.Line(0, 0, 0, 1, 0, 0)
+	d.EndBlock()
+	d.BeginBlock("NESTED", 0, 0, 0)
+	ins, _ := d.Insert("L", 0, 0, 0)
+	ins.Scale[0] = 3
+	d.EndBlock()
+
+	// L: scale 2, rotate 90 deg at (10, 10) => (10,10)-(10,12)
+	ins, _ = d.Insert("L", 10, 10, 0)
+	ins.Scale[0] = 2
+	ins.Rotation = 90
+	d.SetExt()
+	h := d.Header()
+	if !cmpF64(h.ExtMin[0], 10) || !cmpF64(h.ExtMin[1], 10) || !cmpF64(h.ExtMax[0], 10) || !cmpF64(h.ExtMax[1], 12) {
+		t.Errorf("rotated insert: got %v - %v", h.ExtMin, h.ExtMax)
+	}
+
+	// NESTED (L scaled by 3) at (-5, 0) => (-5,0)-(-2,0)
+	d.Insert("NESTED", -5, 0, 0)
+	d.SetExt()
+	if !cmpF64(h.ExtMin[0], -5) || !cmpF64(h.ExtMax[1], 12) {
+		t.Errorf("nested insert: got %v - %v", h.ExtMin, h.ExtMax)
+	}
+
+	// array: 3 columns with spacing 10 => x up to 20+1
+	d = NewDrawing()
+	d.BeginBlock("L", 0, 0, 0)
+	d.Line(0, 0, 0, 1, 0, 0)
+	d.EndBlock()
+	ins, _ = d.Insert("L", 0, 0, 0)
+	ins.Columns, ins.ColumnSpacing = 3, 10
+	d.SetExt()
+	if h := d.Header(); !cmpF64(h.ExtMax[0], 21) {
+		t.Errorf("array insert: ExtMax %v", h.ExtMax)
+	}
+}
+
+func TestInsertWithAttributesFromFile(t *testing.T) {
+	// ATTRIB entities are not supported yet: they and SEQEND are skipped.
+	src := entitiesSection("0\nINSERT\n8\n0\n66\n1\n2\nB\n10\n1\n20\n2\n" +
+		"0\nATTRIB\n8\n0\n10\n1\n20\n2\n40\n1\n1\nVALUE\n2\nTAG\n70\n0\n" +
+		"0\nSEQEND\n8\n0\n" +
+		"0\nPOINT\n8\n0\n10\n3\n20\n4\n")
+	d, err := FromStringData(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d.Entities()) != 2 {
+		t.Fatalf("want INSERT and POINT, got %d entities", len(d.Entities()))
+	}
+	if ins := d.Entities()[0].(*entity.Insert); ins.BlockName != "B" || ins.Coord[1] != 2 {
+		t.Errorf("insert: %+v", ins)
 	}
 }

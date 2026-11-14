@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"os"
+	"strings"
 
 	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/class"
@@ -34,6 +36,8 @@ type Drawing struct {
 	PlotStyle    handle.Handler
 	// savebuff is used internally for the io.Reader options.
 	savebuff *bytes.Buffer
+
+	currentBlock *block.Block // block being defined between BeginBlock and EndBlock
 }
 
 // New creates a new Drawing.
@@ -211,8 +215,91 @@ func (d *Drawing) Entities() entity.Entities {
 }
 
 // AddEntity adds a new entity.
+// If a block is being defined (between BeginBlock and EndBlock),
+// the entity is added to that block instead of the ENTITIES section.
 func (d *Drawing) AddEntity(e entity.Entity) {
-	d.Sections[4] = d.Sections[4].(entity.Entities).Add(e)
+	if d.currentBlock != nil {
+		d.currentBlock.AddEntity(e)
+		return
+	}
+	d.Sections[ENTITIES] = d.Sections[ENTITIES].(entity.Entities).Add(e)
+}
+
+// Blocks returns the blocks of the drawing (BLOCKS section).
+func (d *Drawing) Blocks() block.Blocks {
+	return d.Sections[BLOCKS].(block.Blocks)
+}
+
+// Block returns the block named name (case-insensitive).
+func (d *Drawing) Block(name string) (*block.Block, error) {
+	for _, b := range d.Blocks() {
+		if strings.EqualFold(b.Name, name) {
+			return b, nil
+		}
+	}
+	return nil, fmt.Errorf("block %s doesn't exist", name)
+}
+
+// AddBlock defines a new block with base point (x, y, z).
+// Its BLOCK_RECORD is added to the TABLES section as well.
+// Entities are added with Block.AddEntity, or by drawing between
+// BeginBlock and EndBlock.
+func (d *Drawing) AddBlock(name string, x, y, z float64) (*block.Block, error) {
+	if name == "" {
+		return nil, errors.New("block name is blank")
+	}
+	if b, err := d.Block(name); err == nil {
+		return b, fmt.Errorf("block %s already exists", name)
+	}
+	b := block.NewBlock(name, "")
+	b.Coord = []float64{x, y, z}
+	b.SetLayer(d.Layers["0"])
+	d.Sections[BLOCKS] = d.Blocks().Add(b)
+	records := d.Sections[TABLES].(table.Tables)[table.BLOCK_RECORD]
+	if _, err := records.Contains(name); err != nil {
+		records.Add(table.NewBlockRecord(name))
+	}
+	return b, nil
+}
+
+// BeginBlock defines a new block with base point (x, y, z) and starts adding
+// entities created by Drawing methods (Line, Circle, ...) to it until EndBlock.
+func (d *Drawing) BeginBlock(name string, x, y, z float64) (*block.Block, error) {
+	if d.currentBlock != nil {
+		return nil, fmt.Errorf("block %s is being defined", d.currentBlock.Name)
+	}
+	b, err := d.AddBlock(name, x, y, z)
+	if err != nil {
+		return b, err
+	}
+	d.currentBlock = b
+	return b, nil
+}
+
+// EndBlock ends the block definition started by BeginBlock.
+func (d *Drawing) EndBlock() error {
+	if d.currentBlock == nil {
+		return errors.New("no block is being defined")
+	}
+	d.currentBlock = nil
+	return nil
+}
+
+// Insert creates a new INSERT (block reference) of the block named name at (x, y, z).
+// The block must be defined beforehand.
+func (d *Drawing) Insert(name string, x, y, z float64) (*entity.Insert, error) {
+	b, err := d.Block(name)
+	if err != nil {
+		return nil, err
+	}
+	if d.currentBlock == b {
+		return nil, fmt.Errorf("block %s cannot insert itself", name)
+	}
+	i := entity.NewInsert(b.Name)
+	i.Coord = []float64{x, y, z}
+	i.SetLayer(d.CurrentLayer)
+	d.AddEntity(i)
+	return i, nil
 }
 
 // Point creates a new POINT at (x, y, z).
@@ -406,7 +493,7 @@ func (d *Drawing) SetExt() {
 	mins := []float64{1e16, 1e16, 1e16}
 	maxs := []float64{-1e16, -1e16, -1e16}
 	for _, en := range d.Entities() {
-		tmpmins, tmpmaxs := en.BBox()
+		tmpmins, tmpmaxs := d.bbox(en, 0)
 		for i := 0; i < 3; i++ {
 			if tmpmins[i] < mins[i] {
 				mins[i] = tmpmins[i]
@@ -421,6 +508,62 @@ func (d *Drawing) SetExt() {
 		h.ExtMin[i] = mins[i]
 		h.ExtMax[i] = maxs[i]
 	}
+}
+
+// maxInsertDepth limits the nesting of block references followed by bbox.
+const maxInsertDepth = 16
+
+// bbox returns the bounding box of en.
+// For INSERT, the contents of the referenced block are transformed
+// (scale, rotation, array; the extrusion direction is ignored).
+func (d *Drawing) bbox(en entity.Entity, depth int) ([]float64, []float64) {
+	ins, ok := en.(*entity.Insert)
+	if !ok {
+		return en.BBox()
+	}
+	b, err := d.Block(ins.BlockName)
+	if err != nil || len(b.Entities) == 0 || depth >= maxInsertDepth {
+		return ins.BBox()
+	}
+	bmins := []float64{math.Inf(1), math.Inf(1), math.Inf(1)}
+	bmaxs := []float64{math.Inf(-1), math.Inf(-1), math.Inf(-1)}
+	for _, e := range b.Entities {
+		emins, emaxs := d.bbox(e, depth+1)
+		for i := 0; i < 3; i++ {
+			bmins[i] = math.Min(bmins[i], emins[i])
+			bmaxs[i] = math.Max(bmaxs[i], emaxs[i])
+		}
+	}
+	mins := []float64{math.Inf(1), math.Inf(1), math.Inf(1)}
+	maxs := []float64{math.Inf(-1), math.Inf(-1), math.Inf(-1)}
+	// the transform is affine, so the corners of the first and last
+	// array elements bound the whole array.
+	cols := []int{0}
+	if ins.Columns > 1 {
+		cols = append(cols, ins.Columns-1)
+	}
+	rows := []int{0}
+	if ins.Rows > 1 {
+		rows = append(rows, ins.Rows-1)
+	}
+	for _, c := range cols {
+		for _, r := range rows {
+			for k := 0; k < 8; k++ {
+				corner := []float64{bmins[0], bmins[1], bmins[2]}
+				for i := 0; i < 3; i++ {
+					if k&(1<<uint(i)) != 0 {
+						corner[i] = bmaxs[i]
+					}
+				}
+				p := ins.Transform(corner, b.Coord, c, r)
+				for i := 0; i < 3; i++ {
+					mins[i] = math.Min(mins[i], p[i])
+					maxs[i] = math.Max(maxs[i], p[i])
+				}
+			}
+		}
+	}
+	return mins, maxs
 }
 
 // Spline creates a clamped uniform B-spline from the control points p.
