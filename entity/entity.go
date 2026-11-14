@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
@@ -19,6 +20,27 @@ type Entity interface {
 	BBox() ([]float64, []float64)
 }
 
+// Color number values with special meaning (code 62).
+const (
+	ColorByBlock = 0   // BYBLOCK
+	ColorByLayer = 256 // BYLAYER (default)
+)
+
+// Colored is implemented by all entities in this package.
+// It gives access to the entity color (code 62).
+type Colored interface {
+	// ColorIndex returns the color number: 0 (BYBLOCK), 1-255 or 256 (BYLAYER).
+	ColorIndex() int
+	// SetColor sets an explicit color number (0 means BYBLOCK).
+	SetColor(color.ColorNumber)
+	// SetColorByLayer sets the color to BYLAYER.
+	SetColorByLayer()
+	// SetColorByBlock sets the color to BYBLOCK.
+	SetColorByBlock()
+	// IsColorByLayer reports whether the color is BYLAYER.
+	IsColorByLayer() bool
+}
+
 // entity is common part of Entities.
 // It is embedded in each entities to implement Entity interface.
 type entity struct {
@@ -27,6 +49,7 @@ type entity struct {
 	blockRecord handle.Handler // 102 330
 	owner       handle.Handler // 330
 	layer       *table.Layer   // 8
+	color       int            // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
 	ltscale     float64        // 48
 }
 
@@ -38,6 +61,7 @@ func NewEntity(t EntityType) *entity {
 		blockRecord: nil,
 		owner:       nil,
 		layer:       table.LY_0,
+		color:       ColorByLayer,
 		ltscale:     1.0,
 	}
 	return e
@@ -57,6 +81,10 @@ func (e *entity) Format(f format.Formatter) {
 	}
 	f.WriteString(100, "AcDbEntity")
 	f.WriteString(8, e.layer.Name())
+	// 62 is omitted if BYLAYER (DXF reference, common group codes for entities)
+	if e.color != ColorByLayer {
+		f.WriteInt(62, e.color)
+	}
 	if e.ltscale != 1.0 {
 		f.WriteFloat(48, e.ltscale)
 	}
@@ -114,3 +142,54 @@ func (e *entity) SetLtscale(v float64) {
 func (e *entity) SetEntityType(t EntityType) {
 	e.Type = t
 }
+
+// ColorIndex returns the color number: 0 (BYBLOCK), 1-255 or 256 (BYLAYER).
+func (e *entity) ColorIndex() int {
+	return e.color
+}
+
+// SetColor sets an explicit color number (0 means BYBLOCK).
+func (e *entity) SetColor(c color.ColorNumber) {
+	e.color = int(c)
+}
+
+// SetColorByLayer sets the color to BYLAYER.
+func (e *entity) SetColorByLayer() {
+	e.color = ColorByLayer
+}
+
+// SetColorByBlock sets the color to BYBLOCK.
+func (e *entity) SetColorByBlock() {
+	e.color = ColorByBlock
+}
+
+// IsColorByLayer reports whether the color is BYLAYER.
+func (e *entity) IsColorByLayer() bool {
+	return e.color == ColorByLayer
+}
+
+// setColorIndex sets a raw color number read from a file.
+// Negative values (layer off) are stored as their absolute value,
+// and values out of range fall back to BYLAYER.
+func (e *entity) setColorIndex(c int) {
+	if c < 0 {
+		c = -c
+	}
+	if c > ColorByLayer {
+		c = ColorByLayer
+	}
+	e.color = c
+}
+
+// SetColorIndex sets a raw color number (0-256) to an entity implementing Colored.
+// It is used by the parser; negative values are treated as their absolute value.
+func SetColorIndex(e Entity, c int) bool {
+	type colorIndexSetter interface{ setColorIndex(int) }
+	if s, ok := e.(colorIndexSetter); ok {
+		s.setColorIndex(c)
+		return true
+	}
+	return false
+}
+
+var _ Colored = &entity{}

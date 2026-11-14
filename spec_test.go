@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/yofu/dxf/block"
+	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 )
@@ -360,5 +361,68 @@ func TestConcurrentDrawings(t *testing.T) {
 	}
 	for i := 0; i < 4; i++ {
 		<-done
+	}
+}
+
+func TestEntityColor(t *testing.T) {
+	d := NewDrawing()
+	l, _ := d.Line(0, 0, 0, 1, 1, 0)
+	c, _ := d.Circle(0, 0, 0, 1)
+	a, _ := d.Arc(0, 0, 0, 1, 0, 90)
+	tx, _ := d.Text("x", 0, 0, 0, 1)
+	p, _ := d.Point(0, 0, 0)
+	f, _ := d.ThreeDFace([][]float64{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}})
+	lw, _ := d.LwPolyline(false, []float64{0, 0}, []float64{1, 0})
+	pl, _ := d.Polyline(false, []float64{0, 0, 0}, []float64{1, 1, 1})
+	sp, _ := d.Spline([][]float64{{0, 0, 0}, {1, 1, 0}, {2, 0, 0}, {3, 1, 0}})
+	want := []int{1, 2, 3, 4, 5, 6, 7, 0, 256}
+	ents := []entity.Colored{l, c, a, tx, p, f, lw, pl, sp}
+	for i, e := range ents {
+		switch want[i] {
+		case entity.ColorByBlock:
+			e.SetColorByBlock()
+		case entity.ColorByLayer:
+			e.SetColorByLayer()
+		default:
+			e.SetColor(color.ColorNumber(want[i]))
+		}
+	}
+	pl.Vertices[1].SetColor(color.Red)
+
+	out := writeString(t, d)
+	if strings.Count(out, "\n62\n") != 8+1+len(d.Layers) {
+		t.Errorf("62 should be written for non-BYLAYER entities only: got %d", strings.Count(out, "\n62\n"))
+	}
+	d2, err := FromStringData(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	es := d2.Entities()
+	if len(es) != len(want) {
+		t.Fatalf("want %d entities, got %d", len(want), len(es))
+	}
+	for i, e := range es {
+		if got := e.(entity.Colored).ColorIndex(); got != want[i] {
+			t.Errorf("%T: want color %d, got %d", e, want[i], got)
+		}
+	}
+	vs := es[7].(*entity.Polyline).Vertices
+	if vs[0].ColorIndex() != entity.ColorByLayer || vs[1].ColorIndex() != int(color.Red) {
+		t.Errorf("vertex colors: %d %d", vs[0].ColorIndex(), vs[1].ColorIndex())
+	}
+}
+
+func TestEntityColorFromFile(t *testing.T) {
+	src := entitiesSection("0\nLINE\n8\n0\n62\n-3\n10\n0\n20\n0\n11\n1\n21\n1\n" +
+		"0\nPOINT\n8\n0\n10\n0\n20\n0\n") // negative: layer off
+	d, err := FromStringData(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c := d.Entities()[0].(entity.Colored).ColorIndex(); c != 3 {
+		t.Errorf("want 3, got %d", c)
+	}
+	if !d.Entities()[1].(entity.Colored).IsColorByLayer() {
+		t.Error("default color should be BYLAYER")
 	}
 }

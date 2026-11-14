@@ -627,6 +627,9 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 			return nil
 		case "VERTEX":
 			e, err := ParseVertex(d, chunk)
+			if err == nil {
+				err = parseCommon(e, chunk)
+			}
 			if err != nil {
 				return &entityError{start, err}
 			}
@@ -677,7 +680,25 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	if err != nil {
 		return nil, err
 	}
-	return f(d, data)
+	e, err := f(d, data)
+	if err != nil {
+		return e, err
+	}
+	return e, parseCommon(e, data)
+}
+
+// parseCommon parses group codes common to all entities
+// that are not handled by each entity parser (62: color number).
+func parseCommon(e entity.Entity, data [][2]string) error {
+	for _, dt := range data {
+		switch dt[0] {
+		case "62":
+			if err := setInt(dt, func(val int) { entity.SetColorIndex(e, val) }); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 // ParseEntityFunc returns a function for parsing acoording to entity type string.
