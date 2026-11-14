@@ -923,6 +923,10 @@ func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error
 					lw.Vertices[i] = make([]float64, 2)
 				}
 				lw.Bulges = make([]float64, val)
+				lw.Widths = make([][]float64, val)
+				for i := 0; i < val; i++ {
+					lw.Widths[i] = []float64{0, 0}
+				}
 			})
 		case "10":
 			ind++
@@ -943,12 +947,33 @@ func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error
 			} else {
 				err = fmt.Errorf("LWPOLYLINE bulge without vertex")
 			}
+		case "40", "41":
+			if ind >= 0 && ind < lw.Num {
+				k := 0
+				if dt[0] == "41" {
+					k = 1
+				}
+				err = setFloat(dt, func(val float64) { lw.Widths[ind][k] = val })
+			} else {
+				err = fmt.Errorf("LWPOLYLINE width without vertex")
+			}
+		case "43":
+			err = setFloat(dt, func(val float64) { lw.ConstantWidth = val })
+		case "38":
+			err = setFloat(dt, func(val float64) { lw.Elevation = val })
+		case "210":
+			err = setFloat(dt, func(val float64) { lw.Extrusion[0] = val })
+		case "220":
+			err = setFloat(dt, func(val float64) { lw.Extrusion[1] = val })
+		case "230":
+			err = setFloat(dt, func(val float64) { lw.Extrusion[2] = val })
 		case "70":
 			// bit-coded: 1 = closed, 128 = plinegen
 			err = setInt(dt, func(val int) {
 				if val&1 != 0 {
 					lw.Close()
 				}
+				lw.Plinegen = val&128 != 0
 			})
 		}
 		if err != nil {
