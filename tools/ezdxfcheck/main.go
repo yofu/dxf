@@ -81,6 +81,32 @@ func blocks() *drawing.Drawing {
 	return d
 }
 
+// more uses XLINE, RAY, TRACE, SHAPE, TOLERANCE, LIGHT, HELIX, MESH,
+// MPOLYGON, 3DSOLID (SAT) and ARC_DIMENSION (AC1024).
+func more() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	must(0, d.SetVersion(format.R2010))
+	must(d.XLine([]float64{1, 2, 0}, []float64{3, 4, 0}))
+	must(d.Ray([]float64{0, 0, 0}, []float64{0, 2, 0}))
+	must(d.Trace([][]float64{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}}))
+	d.AddShapeFile("ltypeshp.shx")
+	sh := must(d.Shape("TRACK1", []float64{5, 5, 0}, 2))
+	sh.Rotation = 30
+	must(d.Tolerance(`{\Fgdt;j}%%v0.1`, []float64{0, 10, 0}))
+	must(d.Light("L1", entity.LIGHT_SPOT, []float64{0, 0, 10}))
+	must(d.Helix([]float64{10, 0, 0}, 2, 1, 3, true))
+	m := must(d.Mesh([][]float64{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 1}}, [][]int{{0, 1, 2}, {0, 2, 3}}))
+	m.Edges = [][2]int{{0, 1}}
+	m.Creases = []float64{0.5}
+	mp := must(d.MPolygon([][]float64{{0, 0}, {10, 0}, {10, 10}, {0, 10}}, [][]float64{{2, 2}, {4, 2}, {4, 4}}))
+	mp.FillColor = 3
+	must(d.Body("3DSOLID", cubeSAT))
+	return d
+}
+
+// cubeSAT is minimal SAT data (the geometry is not checked).
+var cubeSAT = []string{"700 0 1 0", "@33 Open Design Alliance ACIS Builder @12 ACIS 32.0 NT @24 Thu Jan 01 00:00:00 2026 ", "1 9.9999999999999995e-07 1e-10 ", "End-of-ACIS-data"}
+
 // images uses an image, a clipped rotated image and a wipeout.
 func images() *drawing.Drawing {
 	d := dxf.NewDrawing()
@@ -299,7 +325,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
-		"linetypes": linetypes, "underlays": underlays, "images": images,
+		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {

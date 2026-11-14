@@ -15,6 +15,10 @@ const (
 	DIM_RADIUS      = 4
 	DIM_ANGULAR3P   = 5 // 3 points
 	DIM_ORDINATE    = 6
+	// ARC_DIMENSION (arc length; written as 5, or 8 for AC1032) and
+	// LARGE_RADIAL_DIMENSION (jogged radius; 9) are entities of their own
+	DIM_ARC          = 8
+	DIM_LARGE_RADIAL = 9
 	DIM_BLOCK_OWNED = 32  // the block is referenced by this dimension only
 	DIM_ORDINATE_X  = 64  // ordinate type is X (otherwise Y)
 	DIM_USER_TEXT   = 128 // text is at a user-defined location
@@ -34,6 +38,10 @@ const (
 //	angular 2-line:  DefPoint2 (13) - DefPoint3 (14) first line, DefPoint4 (15) - DefPoint (10)
 //	                 second line, DefPoint5 (16) on the dimension arc
 //	ordinate:        DefPoint (10) origin, DefPoint2 (13) feature, DefPoint3 (14) leader end
+//	arc length:      DefPoint (10) on the dimension arc, DefPoint2 (13) / DefPoint3 (14)
+//	                 ends of the arc, DefPoint4 (15) center, ArcLeader1/2 (16, 17)
+//	jogged radius:   DefPoint (10) center, DefPoint2 (13) point on the curve,
+//	                 DefPoint3 (14) overridden center, DefPoint4 (15) jog point
 //
 // The graphics are in the block BlockName (an anonymous block "*Dn").
 type Dimension struct {
@@ -53,6 +61,13 @@ type Dimension struct {
 	DefPoint3    []float64 // 14, 24, 34 (WCS)
 	DefPoint4    []float64 // 15, 25, 35 (WCS)
 	DefPoint5    []float64 // 16, 26, 36 (OCS)
+	ArcStart     float64   // 40 (ARC_DIMENSION, radians)
+	ArcEnd       float64   // 41 (ARC_DIMENSION, radians)
+	ArcPartial   bool      // 70 of AcDbArcDimension
+	ArcHasLeader bool      // 71 of AcDbArcDimension
+	ArcLeader1   []float64 // 16 of AcDbArcDimension
+	ArcLeader2   []float64 // 17 of AcDbArcDimension
+	JogValue     float64   // 40 of LARGE_RADIAL_DIMENSION (undocumented)
 	Angle        float64   // 50: rotation of linear dimensions (degrees)
 	Oblique      float64   // 52: oblique angle of extension lines (degrees)
 	LeaderLength float64   // 40: radius/diameter
@@ -93,14 +108,28 @@ func writePoint(f format.Formatter, code int, p []float64) {
 
 // Format writes data to formatter.
 func (d *Dimension) Format(f format.Formatter) {
+	switch d.Type {
+	case DIM_ARC:
+		d.typeName = "ARC_DIMENSION"
+	case DIM_LARGE_RADIAL:
+		d.typeName = "LARGE_RADIAL_DIMENSION"
+	default:
+		d.typeName = ""
+	}
 	d.entity.Format(f)
 	f.WriteString(100, "AcDbDimension")
 	f.WriteString(2, d.BlockName)
 	writePoint(f, 10, d.DefPoint)
 	writePoint(f, 11, d.TextMid)
-	f.WriteInt(70, d.Type|d.Flags)
+	typ := d.Type
+	if typ == DIM_ARC && !format.AtLeast(f, format.R2018) {
+		typ = 5
+	}
+	f.WriteInt(70, typ|d.Flags)
 	f.WriteInt(71, d.Attachment)
-	f.WriteFloat(42, d.Measurement)
+	if d.Measurement != 0 || (d.Type != DIM_ARC && d.Type != DIM_LARGE_RADIAL) {
+		f.WriteFloat(42, d.Measurement)
+	}
 	f.WriteString(1, d.Text)
 	if d.TextRotation != 0 {
 		f.WriteFloat(53, d.TextRotation)
@@ -152,6 +181,23 @@ func (d *Dimension) Format(f format.Formatter) {
 		f.WriteString(100, "AcDbOrdinateDimension")
 		writePoint(f, 13, d.DefPoint2)
 		writePoint(f, 14, d.DefPoint3)
+	case DIM_ARC:
+		f.WriteString(100, "AcDbArcDimension")
+		writePoint3(f, 13, d.DefPoint2)
+		writePoint3(f, 14, d.DefPoint3)
+		writePoint3(f, 15, d.DefPoint4)
+		f.WriteFloat(40, d.ArcStart)
+		f.WriteFloat(41, d.ArcEnd)
+		f.WriteInt(70, boolInt(d.ArcPartial))
+		f.WriteInt(71, boolInt(d.ArcHasLeader))
+		writePoint3(f, 16, d.ArcLeader1)
+		writePoint3(f, 17, d.ArcLeader2)
+	case DIM_LARGE_RADIAL:
+		f.WriteString(100, "AcDbRadialDimensionLarge")
+		writePoint3(f, 13, d.DefPoint2)
+		writePoint3(f, 14, d.DefPoint3)
+		writePoint3(f, 15, d.DefPoint4)
+		f.WriteFloat(40, d.JogValue)
 	}
 }
 
@@ -176,7 +222,7 @@ func (d *Dimension) BBox() ([]float64, []float64) {
 		pts = append(pts, d.DefPoint2, d.DefPoint3)
 	case DIM_RADIUS, DIM_DIAMETER:
 		pts = append(pts, d.DefPoint4)
-	case DIM_ANGULAR3P:
+	case DIM_ANGULAR3P, DIM_ARC, DIM_LARGE_RADIAL:
 		pts = append(pts, d.DefPoint2, d.DefPoint3, d.DefPoint4)
 	case DIM_ANGULAR:
 		pts = append(pts, d.DefPoint2, d.DefPoint3, d.DefPoint4, d.DefPoint5)

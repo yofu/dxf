@@ -814,13 +814,17 @@ func (d *Dimension) ApplyTransform(t Transform) error {
 	if !t.Conformal() {
 		return ErrNonUniform
 	}
-	for _, p := range [][]float64{d.DefPoint, d.TextMid, d.DefPoint2, d.DefPoint3, d.DefPoint4, d.DefPoint5, d.ClonePoint} {
+	for _, p := range [][]float64{d.DefPoint, d.TextMid, d.DefPoint2, d.DefPoint3, d.DefPoint4, d.DefPoint5, d.ClonePoint, d.ArcLeader1, d.ArcLeader2} {
 		if len(p) > 0 {
 			transformPoint(t, p)
 		}
 	}
 	if d.Type == DIM_LINEAR {
 		d.Angle = normDeg(t.Direction(d.Angle))
+	}
+	if d.Type == DIM_ARC && t.Mirrored() {
+		// the arc goes the other way: its ends are swapped
+		d.DefPoint2, d.DefPoint3 = d.DefPoint3, d.DefPoint2
 	}
 	if d.Type != DIM_ANGULAR && d.Type != DIM_ANGULAR3P {
 		d.Measurement = t.Length(d.Measurement)

@@ -27,9 +27,9 @@ const preserveSrc = "0\nSECTION\n2\nHEADER\n" +
 	"0\nSECTION\n2\nENTITIES\n" +
 	"0\nLINE\n5\n40\n330\n1F\n100\nAcDbEntity\n8\nA\n100\nAcDbLine\n10\n0\n20\n0\n30\n0\n11\n10\n21\n0\n31\n0\n" +
 	"1001\nMYAPP\n1000\nline data\n1040\n1.5\n1005\n2F\n1002\n{\n1070\n7\n1002\n}\n" +
-	"0\nXLINE\n5\n41\n102\n{ACAD_REACTORS\n330\n42\n102\n}\n330\n1F\n100\nAcDbEntity\n8\nA\n62\n3\n100\nAcDbXline\n10\n5\n20\n6\n30\n0\n11\n1\n21\n0\n31\n0\n" +
+	"0\nARCALIGNEDTEXT\n5\n41\n102\n{ACAD_REACTORS\n330\n42\n102\n}\n330\n1F\n100\nAcDbEntity\n8\nA\n62\n3\n100\nAcDbArcAlignedText\n10\n5\n20\n6\n30\n0\n11\n1\n21\n0\n31\n0\n" +
 	"0\nIMAGE\n5\n42\n100\nAcDbEntity\n8\n0\n100\nAcDbRasterImage\n10\n0\n20\n0\n340\n60\n" +
-	"0\nTRACE\n8\n0\n62\n2\n10\n0\n20\n0\n11\n1\n21\n0\n12\n0\n22\n1\n13\n1\n23\n1\n" +
+	"0\nRTEXT\n8\n0\n62\n2\n10\n0\n20\n0\n11\n1\n21\n0\n12\n0\n22\n1\n13\n1\n23\n1\n" +
 	"0\nPOLYLINE\n5\n2F\n8\n0\n66\n1\n70\n0\n1001\nMYAPP\n1000\npolyline data\n" +
 	"0\nVERTEX\n8\n0\n10\n0\n20\n0\n1001\nMYAPP\n1070\n1\n0\nVERTEX\n8\n0\n10\n1\n20\n1\n0\nSEQEND\n8\n0\n" +
 	"0\nENDSEC\n" +
@@ -73,7 +73,7 @@ func checkPreserved(t *testing.T, d *drawing.Drawing) {
 
 	es := d.Entities()
 	if len(es) != 5 {
-		t.Fatalf("want LINE, XLINE, IMAGE, TRACE, POLYLINE, got %d", len(es))
+		t.Fatalf("want LINE, ARCALIGNEDTEXT, IMAGE, RTEXT, POLYLINE, got %d", len(es))
 	}
 	line := es[0].(*entity.Line)
 	wantX := [][2]string{{"1001", "MYAPP"}, {"1000", "line data"}, {"1040", "1.5"}, {"1005", "2F"}, {"1002", "{"}, {"1070", "7"}, {"1002", "}"}}
@@ -81,10 +81,10 @@ func checkPreserved(t *testing.T, d *drawing.Drawing) {
 		t.Errorf("line xdata: %v", line.XData())
 	}
 	x, ok := es[1].(*entity.Unknown)
-	if !ok || x.TypeName() != "XLINE" || x.ColorIndex() != 3 || x.Layer().Name() != "A" {
+	if !ok || x.TypeName() != "ARCALIGNEDTEXT" || x.ColorIndex() != 3 || x.Layer().Name() != "A" {
 		t.Fatalf("xline: %+v", es[1])
 	}
-	wantData := [][2]string{{"100", "AcDbXline"}, {"10", "5"}, {"20", "6"}, {"30", "0"}, {"11", "1"}, {"21", "0"}, {"31", "0"}}
+	wantData := [][2]string{{"100", "AcDbArcAlignedText"}, {"10", "5"}, {"20", "6"}, {"30", "0"}, {"11", "1"}, {"21", "0"}, {"31", "0"}}
 	if !reflect.DeepEqual(x.Data, wantData) {
 		t.Errorf("xline data: %v", x.Data)
 	}
@@ -112,7 +112,7 @@ func checkPreserved(t *testing.T, d *drawing.Drawing) {
 		t.Errorf("image definitions: %v", defs)
 	}
 	tr := es[3].(*entity.Unknown)
-	if tr.TypeName() != "TRACE" || tr.ColorIndex() != 2 || len(tr.Data) != 8 {
+	if tr.TypeName() != "RTEXT" || tr.ColorIndex() != 2 || len(tr.Data) != 8 {
 		t.Errorf("trace (R12 style, without subclass markers): %+v", tr.Data)
 	}
 	pl := es[4].(*entity.Polyline)

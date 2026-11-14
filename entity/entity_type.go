@@ -27,6 +27,16 @@ const (
 	LEADER
 	IMAGE
 	WIPEOUT
+	XLINE
+	RAY
+	TRACE
+	SHAPE
+	TOLERANCE
+	HELIX
+	MESH
+	MPOLYGON
+	LIGHT
+	BODY     // BODY, REGION, 3DSOLID and surfaces (see Body.TypeName)
 	UNDERLAY // PDFUNDERLAY, DWFUNDERLAY, DGNUNDERLAY (see Underlay.TypeName)
 	UNKNOWN  // entity types not supported by this package (see Unknown)
 )
@@ -75,6 +85,26 @@ func EntityTypeString(t EntityType) string {
 		return "VIEWPORT"
 	case LEADER:
 		return "LEADER"
+	case XLINE:
+		return "XLINE"
+	case RAY:
+		return "RAY"
+	case TRACE:
+		return "TRACE"
+	case SHAPE:
+		return "SHAPE"
+	case TOLERANCE:
+		return "TOLERANCE"
+	case HELIX:
+		return "HELIX"
+	case MESH:
+		return "MESH"
+	case MPOLYGON:
+		return "MPOLYGON"
+	case LIGHT:
+		return "LIGHT"
+	case BODY:
+		return "BODY"
 	case IMAGE:
 		return "IMAGE"
 	case WIPEOUT:
@@ -130,6 +160,26 @@ func EntityTypeValue(t string) EntityType {
 		return VIEWPORT
 	case "LEADER":
 		return LEADER
+	case "XLINE":
+		return XLINE
+	case "RAY":
+		return RAY
+	case "TRACE":
+		return TRACE
+	case "SHAPE":
+		return SHAPE
+	case "TOLERANCE":
+		return TOLERANCE
+	case "HELIX":
+		return HELIX
+	case "MESH":
+		return MESH
+	case "MPOLYGON":
+		return MPOLYGON
+	case "LIGHT":
+		return LIGHT
+	case "BODY", "REGION", "3DSOLID", "SURFACE", "PLANESURFACE", "EXTRUDEDSURFACE", "LOFTEDSURFACE", "REVOLVEDSURFACE", "SWEPTSURFACE":
+		return BODY
 	case "IMAGE":
 		return IMAGE
 	case "WIPEOUT":

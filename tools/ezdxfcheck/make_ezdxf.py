@@ -144,3 +144,36 @@ b.add_circle((0, 0), 1)
 m.add_blockref("B", (5, 5))
 r12.saveas(os.path.join(out, "ez_r12.dxf"))
 print("ok")
+
+# phase A entities: XLINE, RAY, TRACE, SHAPE, TOLERANCE, LIGHT, HELIX, MESH,
+# MPOLYGON, 3DSOLID (SAT in R2010, SAB in ACDSDATA for R2018), ARC_DIMENSION
+from ezdxf.render import forms
+from ezdxf.acis import api as acis
+for v in ["R2010", "R2018"]:
+    md = ezdxf.new(v, setup=True)
+    mm = md.modelspace()
+    mm.add_xline((1, 2), (3, 4))
+    mm.add_ray((0, 0), (0, 2))
+    mm.add_trace([(0, 0), (1, 0), (0, 1), (1, 1)])
+    md.styles.add_shx("ltypeshp.shx")
+    mm.add_shape("TRACK1", insert=(5, 5), size=2, dxfattribs={"rotation": 30})
+    tol = mm.new_entity("TOLERANCE", {"insert": (0, 10), "content": r"{\Fgdt;j}%%v0.1", "dimstyle": "Standard"})
+    light = mm.new_entity("LIGHT", {"name": "L1", "type": 3, "location": (0, 0, 10), "target": (0, 0, 9)})
+    hx = mm.add_helix(2, 1, 3)
+    hx.translate(10, 0, 0)
+    mesh = mm.add_mesh()
+    with mesh.edit_data() as data:
+        data.vertices = [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 1)]
+        data.faces = [(0, 1, 2), (0, 2, 3)]
+    mp = mm.add_mpolygon(color=3)
+    mp.paths.add_polyline_path([(0, 0), (10, 0), (10, 10), (0, 10)], flags=1)
+    mp.paths.add_polyline_path([(2, 2), (4, 2), (4, 4)], flags=0)
+    solid = mm.add_3dsolid()
+    body = acis.body_from_mesh(forms.cube())
+    if v < "R2013":
+        solid.sat = acis.export_sat([body])
+    else:
+        solid.sab = acis.export_sab([body])
+    dim = mm.add_arc_dim_3p(base=(0, 6), center=(0, 0), p1=(5, 0), p2=(0, 5))
+    dim.render()
+    md.saveas(os.path.join(out, f"ez_more_{v}.dxf"))

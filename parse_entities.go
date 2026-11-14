@@ -292,6 +292,26 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseUnderlay, nil
 	case "IMAGE", "WIPEOUT":
 		return ParseImage, nil
+	case "XLINE", "RAY":
+		return ParseXLine, nil
+	case "TRACE":
+		return ParseTrace, nil
+	case "SHAPE":
+		return ParseShape, nil
+	case "TOLERANCE":
+		return ParseTolerance, nil
+	case "LIGHT":
+		return ParseLight, nil
+	case "HELIX":
+		return ParseHelix, nil
+	case "MESH":
+		return ParseMesh, nil
+	case "MPOLYGON":
+		return ParseMPolygon, nil
+	case "BODY", "REGION", "3DSOLID", "SURFACE", "PLANESURFACE", "EXTRUDEDSURFACE", "LOFTEDSURFACE", "REVOLVEDSURFACE", "SWEPTSURFACE":
+		return ParseBody, nil
+	case "ARC_DIMENSION", "LARGE_RADIAL_DIMENSION":
+		return ParseSpecialDimension, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}

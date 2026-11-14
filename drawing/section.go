@@ -1,6 +1,8 @@
 package drawing
 
 import (
+	"strconv"
+
 	"github.com/yofu/dxf/format"
 )
 
@@ -63,4 +65,50 @@ func SectionTypeValue(s string) SectionType {
 	default:
 		return -1
 	}
+}
+
+// RawSection is a section this package does not interpret (e.g.
+// ACDSDATA with the ACIS data of solids for AC1027 and later, or
+// THUMBNAILIMAGE). It is kept as read and written after the OBJECTS
+// section.
+type RawSection struct {
+	Name    string      // 2
+	Data    [][2]string // group codes between the name and ENDSEC
+	Version string      // DXF version of the file read: not written for earlier versions
+}
+
+// Format writes the section (nothing for versions earlier than Version).
+func (s *RawSection) Format(f format.Formatter) {
+	if s.Version != "" && !format.AtLeast(f, s.Version) {
+		return
+	}
+	f.WriteString(0, "SECTION")
+	f.WriteString(2, s.Name)
+	for _, p := range s.Data {
+		if c, err := strconv.Atoi(p[0]); err == nil {
+			f.WriteString(c, p[1])
+		}
+	}
+	f.WriteString(0, "ENDSEC")
+}
+
+// SetHandle does nothing: the handles of a raw section are kept as read.
+func (s *RawSection) SetHandle(*int) {}
+
+// AddRawSection adds a section kept as read.
+func (d *Drawing) AddRawSection(name string, data [][2]string) *RawSection {
+	s := &RawSection{Name: name, Data: data, Version: d.Header().Version}
+	d.Sections = append(d.Sections, s)
+	return s
+}
+
+// RawSections returns the sections kept as read.
+func (d *Drawing) RawSections() []*RawSection {
+	var rs []*RawSection
+	for _, s := range d.Sections {
+		if r, ok := s.(*RawSection); ok {
+			rs = append(rs, r)
+		}
+	}
+	return rs
 }

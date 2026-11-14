@@ -645,6 +645,7 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	d.linkOwners()
 	d.linkUnderlays()
 	d.linkImages()
+	d.ensureEntityClasses()
 	d.setHandle()
 	h := d.Header()
 	unicode := codepage.IsUnicodeVersion(h.Version)

@@ -54,7 +54,6 @@ def summary(doc):
         elif t == "ELLIPSE": d += [r(a.center), r(a.major_axis), a.ratio, a.start_param, a.end_param]
         elif t == "POINT": d += [r(a.location), a.get("angle", 0)]
         elif t in ("SOLID", "TRACE", "3DFACE"): d += [r(a.vtx0), r(a.vtx1), r(a.vtx2), r(a.vtx3)]
-        elif t in ("XLINE", "RAY"): d += [r(a.start), r(a.unit_vector)]
         elif t == "HATCH": d += [a.pattern_name, a.solid_fill, len(e.paths), [type(p).__name__ for p in e.paths], r([(l.angle, *l.offset) for l in e.pattern.lines]) if e.pattern else None,
                                 (e.gradient.name, e.gradient.color1, e.gradient.color2, r(e.gradient.rotation), e.gradient.centered, e.gradient.one_color, r(e.gradient.tint)) if e.gradient else None]
         elif t == "DIMENSION": d += [e.dimtype, r(e.get_measurement()), len(e.get_geometry_block()) if e.get_geometry_block() else None, r(a.defpoint)]
@@ -64,6 +63,15 @@ def summary(doc):
             ud = e.get_underlay_def()
             d += [r(a.insert), r(e.scaling), a.rotation, a.flags, a.contrast, a.fade, r(list(e.boundary_path)),
                   (ud.dxftype(), ud.dxf.filename, ud.dxf.name) if ud else None]
+        elif t in ("XLINE", "RAY"): d += [r(a.start), r(a.unit_vector)]
+        elif t == "SHAPE": d += [a.name, r(a.insert), a.size, r(a.get("rotation", 0)), r(a.get("xscale", 1))]
+        elif t == "TOLERANCE": d += [a.content, r(a.insert), a.dimstyle, r(a.get("x_axis_vector"))]
+        elif t == "LIGHT": d += [a.name, a.type, r(a.location), r(a.target), a.intensity]
+        elif t == "HELIX": d += [r(a.axis_base_point), a.radius, a.turns, a.turn_height, a.handedness, len(e.control_points), r(list(e.control_points)[:4])]
+        elif t == "MESH": d += [r(list(e.vertices)), [tuple(f) for f in e.faces], [tuple(x) for x in e.edges]]
+        elif t == "MPOLYGON": d += [a.pattern_name, a.solid_fill, a.get("fill_color"), [r(list(p.vertices)) for p in e.paths]]
+        elif t in ("3DSOLID", "BODY", "REGION"): d += [len(e.sat), len(e.sab), e.sat[:3]]
+        elif t == "ARC_DIMENSION": d += [r(a.defpoint), r(a.defpoint2), r(a.defpoint3), r(a.defpoint4), r(a.start_angle), r(a.end_angle), r(a.get("actual_measurement"))]
         elif t in ("IMAGE", "WIPEOUT"):
             d += [r(a.insert), r(a.u_pixel), r(a.v_pixel), r(a.image_size), a.flags, a.clipping, a.fade, r(list(e.boundary_path)),
                   e.image_def.dxf.filename if t == "IMAGE" and e.image_def else None]

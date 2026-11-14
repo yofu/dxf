@@ -7,11 +7,16 @@ DXF (Drawing Exchange Format by Autodesk, Inc.) library for Go.
 - Reads ASCII and binary DXF files of AutoCAD R12 and later. Data this
   package does not interpret is kept, and handles are kept, when a drawing
   read is written again.
-- Entities: LINE, CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT, 3DFACE, SOLID,
-  LWPOLYLINE, POLYLINE (2D, 3D, meshes), SPLINE, INSERT, ATTDEF, ATTRIB,
-  HATCH, DIMENSION, LEADER, VIEWPORT, IMAGE, WIPEOUT and underlays
-  (PDFUNDERLAY, DWFUNDERLAY, DGNUNDERLAY). Other entity types are kept as read
-  (`entity.Unknown`).
+- Entities: LINE, XLINE, RAY, CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT,
+  SHAPE, 3DFACE, SOLID, TRACE, LWPOLYLINE, POLYLINE (2D, 3D, meshes), MESH,
+  SPLINE, HELIX, INSERT, ATTDEF, ATTRIB, HATCH, MPOLYGON, DIMENSION
+  (also ARC_DIMENSION and LARGE_RADIAL_DIMENSION), LEADER, TOLERANCE,
+  VIEWPORT, IMAGE, WIPEOUT, LIGHT, underlays (PDFUNDERLAY, DWFUNDERLAY,
+  DGNUNDERLAY) and ACIS entities (3DSOLID, BODY, REGION and surfaces: the
+  ACIS data as SAT text, the geometry is not interpreted). Other entity
+  types are kept as read (`entity.Unknown`), as are sections this package
+  does not interpret (e.g. ACDSDATA with the ACIS data of AC1027 and later,
+  THUMBNAILIMAGE).
 - Blocks with attributes, groups, layouts and viewports, extended data,
   text in code pages (e.g. Shift_JIS for Japanese), and editing (query,
   remove, move, rotate, scale, copy, explode).
@@ -97,6 +102,22 @@ ins, _ := d.Insert("TITLE", 230, 10, 0) // attributes are created from the defin
 ins.SetAttribute("NAME", "Floor plan")
 ins.Scale = []float64{2, 2, 2}
 d.SyncAttributes(ins) // after changing the insertion point, scale or rotation
+```
+
+### Other entities
+
+```go
+d.XLine([]float64{0, 0, 0}, []float64{1, 1, 0}) // also Ray
+d.Trace([][]float64{{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}})
+d.AddShapeFile("ltypeshp.shx")
+d.Shape("TRACK1", []float64{5, 5, 0}, 2)
+d.Tolerance(`{\Fgdt;j}%%v0.1`, []float64{0, 10, 0}) // feature control frame
+d.Helix([]float64{0, 0, 0}, 2, 1, 3, true)            // radius, pitch, turns, ccw
+d.Mesh(vertices, [][]int{{0, 1, 2}, {0, 2, 3}})
+d.MPolygon(outer, hole) // polygon with holes, solid fill
+d.Light("L1", entity.LIGHT_SPOT, []float64{0, 0, 10})
+solid, _ := d.Body("3DSOLID", satLines) // ACIS data as SAT text
+fmt.Println(solid.SAT)
 ```
 
 ### Text, dimensions, leaders and hatches

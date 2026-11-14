@@ -168,9 +168,15 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 			section = strings.ToUpper(strings.TrimSpace(value))
 			ind := drawing.SectionTypeValue(section)
 			if ind < 0 {
-				return d, fmt.Errorf("line %d: unknown section name: %s", line, value)
+				// kept as read (e.g. ACDSDATA, THUMBNAILIMAGE)
+				name := strings.TrimSpace(value)
+				parser = func(d *drawing.Drawing, _ int, data [][2]string) error {
+					d.AddRawSection(name, data)
+					return nil
+				}
+			} else {
+				parser = parsers[ind]
 			}
-			parser = parsers[ind]
 			startline = line + 1
 			setparser = false
 			continue
