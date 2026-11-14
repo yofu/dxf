@@ -279,9 +279,9 @@ func TestReadHatchFromFile(t *testing.T) {
 	if len(s.Controls) != 4 || len(s.Fits) != 2 {
 		t.Errorf("spline edge: %+v", s)
 	}
-	// written without the source handles (not associative in output sense)
-	if strings.Contains(h.String(), "\n330\n2A\n") {
-		t.Error("source boundary handles should not be written")
+	// the source boundary objects are kept (their handles are kept)
+	if !strings.Contains(h.String(), "\n97\n1\n330\n2A\n") {
+		t.Error("source boundary handles should be written")
 	}
 }
 

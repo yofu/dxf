@@ -3,6 +3,7 @@ package entity
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/yofu/dxf/format"
@@ -168,6 +169,9 @@ type HatchBoundary struct {
 	Bulges   []float64   // 42 (polyline)
 	Closed   bool        // 73 (polyline)
 	Edges    []HatchEdge // 72 ... (edges)
+	// Sources are the source boundary objects of an associative hatch
+	// (97, 330): entities, or handles as read.
+	Sources []Ref
 }
 
 // IsPolyline reports whether the path is a polyline path.
@@ -205,7 +209,10 @@ func (b *HatchBoundary) format(f format.Formatter) {
 			e.format(f)
 		}
 	}
-	f.WriteInt(97, 0) // number of source boundary objects (not associative)
+	f.WriteInt(97, len(b.Sources)) // source boundary objects (associative hatch)
+	for _, s := range b.Sources {
+		s.write(f, 330, true)
+	}
 }
 
 func (b *HatchBoundary) points() [][]float64 {
@@ -246,7 +253,7 @@ type Hatch struct {
 	Extrusion    []float64           // 210, 220, 230
 	PatternName  string              // 2
 	Solid        bool                // 70
-	Associative  bool                // 71 (source boundary objects are not written)
+	Associative  bool                // 71: associative (see HatchBoundary.Sources)
 	Boundaries   []*HatchBoundary    // 91, ...
 	Style        int                 // 75: HATCH_STYLE_*
 	PatternType  int                 // 76: HATCH_PATTERN_*
@@ -320,12 +327,71 @@ func (h *Hatch) SetSolid() {
 	h.Gradient = nil
 }
 
-// predefined patterns (acadiso.pat): angle, base x, base y, offset x, offset y, dashes...
+// predefined patterns: angle, base x, base y, offset x, offset y, dashes
+// (in the line direction; > 0 dash, < 0 gap, 0 dot). The geometric
+// definitions are those of this package (simple line families); other
+// patterns can be loaded from .pat files (ParsePatterns, SetPatternDefinition).
 var predefinedPatterns = map[string][][]float64{
 	"ANSI31": {{45, 0, 0, 0, 3.175}},
 	"ANSI37": {{45, 0, 0, 0, 3.175}, {135, 0, 0, 0, 3.175}},
 	"LINE":   {{0, 0, 0, 0, 3.175}},
 	"NET":    {{0, 0, 0, 0, 3.175}, {90, 0, 0, 0, 3.175}},
+	"DASH":   {{0, 0, 0, 3.175, 3.175, 3.175, -3.175}},
+	"DOTS":   {{0, 0, 0, 0, 3.175, 0, -3.175}},
+	"CROSS":  {{0, 0, 0, 6.35, 6.35, 3.175, -3.175}, {90, 1.5875, -1.5875, 6.35, 6.35, 3.175, -3.175}},
+	"BRICK":  {{0, 0, 0, 0, 6.35}, {90, 0, 0, 6.35, 6.35, 6.35, -6.35}},
+	"SQUARE": {{0, 0, 0, 0, 6.35, 6.35, -6.35}, {90, 0, 0, 0, 6.35, 6.35, -6.35}},
+	"ZIGZAG": {{45, 0, 0, 3.175, 3.175, 4.49, -4.49}, {135, 3.175, 3.175, 3.175, 3.175, 4.49, -4.49}},
+}
+
+// ParsePatterns parses hatch pattern definitions of a .pat file
+// ("*NAME, description" followed by lines "angle, x, y, dx, dy, dash...").
+func ParsePatterns(content string) (map[string][][]float64, error) {
+	out := map[string][][]float64{}
+	name := ""
+	for n, line := range strings.Split(content, "\n") {
+		line = strings.TrimSpace(line)
+		if i := strings.Index(line, ";"); i >= 0 {
+			line = strings.TrimSpace(line[:i])
+		}
+		if line == "" {
+			continue
+		}
+		if strings.HasPrefix(line, "*") {
+			name = strings.ToUpper(strings.TrimSpace(strings.SplitN(line[1:], ",", 2)[0]))
+			out[name] = nil
+			continue
+		}
+		if name == "" {
+			return nil, fmt.Errorf("pattern line %d before a pattern name", n+1)
+		}
+		var vs []float64
+		for _, f := range strings.Split(line, ",") {
+			v, err := strconv.ParseFloat(strings.TrimSpace(f), 64)
+			if err != nil {
+				return nil, fmt.Errorf("pattern line %d: %w", n+1, err)
+			}
+			vs = append(vs, v)
+		}
+		if len(vs) < 5 {
+			return nil, fmt.Errorf("pattern line %d: 5 or more values required", n+1)
+		}
+		out[name] = append(out[name], vs)
+	}
+	return out, nil
+}
+
+// SetPatternDefinition sets a pattern of definition lines (as of a .pat
+// file) with angle (degrees) and scale.
+func (h *Hatch) SetPatternDefinition(name string, def [][]float64, angle, scale float64) {
+	h.PatternName = strings.ToUpper(name)
+	h.Solid = false
+	h.PatternType = HATCH_PATTERN_CUSTOM
+	h.PatternAngle = angle
+	h.PatternScale = scale
+	h.Double = false
+	h.PatternLines = patternLines(def, angle, scale)
+	h.Gradient = nil
 }
 
 // PredefinedPatterns returns the names of the predefined patterns

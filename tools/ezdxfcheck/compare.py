@@ -67,7 +67,10 @@ def summary(doc):
         elif t == "CIRCLE": d += [r(a.center), a.radius]
         elif t == "ARC": d += [r(a.center), a.radius, a.start_angle, a.end_angle]
         elif t == "TEXT": d += [a.text, r(a.insert), r(a.get("align_point")), a.halign, a.valign, a.style]
-        elif t == "MTEXT": d += [e.text, r(a.insert), a.char_height, a.width, a.get("bg_fill"), a.get("bg_fill_color"), a.get("bg_fill_true_color"), r(a.get("box_fill_scale"))]
+        elif t == "MTEXT":
+            c = e.columns
+            d += [e.text, r(a.insert), a.char_height, a.width, a.get("bg_fill"), a.get("bg_fill_color"), a.get("bg_fill_true_color"), r(a.get("box_fill_scale")),
+                  (int(c.column_type), c.count, c.width, c.gutter_width, r(c.defined_height)) if c else None]
         elif t == "LWPOLYLINE": d += [r(list(e.get_points("xyseb"))), e.closed, a.get("elevation", 0)]
         elif t == "POLYLINE": d += [e.get_mode(), len(e.vertices), r(a.elevation), [r(v.dxf.location) for v in e.vertices], [tuple(v.dxf.get(k, 0) for k in ("vtx0", "vtx1", "vtx2", "vtx3")) for v in e.vertices]]
         elif t == "SPLINE": d += [r(list(e.control_points)), r(list(e.weights)), r(list(e.fit_points)), r(list(e.knots)), a.flags]

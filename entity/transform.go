@@ -523,6 +523,16 @@ func (m *MText) ApplyTransform(t Transform) error {
 	m.Rotation = rot
 	m.Height *= kh
 	m.Width *= kh * kw
+	if c := m.Columns; c != nil {
+		c.Width *= kh * kw
+		c.Gutter *= kh * kw
+		c.TotalWidth *= kh * kw
+		c.DefinedHeight *= kh
+		c.TotalHeight *= kh
+		for i := range c.Heights {
+			c.Heights[i] *= kh
+		}
+	}
 	return nil
 }
 

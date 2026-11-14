@@ -63,25 +63,26 @@ type LineProperties interface {
 // entity is common part of Entities.
 // It is embedded in each entities to implement Entity interface.
 type entity struct {
-	Type         EntityType      // 0
-	handle       int             // 5
-	blockRecord  handle.Handler  // 102 330
-	owner        handle.Handler  // 330
-	layer        *table.Layer    // 8
-	typeName     string          // 0: entity type name of Unknown entities
-	srcHandle    string          // 5: handle in the file the entity was read from
-	xdata        [][2]string     // 1001-: extended data, kept as read
-	groups       [][2]string     // 102 groups (reactors, extension dictionary), kept as read
-	xdict        handle.Handler  // extension dictionary set (replaces the one read)
-	paperSpace   bool            // 67: entity is in paper space
-	invisible    bool            // 60: object visibility (1 = invisible)
-	lineType     *table.LineType // 6: nil = BYLAYER
-	color        int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
-	trueColor    int             // 420: 0x00RRGGBB, -1 = none
-	colorName    string          // 430: color name (color book)
-	transparency int             // 440: 0 = BYLAYER (none), 0x01000000 = BYBLOCK, 0x020000AA = alpha AA
-	lineWeight   int             // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
-	ltscale      float64         // 48
+	Type         EntityType       // 0
+	handle       int              // 5
+	blockRecord  handle.Handler   // 102 330
+	owner        handle.Handler   // 330
+	layer        *table.Layer     // 8
+	typeName     string           // 0: entity type name of Unknown entities
+	srcHandle    string           // 5: handle in the file the entity was read from
+	xdata        [][2]string      // 1001-: extended data, kept as read
+	groups       [][2]string      // 102 groups (reactors, extension dictionary), kept as read
+	xdict        handle.Handler   // extension dictionary set (replaces the one read)
+	reactors     []handle.Handler // reactors added (e.g. associative hatches)
+	paperSpace   bool             // 67: entity is in paper space
+	invisible    bool             // 60: object visibility (1 = invisible)
+	lineType     *table.LineType  // 6: nil = BYLAYER
+	color        int              // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
+	trueColor    int              // 420: 0x00RRGGBB, -1 = none
+	colorName    string           // 430: color name (color book)
+	transparency int              // 440: 0 = BYLAYER (none), 0x01000000 = BYBLOCK, 0x020000AA = alpha AA
+	lineWeight   int              // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
+	ltscale      float64          // 48
 }
 
 // NewEntity creates a new entity.
@@ -460,6 +461,11 @@ func (e *entity) writeGroups102(f format.Formatter) {
 	if e.blockRecord != nil {
 		groupHandle = handle.Format(e.blockRecord.Handle())
 	}
+	writeAdded := func() {
+		for _, r := range e.reactors {
+			f.WriteHex(330, r.Handle())
+		}
+	}
 	wroteReactors := false
 	inReactors := false
 	skip := false
@@ -479,15 +485,19 @@ func (e *entity) writeGroups102(f format.Formatter) {
 			if groupHandle != "" {
 				f.WriteString(330, groupHandle)
 			}
+			writeAdded()
 			inReactors = false
 		} else if inReactors && p[0] == "330" && strings.EqualFold(strings.TrimSpace(p[1]), groupHandle) {
 			groupHandle = "" // already a reactor
 		}
 		writeRaw(f, [][2]string{p})
 	}
-	if !wroteReactors && groupHandle != "" {
+	if !wroteReactors && (groupHandle != "" || len(e.reactors) > 0) {
 		f.WriteString(102, "{ACAD_REACTORS")
-		f.WriteString(330, groupHandle)
+		if groupHandle != "" {
+			f.WriteString(330, groupHandle)
+		}
+		writeAdded()
 		f.WriteString(102, "}")
 	}
 	if e.xdict != nil {
@@ -496,6 +506,10 @@ func (e *entity) writeGroups102(f format.Formatter) {
 		f.WriteString(102, "}")
 	}
 }
+
+// AddReactor adds an object notified by the entity (written in the
+// ACAD_REACTORS group), e.g. the associative hatch of a boundary.
+func (e *entity) AddReactor(h handle.Handler) { e.reactors = append(e.reactors, h) }
 
 // SetExtensionDictionary sets the extension dictionary of the entity
 // (written as 102 {ACAD_XDICTIONARY 360 ...}; Drawing.ExtensionDictionary

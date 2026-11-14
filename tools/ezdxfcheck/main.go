@@ -144,6 +144,37 @@ func phaseC() *drawing.Drawing {
 	return d
 }
 
+// phaseD uses the creation APIs: dimensions, MTEXT columns, patterns,
+// associative hatch, polygon mesh, splines, arrows, linetypes, XDATA and
+// a revision cloud (AC1032).
+func phaseD() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	must(0, d.SetVersion(format.R2018))
+	must(d.Angular2LineDimension([]float64{0, 0}, []float64{10, 0}, []float64{0, 0}, []float64{10, 10}, []float64{8, 3}))
+	must(d.OrdinateDimension([]float64{0, 0}, []float64{30, 20}, []float64{35, 40}, true))
+	must(d.OrdinateDimension([]float64{0, 0}, []float64{30, 20}, []float64{50, 25}, false))
+	must(d.ArcDimension([]float64{0, 0}, []float64{5, 0}, []float64{0, 5}, []float64{4, 4}))
+	must(d.LinearDimensions([][]float64{{0, -10}, {10, -10}, {25, -10}}, []float64{0, -15}, 0))
+	ed := entity.NewMTextEditor("Title").Paragraph().Font("Arial", true, false, "bold").ColumnBreak().Append("second column")
+	m := must(d.MText(ed.String(), 0, 30, 0, 1, 20))
+	m.Columns = entity.NewStaticColumns(2, 20, 2, 30)
+	h := must(d.Hatch([]float64{50, 0}, []float64{60, 0}, []float64{60, 10}))
+	must(0, h.SetPattern("BRICK", 0, 1))
+	lw := must(d.LwPolyline(true, []float64{70, 0}, []float64{90, 0}, []float64{90, 20}, []float64{70, 20}))
+	c := must(d.Circle(80, 10, 0, 3))
+	must(d.HatchFromEntities(lw, c))
+	must(d.PolygonMesh(2, 3, [][]float64{{0, 50, 0}, {1, 50, 0}, {2, 50, 1}, {0, 51, 0}, {1, 51, 1}, {2, 51, 0}}, false, true))
+	must(d.SplineThrough([][]float64{{0, 60, 0}, {2, 63, 0}, {5, 61, 0}, {8, 64, 0}, {10, 60, 0}}))
+	must(d.SplineFit([][]float64{{0, 70, 0}, {2, 73, 0}, {5, 71, 0}}))
+	must(d.InsertArrow("_DOT", []float64{100, 0}, 2.5, 45))
+	must(d.LoadLineTypes("*GAS2,Gas ----GAS----\nA,.5,-.2,[\"GAS\",STANDARD,S=.1,R=0.0,X=-0.1,Y=-.05],-.25\n"))
+	must(0, dxf.SetHeaderVariable(d, "$MIRRTEXT", [2]string{"70", "1"}))
+	l := must(d.Line(0, 80, 0, 10, 80, 0))
+	l.SetXDataValues("MYAPP", entity.XString("text"), entity.XReal(1.5), entity.XPoint([]float64{1, 2, 3}))
+	must(d.RevisionCloud([][]float64{{0, 90}, {10, 90}, {10, 95}, {0, 95}}, 2, true))
+	return d
+}
+
 // cubeSAT is minimal SAT data (the geometry is not checked).
 var cubeSAT = []string{"700 0 1 0", "@33 Open Design Alliance ACIS Builder @12 ACIS 32.0 NT @24 Thu Jan 01 00:00:00 2026 ", "1 9.9999999999999995e-07 1e-10 ", "End-of-ACIS-data"}
 
@@ -365,7 +396,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
-		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more, "phaseb": phaseB, "phasec": phaseC,
+		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more, "phaseb": phaseB, "phasec": phaseC, "phased": phaseD,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {

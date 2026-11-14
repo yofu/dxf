@@ -226,3 +226,20 @@ cd.layouts.get("Layout1").page_setup(size=(420, 297), margins=(10, 10, 10, 20), 
 cd.set_raster_variables(frame=1, quality=1, units="mm")
 cd.set_wipeout_variables(frame=2)
 cd.saveas(os.path.join(out, "ez_phasec.dxf"))
+
+# phase D: dimensions, MTEXT columns, polygon mesh, spline through points,
+# revision cloud
+from ezdxf import revcloud as ezrevcloud
+dd = ezdxf.new("R2018", setup=True)
+dm = dd.modelspace()
+dm.add_angular_dim_2l(base=(8, 3), line1=((0, 0), (10, 0)), line2=((0, 0), (10, 10))).render()
+dm.add_ordinate_x_dim(feature_location=(30, 20), offset=(5, 20), origin=(0, 0)).render()
+dm.add_arc_dim_3p(base=(4, 4), center=(0, 0), p1=(5, 0), p2=(0, 5)).render()
+dm.add_mtext_static_columns(["first column", "second column"], width=20, gutter_width=2, height=30)
+mesh = dm.add_polymesh((2, 3))
+for i in range(2):
+    for j in range(3):
+        mesh.set_mesh_vertex((i, j), (j, 50 + i, (i + j) % 2))
+dm.add_cad_spline_control_frame([(0, 60), (2, 63), (5, 61), (8, 64), (10, 60)])
+ezrevcloud.add_entity(dm, [(0, 90), (10, 90), (10, 95), (0, 95)], 2)
+dd.saveas(os.path.join(out, "ez_phased.dxf"))

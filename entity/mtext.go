@@ -71,6 +71,88 @@ type MText struct {
 	BackgroundTrueColor    int     // 421: true color value (-1: not set)
 	BackgroundColorName    string  // 431: color name
 	BackgroundTransparency int     // 441: raw transparency value (0: not set)
+
+	// Columns is the column layout (101 Embedded Object, AC1032 or later;
+	// nil: none). Earlier versions keep the column data of AutoCAD as
+	// XDATA (ACAD), kept as read.
+	Columns *MTextColumns
+}
+
+// Column types of MTEXT.
+const (
+	MTEXT_COLUMNS_NONE    = 0
+	MTEXT_COLUMNS_STATIC  = 1
+	MTEXT_COLUMNS_DYNAMIC = 2
+)
+
+// MTextColumns is the column layout of an MTEXT (AC1032 or later). In
+// the text, "\N" breaks a column (static columns).
+type MTextColumns struct {
+	Type          int       // 71: MTEXT_COLUMNS_*
+	Count         int       // 72 (0 for dynamic columns with auto height)
+	Width         float64   // 44: column width
+	Gutter        float64   // 45: gutter width
+	AutoHeight    bool      // 73
+	Reversed      bool      // 74: reversed column flow
+	Heights       []float64 // 46: heights of the columns (dynamic, manual height)
+	DefinedHeight float64   // 41
+	TotalWidth    float64   // 42
+	TotalHeight   float64   // 43
+}
+
+// NewStaticColumns returns static columns: count columns of width and
+// gutter, of height (the text breaks columns with "\N").
+func NewStaticColumns(count int, width, gutter, height float64) *MTextColumns {
+	return &MTextColumns{Type: MTEXT_COLUMNS_STATIC, Count: count, Width: width, Gutter: gutter,
+		DefinedHeight: height, TotalWidth: float64(count)*width + float64(count-1)*gutter, TotalHeight: height}
+}
+
+// NewDynamicColumns returns dynamic columns of width and gutter: with
+// auto height (heights nil; the columns are of height) or manual heights.
+func NewDynamicColumns(width, gutter, height float64, heights ...float64) *MTextColumns {
+	c := &MTextColumns{Type: MTEXT_COLUMNS_DYNAMIC, Width: width, Gutter: gutter, DefinedHeight: height}
+	if len(heights) == 0 {
+		c.AutoHeight = true
+		c.Count = 1
+		c.TotalWidth, c.TotalHeight = width, height
+		return c
+	}
+	c.Heights = heights
+	c.Count = len(heights)
+	c.TotalWidth = float64(c.Count)*width + float64(c.Count-1)*gutter
+	for _, h := range heights {
+		if h > c.TotalHeight {
+			c.TotalHeight = h
+		}
+	}
+	return c
+}
+
+func (c *MTextColumns) format(f format.Formatter, t *MText) {
+	f.WriteString(101, "Embedded Object")
+	f.WriteInt(70, t.Attachment)
+	rad := t.Rotation * math.Pi / 180
+	f.WriteFloat(10, math.Cos(rad))
+	f.WriteFloat(20, math.Sin(rad))
+	f.WriteFloat(30, 0)
+	writePoint3(f, 11, t.Coord)
+	f.WriteFloat(40, t.Width)
+	f.WriteFloat(41, c.DefinedHeight)
+	f.WriteFloat(42, c.TotalWidth)
+	f.WriteFloat(43, c.TotalHeight)
+	f.WriteInt(71, c.Type)
+	count := c.Count
+	if c.Type == MTEXT_COLUMNS_DYNAMIC && c.AutoHeight {
+		count = 0
+	}
+	f.WriteInt(72, count)
+	f.WriteFloat(44, c.Width)
+	f.WriteFloat(45, c.Gutter)
+	f.WriteInt(73, boolInt(c.AutoHeight))
+	f.WriteInt(74, boolInt(c.Reversed))
+	for _, h := range c.Heights {
+		f.WriteFloat(46, h)
+	}
 }
 
 // IsEntity is for Entity interface.
@@ -128,6 +210,13 @@ func (t *MText) Format(f format.Formatter) {
 	}
 	f.WriteInt(73, t.LineSpacingStyle)
 	f.WriteFloat(44, t.LineSpacingFactor)
+	t.formatBackground(f)
+	if t.Columns != nil && format.AtLeast(f, format.R2018) {
+		t.Columns.format(f, t)
+	}
+}
+
+func (t *MText) formatBackground(f format.Formatter) {
 	if t.BackgroundFill != 0 && format.AtLeast(f, format.R2004) {
 		if t.BackgroundFill&(MTEXT_BG_COLOR|MTEXT_BG_CANVAS) == 0 {
 			// text frame only: 45 and 63 are not written

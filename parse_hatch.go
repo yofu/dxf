@@ -290,7 +290,7 @@ func parseHatchBoundary(r *groupReader) (*entity.HatchBoundary, error) {
 		return nil, err
 	}
 	for i := 0; i < n && r.peek() == "330"; i++ {
-		r.next()
+		b.Sources = append(b.Sources, entity.Ref{Raw: strings.TrimSpace(r.next()[1])})
 	}
 	return b, nil
 }

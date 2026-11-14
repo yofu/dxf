@@ -173,6 +173,36 @@ im.SetBoundary([]float64{-0.5, -0.5}, []float64{319.5, 239.5}) // clipping in pi
 d.Wipeout([]float64{0, 0}, []float64{10, 0}, []float64{10, 5}) // masking polygon
 ```
 
+### More creation
+
+```go
+// dimensions: also 2-line angular, ordinate, arc length and continued ones
+d.Angular2LineDimension(l1a, l1b, l2a, l2b, location)
+d.OrdinateDimension(origin, feature, leaderEnd, true) // X ordinate
+d.ArcDimension(center, p1, p2, location)
+d.LinearDimensions(points, location, 0)
+
+// MTEXT content with formatting codes, and columns (AC1032)
+ed := entity.NewMTextEditor("Title").Paragraph().Font("Arial", true, false, "bold").
+	Height(2.5, "big").Stack("1", "2", entity.STACK_HORIZONTAL).ColumnBreak()
+mt, _ := d.MText(ed.String(), 0, 0, 0, 1, 20)
+mt.Columns = entity.NewStaticColumns(2, 20, 2, 30) // count, width, gutter, height
+text.SetPlacement([]float64{5, 5}, nil, "MIDDLE_CENTER")
+
+// hatch patterns of .pat files, associative hatches
+pats, _ := entity.ParsePatterns(patFileContent)
+hatch.SetPatternDefinition("MYPAT", pats["MYPAT"], 0, 1)
+d.HatchFromEntities(closedPolyline, circle) // boundaries refer to the hatch
+
+d.PolygonMesh(m, n, vertices, false, false)
+d.SplineThrough(points) // control points computed; d.SplineFit(points): fit points only
+d.InsertArrow("_DOT", tip, 2.5, 45) // arrowhead blocks (d.ArrowBlock)
+d.LoadLineTypes(linFileContent)     // .lin definitions, also with text and shapes
+dxf.SetHeaderVariable(d, "$MIRRTEXT", [2]string{"70", "1"}) // dxf.HeaderVariable
+line.SetXDataValues("MYAPP", entity.XString("text"), entity.XReal(1.5)) // XDataValues
+d.RevisionCloud(vertices, 2, true) // segment length, calligraphy
+```
+
 ### Layouts and viewports
 
 ```go

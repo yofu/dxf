@@ -2,6 +2,7 @@ package dxf
 
 import (
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/yofu/dxf/drawing"
@@ -143,6 +144,15 @@ func ParseMText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	xaxis := []float64{0, 0, 0}
 	hasXAxis := false
 	var err error
+	// the embedded object (101) of AC1032 has the column layout
+	for i, dt := range data {
+		if dt[0] == "101" {
+			cols, _ := splitXData(data[i+1:])
+			data = data[:i]
+			t.Columns = parseMTextColumns(cols)
+			break
+		}
+	}
 	for _, dt := range data {
 		switch dt[0] {
 		default:
@@ -219,4 +229,40 @@ func ParseMText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		t.Rotation = math.Atan2(xaxis[1], xaxis[0]) * 180.0 / math.Pi
 	}
 	return t, nil
+}
+
+// parseMTextColumns parses the embedded object of MTEXT (columns).
+func parseMTextColumns(data [][2]string) *entity.MTextColumns {
+	c := &entity.MTextColumns{}
+	for _, dt := range data {
+		v := strings.TrimSpace(dt[1])
+		f, _ := strconv.ParseFloat(v, 64)
+		i, _ := strconv.Atoi(v)
+		switch dt[0] {
+		case "41":
+			c.DefinedHeight = f
+		case "42":
+			c.TotalWidth = f
+		case "43":
+			c.TotalHeight = f
+		case "71":
+			c.Type = i
+		case "72":
+			c.Count = i
+		case "44":
+			c.Width = f
+		case "45":
+			c.Gutter = f
+		case "73":
+			c.AutoHeight = i != 0
+		case "74":
+			c.Reversed = i != 0
+		case "46":
+			c.Heights = append(c.Heights, f)
+		}
+	}
+	if c.Type == entity.MTEXT_COLUMNS_DYNAMIC && c.AutoHeight && c.Count == 0 {
+		c.Count = 1
+	}
+	return c
 }

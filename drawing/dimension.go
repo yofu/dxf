@@ -97,7 +97,8 @@ func (d *Drawing) addDimension(dim *entity.Dimension, set func()) (*entity.Dimen
 // RegenerateDimension (re)creates the graphics block of dim from its
 // definition points, type, text and dimension style, and updates
 // Measurement and TextMid. Call it after changing a dimension.
-// Linear, aligned, radius, diameter and 3-point angular dimensions are supported.
+// Linear, aligned, radius, diameter, angular (3 points and 2 lines),
+// ordinate and arc length dimensions are supported.
 func (d *Drawing) RegenerateDimension(dim *entity.Dimension) error {
 	style, err := d.DimStyle(dim.Style)
 	if err != nil {
@@ -113,6 +114,12 @@ func (d *Drawing) RegenerateDimension(dim *entity.Dimension) error {
 		err = g.radial(dim)
 	case entity.DIM_ANGULAR3P:
 		err = g.angular(dim)
+	case entity.DIM_ANGULAR:
+		err = g.angular2(dim)
+	case entity.DIM_ORDINATE:
+		err = g.ordinate(dim)
+	case entity.DIM_ARC:
+		err = g.arcLength(dim)
 	default:
 		return fmt.Errorf("dimension type %d is not supported", dim.Type)
 	}
@@ -348,7 +355,12 @@ func (g *dimGraphics) radial(dim *entity.Dimension) error {
 }
 
 func (g *dimGraphics) angular(dim *entity.Dimension) error {
-	v, p1, p2, loc := dim.DefPoint4, dim.DefPoint2, dim.DefPoint3, dim.DefPoint
+	return g.angularArc(dim, dim.DefPoint4, dim.DefPoint2, dim.DefPoint3, dim.DefPoint)
+}
+
+// angularArc draws the dimension arc through loc of the angle at vertex v
+// between the directions to p1 and p2 (the angle containing loc).
+func (g *dimGraphics) angularArc(dim *entity.Dimension, v, p1, p2, loc []float64) error {
 	r := math.Hypot(loc[0]-v[0], loc[1]-v[1])
 	if r == 0 {
 		return errors.New("angular dimension: location is at the vertex")

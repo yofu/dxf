@@ -159,9 +159,9 @@ func TestDimensionTextAndStyle(t *testing.T) {
 	if dim.BlockName != name || dim.Measurement != 2000 || blockText(t, dimBlockEntities(t, d, dim)).Value != "2000 mm" {
 		t.Errorf("regenerate: %s %v", dim.BlockName, dim.Measurement)
 	}
-	ord := entity.NewDimension(entity.DIM_ORDINATE)
+	ord := entity.NewDimension(entity.DIM_LARGE_RADIAL)
 	if err := d.RegenerateDimension(ord); err == nil {
-		t.Error("ordinate dimension generation is not supported")
+		t.Error("jogged radius dimension generation is not supported")
 	}
 
 	// DIMSTYLE values round trip
