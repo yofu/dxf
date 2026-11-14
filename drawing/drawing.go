@@ -740,22 +740,23 @@ func (d *Drawing) bbox(en entity.Entity, depth int) ([]float64, []float64) {
 	if err != nil || len(b.Entities) == 0 || depth >= maxInsertDepth {
 		return ins.BBox()
 	}
-	bmins := []float64{math.Inf(1), math.Inf(1), math.Inf(1)}
-	bmaxs := []float64{math.Inf(-1), math.Inf(-1), math.Inf(-1)}
+	// each entity's box is transformed (tighter than transforming the box
+	// of the whole block when the insert is rotated)
+	var boxes [][2][]float64
 	for _, e := range b.Entities {
 		if _, ok := e.(*entity.AttributeDefinition); ok {
 			continue // not displayed in block references (ATTRIBs are)
 		}
 		emins, emaxs := d.bbox(e, depth+1)
-		for i := 0; i < 3; i++ {
-			bmins[i] = math.Min(bmins[i], emins[i])
-			bmaxs[i] = math.Max(bmaxs[i], emaxs[i])
+		if math.IsInf(emins[0], 1) {
+			continue // empty
 		}
+		boxes = append(boxes, [2][]float64{emins, emaxs})
 	}
 	mins := []float64{math.Inf(1), math.Inf(1), math.Inf(1)}
 	maxs := []float64{math.Inf(-1), math.Inf(-1), math.Inf(-1)}
-	// the transform is affine, so the corners of the first and last
-	// array elements bound the whole array.
+	// the transform is affine, so the first and last array elements bound
+	// the whole array.
 	cols := []int{0}
 	if ins.Columns > 1 {
 		cols = append(cols, ins.Columns-1)
@@ -764,19 +765,21 @@ func (d *Drawing) bbox(en entity.Entity, depth int) ([]float64, []float64) {
 	if ins.Rows > 1 {
 		rows = append(rows, ins.Rows-1)
 	}
-	for _, c := range cols {
-		for _, r := range rows {
-			for k := 0; k < 8; k++ {
-				corner := []float64{bmins[0], bmins[1], bmins[2]}
-				for i := 0; i < 3; i++ {
-					if k&(1<<uint(i)) != 0 {
-						corner[i] = bmaxs[i]
+	for _, box := range boxes {
+		for _, c := range cols {
+			for _, r := range rows {
+				for k := 0; k < 8; k++ {
+					corner := []float64{box[0][0], box[0][1], box[0][2]}
+					for i := 0; i < 3; i++ {
+						if k&(1<<uint(i)) != 0 {
+							corner[i] = box[1][i]
+						}
 					}
-				}
-				p := ins.Transform(corner, b.Coord, c, r)
-				for i := 0; i < 3; i++ {
-					mins[i] = math.Min(mins[i], p[i])
-					maxs[i] = math.Max(maxs[i], p[i])
+					p := ins.Transform(corner, b.Coord, c, r)
+					for i := 0; i < 3; i++ {
+						mins[i] = math.Min(mins[i], p[i])
+						maxs[i] = math.Max(maxs[i], p[i])
+					}
 				}
 			}
 		}
@@ -904,6 +907,11 @@ func (d *Drawing) syncHeader() {
 	}
 	if d.CurrentStyle != nil {
 		h.TextStyle = d.CurrentStyle.Name()
+	}
+	// the structure written is AC1015 (R2000): files read from older
+	// versions (e.g. R12, AC1009) are written as AC1015
+	if v := strings.ToUpper(strings.TrimSpace(h.Version)); len(v) == 6 && strings.HasPrefix(v, "AC") && v < "AC1015" {
+		h.Version = "AC1015"
 	}
 }
 

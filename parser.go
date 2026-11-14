@@ -503,6 +503,13 @@ func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 		switch dt[0] {
 		case "2":
 			b.Name = dt[1]
+			// R12 names of the model space and paper space blocks
+			switch strings.ToUpper(strings.TrimSpace(b.Name)) {
+			case "$MODEL_SPACE":
+				b.Name = "*Model_Space"
+			case "$PAPER_SPACE":
+				b.Name = "*Paper_Space"
+			}
 		case "1":
 			b.XrefPath = dt[1]
 		case "4":

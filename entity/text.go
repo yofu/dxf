@@ -1,6 +1,9 @@
 package entity
 
 import (
+	"math"
+	"unicode/utf8"
+
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/table"
 )
@@ -172,9 +175,47 @@ func (t *Text) Anchor(pos int) {
 	}
 }
 
+// The width is estimated as the number of characters times the height and
+// the width factor; the justification (72, 73) and rotation are applied.
 func (t *Text) BBox() ([]float64, []float64) {
-	// TODO: text length, anchor point
-	mins := []float64{t.Coord1[0], t.Coord1[1], t.Coord1[2]}
-	maxs := []float64{t.Coord1[0], t.Coord1[1] + t.Height, t.Coord1[2]}
+	h := t.Height
+	wf := t.WidthFactor
+	if wf <= 0 {
+		wf = 1
+	}
+	w := float64(utf8.RuneCountInString(t.Value)) * h * wf
+	ref := t.Coord1
+	justified := t.HorizontalFlag != 0 || t.VerticalFlag != 0
+	if justified && len(t.Coord2) >= 3 {
+		ref = t.Coord2
+	}
+	x0 := 0.0
+	switch t.HorizontalFlag {
+	case 1, 4: // center, middle
+		x0 = -w / 2
+	case 2: // right
+		x0 = -w
+	case 3, 5: // aligned, fit: between the two points
+		x0 = 0
+		ref = t.Coord1
+		w = math.Hypot(t.Coord2[0]-t.Coord1[0], t.Coord2[1]-t.Coord1[1])
+	}
+	y0 := 0.0
+	switch {
+	case t.HorizontalFlag == 4 || t.VerticalFlag == 2: // middle
+		y0 = -h / 2
+	case t.VerticalFlag == 3: // top
+		y0 = -h
+	}
+	rad := t.Rotation * math.Pi / 180
+	sin, cos := math.Sin(rad), math.Cos(rad)
+	mins := []float64{math.Inf(1), math.Inf(1), ref[2]}
+	maxs := []float64{math.Inf(-1), math.Inf(-1), ref[2]}
+	for _, p := range [][2]float64{{x0, y0}, {x0 + w, y0}, {x0, y0 + h}, {x0 + w, y0 + h}} {
+		x := ref[0] + p[0]*cos - p[1]*sin
+		y := ref[1] + p[0]*sin + p[1]*cos
+		mins[0], maxs[0] = math.Min(mins[0], x), math.Max(maxs[0], x)
+		mins[1], maxs[1] = math.Min(mins[1], y), math.Max(maxs[1], y)
+	}
 	return extrude(mins, maxs, t.Thickness)
 }

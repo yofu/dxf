@@ -1,0 +1,36 @@
+# ezdxfcheck
+
+Validation of this package with [ezdxf](https://ezdxf.mozman.at/).
+
+1. Files written by this package are read and audited by ezdxf.
+2. Files written by ezdxf are read by this package, written back
+   (ASCII and binary), and compared with the originals by ezdxf.
+
+## Usage
+
+```sh
+python -m venv venv
+venv/bin/pip install ezdxf        # venv\Scripts\pip on Windows
+
+# 1. files written by this package (ASCII, binary, Shift_JIS)
+go run ./tools/ezdxfcheck generate out/gen
+venv/bin/python tools/ezdxfcheck/audit.py out/gen
+
+# 2. files written by ezdxf (R2000 ASCII/binary, Shift_JIS, R12)
+venv/bin/python tools/ezdxfcheck/make_ezdxf.py out/ez
+go run ./tools/ezdxfcheck roundtrip out/ez out/rt
+venv/bin/python tools/ezdxfcheck/compare.py out/ez out/rt
+```
+
+`audit.py` prints the result of `doc.audit()` (errors and fixes) and the
+contents of each file. `compare.py` prints the audit result of the files
+written back and the differences from the original files (entities and
+their properties, layers, linetypes, styles, dimension styles, blocks,
+groups, layouts and viewports).
+
+Expected differences after a round trip:
+
+- R12 files are written as AC1015 (R2000); layers get the lineweight
+  DEFAULT (-3).
+- The dimension style of `$DIMSTYLE` is added if the DIMSTYLE table does
+  not have it.
