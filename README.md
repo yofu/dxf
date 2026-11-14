@@ -179,6 +179,18 @@ For files without `$DWGCODEPAGE`, the code page can be given:
 d, err := dxf.FromFileWithCodePage("sjis.dxf", codepage.Japanese)
 ```
 
+### Binary DXF
+
+```go
+d.SaveAsBinary("drawing.dxf") // or d.SetFormatter(format.NewBinary()) and d.WriteTo(w)
+d, err := dxf.FromFile("drawing.dxf") // binary DXF is detected by its sentinel
+```
+
+Values are written in the type of their group code (strings, doubles,
+16/32/64-bit integers, booleans and binary chunks); text is converted to
+the code page of `$DWGCODEPAGE` as in ASCII DXF. Binary DXF of R12
+(1-byte group codes) can also be read.
+
 ### Reading and writing back
 
 When a file is read and written again, data this package does not

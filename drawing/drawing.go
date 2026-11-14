@@ -601,19 +601,51 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	d.ensureAppIDs()
 	d.linkOwners()
 	d.setHandle()
+	h := d.Header()
+	unicode := codepage.IsUnicodeVersion(h.Version)
+	// formatters converting each string value (e.g. format.Binary)
+	enc, perValue := d.formatter.(interface{ SetEncoder(func(string) string) })
+	if perValue {
+		if unicode {
+			enc.SetEncoder(nil)
+		} else {
+			cp := h.CodePage
+			enc.SetEncoder(func(s string) string { return codepage.Encode(s, cp) })
+		}
+	}
 	d.formatter.Reset()
 	for _, s := range d.Sections {
 		s.Format(d.formatter)
 	}
 	d.formatter.WriteString(0, "EOF")
-	h := d.Header()
-	if codepage.IsUnicodeVersion(h.Version) {
+	if unicode || perValue {
 		return d.formatter.WriteTo(w) // AC1021 or later: UTF-8
 	}
 	// Text is written in the code page of $DWGCODEPAGE, and characters
 	// outside it as \U+XXXX escapes.
 	n2, err := io.WriteString(w, codepage.Encode(d.formatter.Output(), h.CodePage))
 	return int64(n2), err
+}
+
+// SetFormatter sets the formatter used for writing the drawing:
+// format.NewASCII() (default) or format.NewBinary() for binary DXF.
+func (d *Drawing) SetFormatter(f format.Formatter) {
+	d.formatter = f
+	d.savebuff = nil
+}
+
+// Formatter returns the formatter used for writing the drawing.
+func (d *Drawing) Formatter() format.Formatter {
+	return d.formatter
+}
+
+// SaveAsBinary saves the drawing as a binary DXF file.
+// The formatter of the drawing is not changed.
+func (d *Drawing) SaveAsBinary(filename string) error {
+	f := d.formatter
+	d.formatter = format.NewBinary()
+	defer func() { d.formatter = f }()
+	return d.SaveAs(filename)
 }
 
 var _ io.WriterTo = &Drawing{}

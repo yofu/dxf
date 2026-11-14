@@ -4,7 +4,6 @@
 package dxf
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"os"
@@ -70,7 +69,7 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 // (e.g. "ANSI_932" for Shift_JIS) for text if the file has no $DWGCODEPAGE.
 // The code page is kept in Header().CodePage and used when the drawing is written.
 func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, error) {
-	scanner := bufio.NewScanner(r)
+	src := newPairSource(r)
 	d := NewDrawing()
 	var code, value string
 	parsers := []func(*drawing.Drawing, int, [][2]string) error{
@@ -114,19 +113,20 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 	}
 	defer finish()
 
-	for scanner.Scan() {
-		line++
-		if line%2 == 1 {
-			code = strings.TrimSpace(scanner.Text())
-			if line == 1 {
-				code = strings.TrimPrefix(code, "\uFEFF") // UTF-8 BOM
-			}
-			continue
+	for {
+		c, raw, err := src.next()
+		if err == io.EOF {
+			break
 		}
+		if err != nil {
+			return d, err
+		}
+		code = c
+		line = src.line()
 		if code == "999" { // comment
 			continue
 		}
-		value = decode(scanner.Text())
+		value = decode(raw)
 		if section == "HEADER" {
 			switch code {
 			case "9":
@@ -178,9 +178,6 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 			}
 		}
 		data = append(data, [2]string{code, value})
-	}
-	if err := scanner.Err(); err != nil {
-		return d, err
 	}
 	if len(data) > 0 && parser != nil {
 		err := parser(d, startline, data)
