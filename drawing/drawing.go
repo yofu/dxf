@@ -38,6 +38,9 @@ type Drawing struct {
 	layouts      []*object.Layout // "Model" (*Model_Space), "Layout1" (*Paper_Space), ...
 	layoutdict   *object.Dictionary
 	PlotStyle    handle.Handler
+
+	underlayDicts map[string]*object.Dictionary // ACAD_PDFDEFINITIONS, ... by format
+	underlayDefs  []*entity.UnderlayDefinition
 	// savebuff is used internally for the io.Reader options.
 	savebuff *bytes.Buffer
 
@@ -638,6 +641,7 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	d.ensureClasses()
 	d.ensureAppIDs()
 	d.linkOwners()
+	d.linkUnderlays()
 	d.setHandle()
 	h := d.Header()
 	unicode := codepage.IsUnicodeVersion(h.Version)
@@ -1035,7 +1039,8 @@ func (d *Drawing) SetHandleBase(h int) {
 
 // SetObjectSourceHandle sets the handle, in the file read from, of an
 // object this package creates: the root dictionary (key ""), the
-// dictionaries "ACAD_GROUP", "ACAD_LAYOUT", "ACAD_PLOTSTYLENAME" and the
+// dictionaries "ACAD_GROUP", "ACAD_LAYOUT", "ACAD_PLOTSTYLENAME",
+// "ACAD_PDFDEFINITIONS" (also DWF and DGN) and the
 // default plot style "ACAD_PLOTSTYLENAME/Normal". References to them by
 // handle from objects kept as read stay valid.
 func (d *Drawing) SetObjectSourceHandle(key, h string) {
@@ -1048,6 +1053,8 @@ func (d *Drawing) SetObjectSourceHandle(key, h string) {
 		d.layoutdict.SetSourceHandle(h)
 	case "ACAD_PLOTSTYLENAME":
 		d.plotstyles.SetSourceHandle(h)
+	case "ACAD_PDFDEFINITIONS", "ACAD_DWFDEFINITIONS", "ACAD_DGNDEFINITIONS":
+		d.underlayDictionary(key[5:8]).SetSourceHandle(h)
 	case "ACAD_PLOTSTYLENAME/Normal":
 		if p, ok := d.PlotStyle.(interface{ SetSourceHandle(string) }); ok {
 			p.SetSourceHandle(h)

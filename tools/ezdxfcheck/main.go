@@ -98,6 +98,19 @@ func linetypes() *drawing.Drawing {
 	return d
 }
 
+// underlays uses PDF and DGN underlays.
+func underlays() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	def := must(d.AddUnderlayDefinition(entity.UNDERLAY_PDF, "plans/site.pdf", "2"))
+	u := must(d.Underlay(def, 10, 20, 0, 2))
+	u.Rotation = 30
+	u.SetClipping([]float64{0, 0}, []float64{100, 50})
+	u.Fade = 25
+	dgn := must(d.AddUnderlayDefinition(entity.UNDERLAY_DGN, "model.dgn", ""))
+	must(d.Underlay(dgn, 0, 0, 0, 1))
+	return d
+}
+
 func hatchDims() *drawing.Drawing {
 	d := dxf.NewDrawing()
 	h := must(d.Hatch([]float64{0, 0}, []float64{100, 0}, []float64{100, 50}, []float64{0, 50}))
@@ -205,7 +218,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
-		"linetypes": linetypes,
+		"linetypes": linetypes, "underlays": underlays,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {

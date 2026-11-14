@@ -441,3 +441,17 @@ func (v *Viewport) ApplyTransform(t Transform) error {
 func (u *Unknown) ApplyTransform(t Transform) error {
 	return ErrTransform
 }
+
+// ApplyTransform transforms the underlay: insertion point, scale and
+// rotation (the clipping boundary is in underlay coordinates).
+func (u *Underlay) ApplyTransform(t Transform) error {
+	if err := checkZ(t, u.Extrusion); err != nil {
+		return err
+	}
+	transformPoint(t, u.Insert)
+	for k := range u.Scale {
+		u.Scale[k] = t.Length(u.Scale[k])
+	}
+	u.Rotation += t.Angle
+	return nil
+}

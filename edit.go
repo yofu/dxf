@@ -49,6 +49,12 @@ func Copy(d *drawing.Drawing, e entity.Entity) (entity.Entity, error) {
 	if sh, ok := c.(interface{ SetSourceHandle(string) }); ok {
 		sh.SetSourceHandle("")
 	}
+	if u, ok := c.(*entity.Underlay); ok {
+		// the definition is shared
+		src := e.(*entity.Underlay)
+		u.Definition = src.Definition
+		u.SetDefinitionHandle(src.DefinitionHandle())
+	}
 	if dim, ok := c.(*entity.Dimension); ok && dim.BlockName != "" {
 		if err := copyDimensionBlock(d, dim); err != nil {
 			return nil, err

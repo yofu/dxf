@@ -7,6 +7,7 @@ import (
 
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/object"
 	"github.com/yofu/dxf/table"
 )
@@ -52,7 +53,8 @@ func (o objRecord) after(marker string) [][2]string {
 }
 
 // ParseObjects parses OBJECTS section: groups (GROUP in the ACAD_GROUP
-// dictionary) and layouts (LAYOUT in the ACAD_LAYOUT dictionary).
+// dictionary), layouts (LAYOUT in the ACAD_LAYOUT dictionary) and underlay
+// definitions (PDFDEFINITION in the ACAD_PDFDEFINITIONS dictionary, ...).
 // Other objects are kept as read (object.Raw) and written again.
 func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	var objects []objRecord
@@ -102,6 +104,7 @@ func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 			return err
 		}
 	}
+	parseUnderlayDefinitions(d, items, byHandle, modeled)
 	// the other objects are kept as read, with their handles
 	rootKeys := map[string]string{}
 	for name, h := range items {
@@ -252,4 +255,62 @@ func sortedKeys(m map[string]string) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// parseUnderlayDefinitions creates the underlay definitions of the
+// dictionaries ACAD_PDFDEFINITIONS, ACAD_DWFDEFINITIONS and
+// ACAD_DGNDEFINITIONS, and links the underlays read to them.
+func parseUnderlayDefinitions(d *drawing.Drawing, items map[string]string, byHandle map[string]objRecord, modeled map[string]bool) {
+	defs := map[int]*entity.UnderlayDefinition{} // by handle in the file
+	for _, ff := range []string{entity.UNDERLAY_PDF, entity.UNDERLAY_DWF, entity.UNDERLAY_DGN} {
+		key := "ACAD_" + ff + "DEFINITIONS"
+		h, ok := items[key]
+		if !ok || byHandle[h].typ != "DICTIONARY" {
+			continue
+		}
+		modeled[h] = true
+		d.SetObjectSourceHandle(key, h)
+		dictItems := byHandle[h].dictionaryItems()
+		for _, name := range sortedKeys(dictItems) {
+			dh := dictItems[name]
+			o, ok := byHandle[dh]
+			if !ok || o.typ != ff+"DEFINITION" {
+				continue
+			}
+			def := entity.NewUnderlayDefinition(ff, "", "")
+			for _, dt := range o.after("AcDbUnderlayDefinition") {
+				switch dt[0] {
+				case "1":
+					def.FileName = dt[1]
+				case "2":
+					def.Name = dt[1]
+				}
+			}
+			def.SetSourceHandle(dh)
+			if err := d.AddUnderlayDefinitionWithKey(def, name); err != nil {
+				continue
+			}
+			modeled[dh] = true
+			defs[handle.Parse(dh)] = def
+		}
+	}
+	if len(defs) == 0 {
+		return
+	}
+	link := func(es entity.Entities) {
+		for _, e := range es {
+			u, ok := e.(*entity.Underlay)
+			if !ok || u.DefinitionHandle() == "" {
+				continue
+			}
+			if def, ok := defs[handle.Parse(u.DefinitionHandle())]; ok {
+				u.Definition = def
+				u.SetDefinitionHandle("")
+			}
+		}
+	}
+	link(d.Entities())
+	for _, b := range d.Blocks() {
+		link(b.Entities)
+	}
 }

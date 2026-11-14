@@ -25,7 +25,8 @@ const (
 	ATTRIB
 	VIEWPORT
 	LEADER
-	UNKNOWN // entity types not supported by this package (see Unknown)
+	UNDERLAY // PDFUNDERLAY, DWFUNDERLAY, DGNUNDERLAY (see Underlay.TypeName)
+	UNKNOWN  // entity types not supported by this package (see Unknown)
 )
 
 // EntityTypeString converts EntityType to string.
@@ -72,6 +73,8 @@ func EntityTypeString(t EntityType) string {
 		return "VIEWPORT"
 	case LEADER:
 		return "LEADER"
+	case UNDERLAY:
+		return "PDFUNDERLAY"
 	default:
 		return ""
 	}
@@ -121,6 +124,8 @@ func EntityTypeValue(t string) EntityType {
 		return VIEWPORT
 	case "LEADER":
 		return LEADER
+	case "PDFUNDERLAY", "PDFREFERENCE", "DWFUNDERLAY", "DGNUNDERLAY":
+		return UNDERLAY
 	default:
 		return -1
 	}

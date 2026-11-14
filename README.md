@@ -9,7 +9,8 @@ DXF (Drawing Exchange Format by Autodesk, Inc.) library for Go.
   read is written again.
 - Entities: LINE, CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT, 3DFACE, SOLID,
   LWPOLYLINE, POLYLINE (2D, 3D, meshes), SPLINE, INSERT, ATTDEF, ATTRIB,
-  HATCH, DIMENSION, LEADER and VIEWPORT. Other entity types are kept as read
+  HATCH, DIMENSION, LEADER, VIEWPORT and underlays (PDFUNDERLAY,
+  DWFUNDERLAY, DGNUNDERLAY). Other entity types are kept as read
   (`entity.Unknown`).
 - Blocks with attributes, groups, layouts and viewports, extended data,
   text in code pages (e.g. Shift_JIS for Japanese), and editing (query,
@@ -124,6 +125,13 @@ h.SetGradient(entity.GRADIENT_LINEAR, color.RGB(255, 0, 0), color.RGB(0, 0, 255)
 
 e, _ := d.Ellipse([]float64{0, 0, 0}, []float64{10, 0, 0}, 0.5)
 e.Start, e.End = 0, math.Pi // elliptical arc
+
+// PDF underlay: the definition (OBJECTS, ACAD_PDFDEFINITIONS) and its reference
+def, _ := d.AddUnderlayDefinition(entity.UNDERLAY_PDF, "plans/site.pdf", "2") // page 2
+u, _ := d.Underlay(def, 0, 0, 0, 1) // insertion point, scale
+u.Rotation = 30
+u.SetClipping([]float64{0, 0}, []float64{100, 50}) // in underlay coordinates
+u.Fade = 25                                        // also Contrast, Flags (UNDERLAY_MONOCHROME, ...)
 ```
 
 ### Layouts and viewports

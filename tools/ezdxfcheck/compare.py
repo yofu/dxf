@@ -60,6 +60,10 @@ def summary(doc):
         elif t == "DIMENSION": d += [e.dimtype, r(e.get_measurement()), len(e.get_geometry_block()) if e.get_geometry_block() else None, r(a.defpoint)]
         elif t == "LEADER": d += [r(list(e.vertices))]
         elif t == "INSERT": d += [a.name, r(a.insert), a.xscale, a.rotation, [(x.dxf.tag, x.dxf.text) for x in e.attribs]]
+        elif t in ("PDFUNDERLAY", "DWFUNDERLAY", "DGNUNDERLAY"):
+            ud = e.get_underlay_def()
+            d += [r(a.insert), r(e.scaling), a.rotation, a.flags, a.contrast, a.fade, r(list(e.boundary_path)),
+                  (ud.dxftype(), ud.dxf.filename, ud.dxf.name) if ud else None]
         elif t == "IMAGE": d += [r(a.insert), e.image_def.dxf.filename if e.image_def else None]
         elif t == "WIPEOUT": d += [r(a.insert), len(e.boundary_path)]
         elif t == "MLINE": d += [len(e.vertices), e.style.dxf.name if e.style else None]

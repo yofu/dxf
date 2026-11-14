@@ -95,6 +95,11 @@ func (d *Dictionary) AddItem(key string, value handle.Handler) error {
 	return nil
 }
 
+// Item returns the item with key (nil if it does not exist).
+func (d *Dictionary) Item(key string) handle.Handler {
+	return d.item[key]
+}
+
 // SetOwner sets the owner dictionary.
 func (d *Dictionary) SetOwner(h handle.Handler) {
 	d.owner = h

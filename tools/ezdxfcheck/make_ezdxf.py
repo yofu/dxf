@@ -66,6 +66,13 @@ lay2.add_viewport(center=(100, 100), size=(100, 100), view_center_point=(0, 0), 
 # objects referred to by handle: image, wipeout, mline, extension dictionary
 image_def = doc.add_image_def(filename="plan.png", size_in_pixel=(640, 480))
 msp.add_image(insert=(0, 0), size_in_units=(6.4, 4.8), image_def=image_def, rotation=0)
+pdf_def = doc.add_underlay_def(filename="plans/site.pdf", fmt="pdf", name="2")
+pu = msp.add_underlay(pdf_def, insert=(10, 20), scale=2, rotation=30)
+pu.clipping = True
+pu.boundary_path = [(0, 0), (100, 50)]
+pu.dxf.fade = 25
+dgn_def = doc.add_underlay_def(filename="model.dgn", fmt="dgn", name="default")
+msp.add_underlay(dgn_def, insert=(0, 0))
 msp.add_wipeout([(0, 0), (5, 0), (5, 5)])
 msp.add_mline([(0, 0), (10, 0), (10, 10)])
 xl = msp.add_line((0, 0), (1, 1))
