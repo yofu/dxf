@@ -367,7 +367,23 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	l.SetFlag(flag)
 	l.SetLineWidth(lw)
 	l.SetPlotStyle(d.PlotStyle)
-	l.Extra = rawExtra(data, codes("2", "70", "62", "6", "370", "390"), false)
+	l.Extra = rawExtra(data, codes("2", "70", "62", "6", "370", "390", "420", "430"), false)
+	if v, ok := value(data, "420"); ok {
+		if c, err := strconv.Atoi(strings.TrimSpace(v)); err == nil {
+			l.SetTrueColorValue(c)
+		}
+	}
+	if v, ok := value(data, "430"); ok {
+		l.SetColorName(v)
+	}
+	// transparency: extended data AcCmTransparency (1071)
+	l.Extra = takeXData(l.Extra, table.TransparencyApp, func(x [][2]string) {
+		if v, ok := value(x, "1071"); ok {
+			if t, err := strconv.Atoi(strings.TrimSpace(v)); err == nil {
+				l.SetTransparencyValue(t)
+			}
+		}
+	})
 	return l, nil
 }
 
@@ -780,6 +796,16 @@ func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
 			lp.SetLineType(lt)
 		case "48":
 			if err := setFloat(dt, func(val float64) { e.SetLtscale(val) }); err != nil {
+				return err
+			}
+		case "420":
+			if err := setInt(dt, func(val int) { entity.SetRawColorValues(e, val, "", 0) }); err != nil {
+				return err
+			}
+		case "430":
+			entity.SetRawColorValues(e, -1, dt[1], 0)
+		case "440":
+			if err := setInt(dt, func(val int) { entity.SetRawColorValues(e, -1, "", val) }); err != nil {
 				return err
 			}
 		case "60":

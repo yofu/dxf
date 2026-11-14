@@ -68,6 +68,18 @@ xrec.extend([(1, "extension data"), (40, 1.5)])
 doc.saveas(os.path.join(out, "ez_r2000.dxf"))
 doc.saveas(os.path.join(out, "ez_r2000_bin.dxf"), fmt="bin")
 
+# R2010: true color, color names and transparency
+c10 = ezdxf.new("R2010")
+lay = c10.layers.add("GLASS")
+lay.rgb = (10, 200, 250)
+lay.transparency = 0.3
+m10 = c10.modelspace()
+ln = m10.add_line((0, 0), (10, 0), dxfattribs={"layer": "GLASS"})
+ln.rgb = (255, 128, 0)
+ln.transparency = 0.5
+m10.add_circle((0, 0), 5, dxfattribs={"true_color": ezdxf.colors.rgb2int((1, 2, 3)), "color_name": "BOOK$NAME"})
+c10.saveas(os.path.join(out, "ez_r2010.dxf"))
+
 # Japanese drawing in Shift_JIS (cp932)
 jdoc = ezdxf.new("R2000")
 jdoc.encoding = "cp932"

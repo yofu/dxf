@@ -17,6 +17,7 @@ import (
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/format"
 )
 
 func must[T any](v T, err error) T {
@@ -112,6 +113,23 @@ func must2[A, B any](a A, b B, err error) (A, B) {
 	return a, b
 }
 
+// colors uses true colors and transparency (AC1024).
+func colors() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	must(0, d.SetVersion(format.R2010))
+	l := must(d.AddLayer("GLASS", color.Cyan, dxf.DefaultLineType, true))
+	l.SetTrueColor(10, 200, 250)
+	l.SetTransparency(0.3)
+	ln := must(d.Line(0, 0, 0, 10, 0, 0))
+	ln.SetTrueColor(255, 128, 0)
+	ln.SetTransparency(0.5)
+	c := must(d.Circle(0, 0, 0, 5))
+	c.SetTrueColor(1, 2, 3)
+	c.SetColorName("BOOK$NAME")
+	c.SetTransparencyByBlock()
+	return d
+}
+
 // edited uses the editing API: explode, copy, transform, remove, rename.
 func edited() *drawing.Drawing {
 	d := blocks()
@@ -151,7 +169,7 @@ func layouts() *drawing.Drawing {
 
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
-		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited,
+		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
 	}
 	for name, f := range files {
 		d := f()

@@ -66,9 +66,10 @@ func GroupCodeType(code int) ValueType {
 // Values are written in the type of their group code, whatever Write*
 // method is used: e.g. WriteString(10, "1.5") writes a double.
 type Binary struct {
-	buffer bytes.Buffer
-	encode func(string) string
-	err    error
+	buffer  bytes.Buffer
+	encode  func(string) string
+	err     error
+	version string
 }
 
 // NewBinary creates a new Binary formatter.

@@ -227,6 +227,21 @@ func inheritFromBlockReference(d *drawing.Drawing, e entity.Entity, ins *entity.
 	}
 	if c, ok := e.(entity.Colored); ok && c.ColorIndex() == entity.ColorByBlock {
 		entity.SetColorIndex(e, ins.ColorIndex())
+		if tc, ok := e.(entity.TrueColorer); ok {
+			if r, g, b, ok := ins.TrueColor(); ok {
+				tc.SetTrueColor(r, g, b)
+				entity.SetColorIndex(e, ins.ColorIndex())
+			}
+		}
+	}
+	if tc, ok := e.(entity.TrueColorer); ok {
+		if _, isAlpha := tc.Transparency(); !isAlpha && isTransparencyByBlock(tc) {
+			if t, ok := ins.Transparency(); ok {
+				tc.SetTransparency(t)
+			} else {
+				tc.ClearTransparency()
+			}
+		}
 	}
 	if lp, ok := e.(entity.LineProperties); ok {
 		if lp.LineType() != nil && strings.EqualFold(lp.LineType().Name(), "BYBLOCK") {
@@ -239,4 +254,13 @@ func inheritFromBlockReference(d *drawing.Drawing, e entity.Entity, ins *entity.
 	if sp, ok := e.(entity.SpaceSelector); ok {
 		sp.SetPaperSpace(ins.InPaperSpace())
 	}
+}
+
+// isTransparencyByBlock reports whether the transparency is BYBLOCK.
+func isTransparencyByBlock(e entity.TrueColorer) bool {
+	type raw interface{ TransparencyValue() int }
+	if r, ok := e.(raw); ok {
+		return r.TransparencyValue() == entity.TransparencyByBlock
+	}
+	return false
 }

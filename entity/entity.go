@@ -63,21 +63,24 @@ type LineProperties interface {
 // entity is common part of Entities.
 // It is embedded in each entities to implement Entity interface.
 type entity struct {
-	Type        EntityType      // 0
-	handle      int             // 5
-	blockRecord handle.Handler  // 102 330
-	owner       handle.Handler  // 330
-	layer       *table.Layer    // 8
-	typeName    string          // 0: entity type name of Unknown entities
-	srcHandle   string          // 5: handle in the file the entity was read from
-	xdata       [][2]string     // 1001-: extended data, kept as read
-	groups      [][2]string     // 102 groups (reactors, extension dictionary), kept as read
-	paperSpace  bool            // 67: entity is in paper space
-	invisible   bool            // 60: object visibility (1 = invisible)
-	lineType    *table.LineType // 6: nil = BYLAYER
-	color       int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
-	lineWeight  int             // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
-	ltscale     float64         // 48
+	Type         EntityType      // 0
+	handle       int             // 5
+	blockRecord  handle.Handler  // 102 330
+	owner        handle.Handler  // 330
+	layer        *table.Layer    // 8
+	typeName     string          // 0: entity type name of Unknown entities
+	srcHandle    string          // 5: handle in the file the entity was read from
+	xdata        [][2]string     // 1001-: extended data, kept as read
+	groups       [][2]string     // 102 groups (reactors, extension dictionary), kept as read
+	paperSpace   bool            // 67: entity is in paper space
+	invisible    bool            // 60: object visibility (1 = invisible)
+	lineType     *table.LineType // 6: nil = BYLAYER
+	color        int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
+	trueColor    int             // 420: 0x00RRGGBB, -1 = none
+	colorName    string          // 430: color name (color book)
+	transparency int             // 440: 0 = BYLAYER (none), 0x01000000 = BYBLOCK, 0x020000AA = alpha AA
+	lineWeight   int             // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
+	ltscale      float64         // 48
 }
 
 // NewEntity creates a new entity.
@@ -89,6 +92,7 @@ func NewEntity(t EntityType) *entity {
 		owner:       nil,
 		layer:       table.LY_0,
 		color:       ColorByLayer,
+		trueColor:   -1,
 		lineWeight:  table.LineWeightByLayer,
 		ltscale:     1.0,
 	}
@@ -127,6 +131,17 @@ func (e *entity) Format(f format.Formatter) {
 	}
 	if e.invisible {
 		f.WriteInt(60, 1)
+	}
+	if format.AtLeast(f, format.R2004) {
+		if e.trueColor >= 0 {
+			f.WriteInt(420, e.trueColor)
+		}
+		if e.colorName != "" {
+			f.WriteString(430, e.colorName)
+		}
+	}
+	if e.transparency != 0 && format.AtLeast(f, format.R2010) {
+		f.WriteInt(440, e.transparency)
 	}
 }
 
@@ -465,4 +480,123 @@ func (e *entity) writeGroups102(f format.Formatter) {
 		f.WriteString(330, groupHandle)
 		f.WriteString(102, "}")
 	}
+}
+
+// TransparencyByBlock is the value of code 440 for BYBLOCK.
+const TransparencyByBlock = color.TransparencyByBlock
+
+// TrueColorer is implemented by all entities in this package: true color
+// (code 420, AC1018 or later), color name (430, AC1018 or later) and
+// transparency (440, AC1024 or later). They are not written for earlier
+// versions.
+type TrueColorer interface {
+	TrueColor() (r, g, b uint8, ok bool)
+	SetTrueColor(r, g, b uint8)
+	ClearTrueColor()
+	ColorName() string
+	SetColorName(string)
+	Transparency() (t float64, ok bool)
+	SetTransparency(t float64)
+	SetTransparencyByBlock()
+	ClearTransparency()
+}
+
+// TrueColor returns the true color (code 420); ok is false if not set.
+func (e *entity) TrueColor() (r, g, b uint8, ok bool) {
+	if e.trueColor < 0 {
+		return 0, 0, 0, false
+	}
+	r, g, b = color.SplitRGB(e.trueColor)
+	return r, g, b, true
+}
+
+// SetTrueColor sets the true color (code 420). The color number (62) is
+// set to the nearest one, for applications without true color.
+func (e *entity) SetTrueColor(r, g, b uint8) {
+	e.trueColor = color.RGB(r, g, b)
+	e.color = int(color.Nearest(r, g, b))
+}
+
+// ClearTrueColor removes the true color and the color name.
+func (e *entity) ClearTrueColor() {
+	e.trueColor = -1
+	e.colorName = ""
+}
+
+// ColorName returns the color name (code 430, "book$name").
+func (e *entity) ColorName() string {
+	return e.colorName
+}
+
+// SetColorName sets the color name (code 430, "book$name") of a color
+// book color; set the true color as well.
+func (e *entity) SetColorName(n string) {
+	e.colorName = n
+}
+
+// Transparency returns the transparency (0: opaque, 1: fully transparent);
+// ok is false if it is BYLAYER (not set) or BYBLOCK.
+func (e *entity) Transparency() (float64, bool) {
+	return DecodeTransparency(e.transparency)
+}
+
+// SetTransparency sets the transparency (0: opaque, 1: fully transparent).
+func (e *entity) SetTransparency(t float64) {
+	e.transparency = EncodeTransparency(t)
+}
+
+// SetTransparencyByBlock sets the transparency to BYBLOCK.
+func (e *entity) SetTransparencyByBlock() {
+	e.transparency = TransparencyByBlock
+}
+
+// ClearTransparency sets the transparency to BYLAYER.
+func (e *entity) ClearTransparency() {
+	e.transparency = 0
+}
+
+func (e *entity) setTransparencyRaw(v int) {
+	e.transparency = v
+}
+
+func (e *entity) setTrueColorRaw(v int) {
+	e.trueColor = v & 0xFFFFFF
+}
+
+// EncodeTransparency returns the value of code 440 for a transparency
+// (see color.EncodeTransparency).
+func EncodeTransparency(t float64) int { return color.EncodeTransparency(t) }
+
+// DecodeTransparency returns the transparency of a value of code 440
+// (see color.DecodeTransparency).
+func DecodeTransparency(v int) (float64, bool) { return color.DecodeTransparency(v) }
+
+// SetRawColorValues sets the true color (420), color name (430) and
+// transparency (440) values read from a file; c < 0, name "" and t == 0
+// are ignored. The color number (62) is not changed.
+func SetRawColorValues(e Entity, c int, name string, t int) {
+	type raw interface {
+		setTrueColorRaw(int)
+		setTransparencyRaw(int)
+		SetColorName(string)
+	}
+	if r, ok := e.(raw); ok {
+		if c >= 0 {
+			r.setTrueColorRaw(c)
+		}
+		if name != "" {
+			r.SetColorName(name)
+		}
+		if t != 0 {
+			r.setTransparencyRaw(t)
+		}
+	}
+}
+
+var _ TrueColorer = &entity{}
+
+// TransparencyValue returns the raw value of code 440 (0: BYLAYER,
+// TransparencyByBlock, or 0x020000AA with alpha AA).
+func (e *entity) TransparencyValue() int {
+	return e.transparency
 }

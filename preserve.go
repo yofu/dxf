@@ -82,7 +82,7 @@ func splitXData(data [][2]string) ([][2]string, [][2]string) {
 }
 
 // common entity group codes written by entity.Format
-var commonEntityCodes = codes("8", "6", "62", "370", "48", "67", "60")
+var commonEntityCodes = codes("8", "6", "62", "370", "48", "67", "60", "420", "430", "440")
 
 // parseUnknown creates an Unknown entity from the group codes of an entity
 // type not supported by this package. References by handle (e.g. IMAGE to
@@ -109,4 +109,30 @@ func parseUnknown(d *drawing.Drawing, data [][2]string) (*entity.Unknown, bool) 
 	}
 	u.Data = append(rawExtra(body[:common], commonEntityCodes, false), rawExtra(body[common:], nil, true)...)
 	return u, true
+}
+
+// takeXData removes the extended data of application app from data (a
+// list of group codes ending with extended data), calling f with its group
+// codes (after 1001).
+func takeXData(data [][2]string, app string, f func([][2]string)) [][2]string {
+	start := -1
+	for i, dt := range data {
+		if dt[0] == "1001" && strings.EqualFold(strings.TrimSpace(dt[1]), app) {
+			start = i
+			break
+		}
+	}
+	if start < 0 {
+		return data
+	}
+	end := len(data)
+	for i := start + 1; i < len(data); i++ {
+		if data[i][0] == "1001" {
+			end = i
+			break
+		}
+	}
+	f(data[start+1 : end])
+	out := append([][2]string{}, data[:start]...)
+	return append(out, data[end:]...)
 }

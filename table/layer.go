@@ -16,16 +16,19 @@ var (
 
 // Layer represents LAYER SymbolTable.
 type Layer struct {
-	handle    int
-	src       int // handle in the file it was read from (kept when writing)
-	owner     handle.Handler
-	name      string
-	flag      int
-	off       bool              // written as negative color number (62)
-	Color     color.ColorNumber // 62 (absolute value)
-	LineType  *LineType
-	lineWidth int
-	PlotStyle handle.Handler
+	handle       int
+	src          int // handle in the file it was read from (kept when writing)
+	owner        handle.Handler
+	name         string
+	flag         int
+	off          bool              // written as negative color number (62)
+	Color        color.ColorNumber // 62 (absolute value)
+	trueColor    int               // 420: 0x00RRGGBB, -1 = none
+	colorName    string            // 430
+	transparency int               // XDATA AcCmTransparency (1071): 0 = none
+	LineType     *LineType
+	lineWidth    int
+	PlotStyle    handle.Handler
 	// Extra holds group codes read from a file that are not interpreted by
 	// this package (and XDATA); they are written after the other values.
 	Extra [][2]string
@@ -38,6 +41,7 @@ func NewLayer(name string, color color.ColorNumber, lt *LineType) *Layer {
 	l.Color = color
 	l.LineType = lt
 	l.lineWidth = -3
+	l.trueColor = -1
 	return l
 }
 
@@ -63,6 +67,14 @@ func (l *Layer) Format(f format.Formatter) {
 	} else {
 		f.WriteInt(62, int(l.Color))
 	}
+	if format.AtLeast(f, format.R2004) {
+		if l.trueColor >= 0 {
+			f.WriteInt(420, l.trueColor)
+		}
+		if l.colorName != "" {
+			f.WriteString(430, l.colorName)
+		}
+	}
 	if l.LineType != nil {
 		f.WriteString(6, l.LineType.Name())
 	} else {
@@ -73,6 +85,11 @@ func (l *Layer) Format(f format.Formatter) {
 		f.WriteHex(390, l.PlotStyle.Handle())
 	}
 	writeRaw(f, l.Extra)
+	// the transparency of layers is in the extended data (AC1024 or later)
+	if l.transparency != 0 && format.AtLeast(f, format.R2010) {
+		f.WriteString(1001, TransparencyApp)
+		f.WriteInt(1071, l.transparency)
+	}
 }
 
 // On turns the layer on.
@@ -213,4 +230,73 @@ func (l *Layer) LineWeight() int {
 // SetLineWeight sets the lineweight of the layer (see SetLineWidth).
 func (l *Layer) SetLineWeight(w int) int {
 	return l.SetLineWidth(w)
+}
+
+// TransparencyApp is the application name of the extended data holding the
+// transparency of layers.
+const TransparencyApp = "AcCmTransparency"
+
+// TrueColor returns the true color of the layer (code 420); ok is false if not set.
+func (l *Layer) TrueColor() (r, g, b uint8, ok bool) {
+	if l.trueColor < 0 {
+		return 0, 0, 0, false
+	}
+	r, g, b = color.SplitRGB(l.trueColor)
+	return r, g, b, true
+}
+
+// SetTrueColor sets the true color of the layer (code 420, AC1018 or
+// later); the color number is set to the nearest one.
+func (l *Layer) SetTrueColor(r, g, b uint8) {
+	l.trueColor = color.RGB(r, g, b)
+	l.Color = color.Nearest(r, g, b)
+}
+
+// SetTrueColorValue sets a true color value (0x00RRGGBB) read from a file.
+func (l *Layer) SetTrueColorValue(v int) {
+	l.trueColor = v & 0xFFFFFF
+}
+
+// ClearTrueColor removes the true color and the color name of the layer.
+func (l *Layer) ClearTrueColor() {
+	l.trueColor = -1
+	l.colorName = ""
+}
+
+// ColorName returns the color name of the layer (code 430).
+func (l *Layer) ColorName() string {
+	return l.colorName
+}
+
+// SetColorName sets the color name of the layer (code 430, "book$name").
+func (l *Layer) SetColorName(n string) {
+	l.colorName = n
+}
+
+// Transparency returns the transparency of the layer (0: opaque, 1: fully
+// transparent); ok is false if not set.
+func (l *Layer) Transparency() (float64, bool) {
+	return color.DecodeTransparency(l.transparency)
+}
+
+// HasTransparency reports whether the layer has a transparency.
+func (l *Layer) HasTransparency() bool {
+	return l.transparency != 0
+}
+
+// SetTransparency sets the transparency of the layer (0: opaque, 1: fully
+// transparent; written for AC1024 or later).
+func (l *Layer) SetTransparency(t float64) {
+	l.transparency = color.EncodeTransparency(t)
+}
+
+// SetTransparencyValue sets a transparency value (code 1071 of
+// AcCmTransparency) read from a file.
+func (l *Layer) SetTransparencyValue(v int) {
+	l.transparency = v
+}
+
+// ClearTransparency removes the transparency of the layer.
+func (l *Layer) ClearTransparency() {
+	l.transparency = 0
 }

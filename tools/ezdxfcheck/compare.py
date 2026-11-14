@@ -16,7 +16,9 @@ def summary(doc):
     s = {}
     for layout in doc.layouts:
         s["layout " + layout.name] = dict(sorted(Counter(e.dxftype() for e in layout).items()))
-    s["layers"] = sorted((l.dxf.name, l.dxf.color, l.dxf.linetype, l.dxf.get("lineweight"), l.dxf.get("plot", 1), l.is_on()) for l in doc.layers)
+    s["layers"] = sorted((l.dxf.name, l.dxf.color, l.dxf.linetype, l.dxf.get("lineweight"), l.dxf.get("plot", 1), l.is_on(),
+                          l.dxf.get("true_color"), round(l.transparency, 3)) for l in doc.layers)
+    s["version"] = doc.dxfversion
     s["linetypes"] = sorted(lt.dxf.name for lt in doc.linetypes)
     s["styles"] = sorted((st.dxf.name, st.dxf.font) for st in doc.styles)
     s["dimstyles"] = sorted(ds.dxf.name for ds in doc.dimstyles)
@@ -26,7 +28,8 @@ def summary(doc):
     for e in doc.modelspace():
         t = e.dxftype()
         a = e.dxf
-        d = [t, a.layer, a.get("color", 256), a.get("linetype", "BYLAYER"), a.get("lineweight", -1)]
+        d = [t, a.layer, a.get("color", 256), a.get("linetype", "BYLAYER"), a.get("lineweight", -1),
+             a.get("true_color"), a.get("color_name"), a.get("transparency")]
         if t == "LINE": d += [r(a.start), r(a.end), a.get("thickness", 0), e.get_xdata("MYAPP") if e.has_xdata("MYAPP") else None]
         elif t == "CIRCLE": d += [r(a.center), a.radius]
         elif t == "ARC": d += [r(a.center), a.radius, a.start_angle, a.end_angle]

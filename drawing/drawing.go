@@ -611,6 +611,10 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	d.setHandle()
 	h := d.Header()
 	unicode := codepage.IsUnicodeVersion(h.Version)
+	// group codes of later versions are written only for those versions
+	if vf, ok := d.formatter.(interface{ SetVersion(string) }); ok {
+		vf.SetVersion(strings.ToUpper(strings.TrimSpace(h.Version)))
+	}
 	// formatters converting each string value (e.g. format.Binary)
 	enc, perValue := d.formatter.(interface{ SetEncoder(func(string) string) })
 	if perValue {
@@ -964,6 +968,9 @@ func (d *Drawing) ensureAppIDs() {
 			switch r := st.(type) {
 			case *table.Layer:
 				register(r.Extra)
+				if r.HasTransparency() {
+					register([][2]string{{"1001", table.TransparencyApp}})
+				}
 			case *table.View:
 				register(r.Extra)
 			case *table.Ucs:
@@ -1036,4 +1043,26 @@ func (d *Drawing) RawObjects() []*object.Raw {
 		}
 	}
 	return rs
+}
+
+// SetVersion sets the DXF version written ($ACADVER): format.R2000
+// (AC1015, default), format.R2004 (AC1018), format.R2007 (AC1021),
+// format.R2010 (AC1024), format.R2013 (AC1027) or format.R2018 (AC1032).
+// Group codes introduced in later versions (e.g. true color 420 in AC1018,
+// transparency 440 in AC1024) are written only for those versions, and
+// text is written in UTF-8 for AC1021 and later.
+func (d *Drawing) SetVersion(v string) error {
+	v = strings.ToUpper(strings.TrimSpace(v))
+	for _, s := range format.Versions() {
+		if v == s {
+			d.Header().Version = v
+			return nil
+		}
+	}
+	return fmt.Errorf("unsupported DXF version %q (supported: %s)", v, strings.Join(format.Versions(), ", "))
+}
+
+// Version returns the DXF version written ($ACADVER).
+func (d *Drawing) Version() string {
+	return d.Header().Version
 }

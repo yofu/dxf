@@ -67,6 +67,8 @@ l.SetLineType(lt)          // 6 (nil: BYLAYER)
 l.SetLineWeight(35)        // 370: 0.35 mm
 l.Thickness = 10           // 39
 l.SetVisible(false)        // 60
+l.SetTrueColor(255, 128, 0) // 420 (AC1018 or later); 62 is set to the nearest color number
+l.SetTransparency(0.5)      // 440 (AC1024 or later); also layers: layer.SetTransparency
 l.SetXData([][2]string{{"1001", "MYAPP"}, {"1000", "data"}}) // APPID is registered when writing
 ```
 
@@ -140,6 +142,19 @@ Transformations are moves, rotations about the Z axis and uniform scaling
 Z axis cannot be transformed.
 
 ## Files
+
+### Versions
+
+Drawings are written as AC1015 (AutoCAD 2000) by default. Other versions
+can be chosen; group codes introduced in later versions (true color,
+transparency, ...) are written only for those versions, and text is
+written in UTF-8 for AC1021 and later.
+
+```go
+d.SetVersion(format.R2010) // R2000 (AC1015), R2004, R2007, R2010, R2013, R2018 (AC1032)
+```
+
+Files of later versions keep their version when read and written again.
 
 ### Text encoding
 

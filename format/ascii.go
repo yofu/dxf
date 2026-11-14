@@ -8,8 +8,9 @@ import (
 
 // ASCII is Formatter for ASCII format.
 type ASCII struct {
-	buffer bytes.Buffer
-	float  string
+	buffer  bytes.Buffer
+	float   string
+	version string
 }
 
 // NewASCII creates a new ASCII formatter.
