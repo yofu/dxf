@@ -12,6 +12,7 @@ import (
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
 )
 
@@ -115,6 +116,7 @@ func ParseTables(d *drawing.Drawing, line int, data [][2]string) error {
 			return fmt.Errorf("line %d: %w", line+2*len(data)-len(tmpdata)*2, err)
 		}
 	}
+	resolveLinetypeStyles(d)
 	return nil
 }
 
@@ -275,36 +277,91 @@ func ParseViewport(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 	return v, nil
 }
 
-// ParseLtype parses LTYPE tables.
+// ParseLtype parses LTYPE tables, including the text strings and shapes of
+// complex linetypes. Their styles (340) are resolved by ParseTables.
 func ParseLtype(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	var name, desc string
-	var lengths []float64
-	ind := 0
+	lt := table.NewLineType("", "")
+	var name string
+	total := -1.0
+	var es []*table.LineTypeElement
+	var cur *table.LineTypeElement
 	for _, dt := range data {
+		var err error
+		if cur == nil && dt[0] != "49" {
+			switch dt[0] {
+			case "2":
+				name = dt[1]
+			case "3":
+				lt.Description = dt[1]
+			case "40":
+				if err := setFloat(dt, func(val float64) { total = val }); err != nil {
+					return nil, err
+				}
+			}
+			continue
+		}
 		switch dt[0] {
-		case "2":
-			name = dt[1]
-		case "3":
-			desc = dt[1]
-		case "73":
-			l, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
-			if err != nil {
-				return nil, err
-			}
-			lengths = make([]float64, int(l))
 		case "49":
-			if ind >= len(lengths) {
-				return nil, fmt.Errorf("ltype too long")
+			cur = &table.LineTypeElement{}
+			err = setFloat(dt, func(val float64) { cur.Length = val })
+			es = append(es, cur)
+		case "74":
+			err = setInt(dt, func(val int) { cur.Flags = val })
+		case "75":
+			err = setInt(dt, func(val int) { cur.Shape = val })
+		case "340":
+			cur.SetStyleHandle(strings.TrimSpace(dt[1]))
+		case "46":
+			err = setFloat(dt, func(val float64) { cur.Scale = val })
+		case "50":
+			err = setFloat(dt, func(val float64) { cur.Rotation = val })
+		case "44", "45":
+			if cur.Offset == nil {
+				cur.Offset = []float64{0, 0}
 			}
-			val, err := strconv.ParseFloat(strings.TrimSpace(dt[1]), 64)
-			if err != nil {
-				return nil, err
+			k := 0
+			if dt[0] == "45" {
+				k = 1
 			}
-			lengths[ind] = val
-			ind++
+			err = setFloat(dt, func(val float64) { cur.Offset[k] = val })
+		case "9":
+			cur.Text = dt[1]
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
-	return table.NewLineType(name, desc, lengths...), nil
+	nlt := table.NewLineType(name, lt.Description)
+	nlt.SetElements(es...)
+	nlt.SetTotalLength(total)
+	return nlt, nil
+}
+
+// resolveLinetypeStyles links the text styles and shape files of complex
+// linetype elements (340) to the STYLE table entries read.
+func resolveLinetypeStyles(d *drawing.Drawing) {
+	tables := d.Sections[drawing.TABLES].(table.Tables)
+	styles := map[int]*table.Style{}
+	for _, st := range tables[table.STYLE].Entries() {
+		if s, ok := st.(*table.Style); ok && s.SourceHandle() != "" {
+			styles[handle.Parse(s.SourceHandle())] = s
+		}
+	}
+	for _, st := range tables[table.LTYPE].Entries() {
+		lt, ok := st.(*table.LineType)
+		if !ok {
+			continue
+		}
+		for _, e := range lt.Elements() {
+			if e.StyleHandle() == "" {
+				continue
+			}
+			if s, ok := styles[handle.Parse(e.StyleHandle())]; ok {
+				e.Style = s
+				e.SetStyleHandle("")
+			}
+		}
+	}
 }
 
 // ParseLayer parses LAYER tables.
@@ -1498,7 +1555,7 @@ func ParseSpline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 }
 
 // ParseInsert parses INSERT entities.
-// ATTRIB entities following an INSERT are not supported yet and are skipped.
+// ATTRIB entities following an INSERT are attached to it by parseEntityList.
 func ParseInsert(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	ins := entity.NewInsert("")
 	var err error

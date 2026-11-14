@@ -53,7 +53,7 @@ func (o objRecord) after(marker string) [][2]string {
 
 // ParseObjects parses OBJECTS section: groups (GROUP in the ACAD_GROUP
 // dictionary) and layouts (LAYOUT in the ACAD_LAYOUT dictionary).
-// Other objects are not kept.
+// Other objects are kept as read (object.Raw) and written again.
 func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	var objects []objRecord
 	for _, dt := range data {

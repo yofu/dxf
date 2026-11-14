@@ -5,7 +5,14 @@ out = sys.argv[1]
 doc = ezdxf.new("R2000", setup=True)
 doc.layers.add("WALL", color=1, linetype="DASHED", lineweight=35)
 nl = doc.layers.add("NOPLOT", color=3); nl.dxf.plot = 0; nl.off()
+# complex linetypes: text and shape
+doc.styles.add_shx("ltypeshp.shx")
+doc.linetypes.add("GAS_LINE", pattern='A,.5,-.2,["GAS",STANDARD,S=.1,U=0.0,X=-0.1,Y=-.05],-.25',
+                  description="Gas line ----GAS----GAS----", length=0.95)
+doc.linetypes.add("TRACKS", pattern="A,.15,[132,ltypeshp.shx,S=.25],.15",
+                  description="Tracks -|-|-|-|-|-|-|-", length=0.3)
 msp = doc.modelspace()
+msp.add_line((0, -5), (10, -5), dxfattribs={"linetype": "GAS_LINE"})
 msp.add_line((0, 0), (10, 5), dxfattribs={"layer": "WALL", "color": 3, "thickness": 2})
 msp.add_circle((5, 5), 3, dxfattribs={"linetype": "CENTER", "lineweight": 50})
 msp.add_arc((0, 0), 5, 30, 150)

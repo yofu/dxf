@@ -278,6 +278,35 @@ func (d *Drawing) AddLineType(name string, desc string, ls ...float64) (*table.L
 	return newlt, nil
 }
 
+// AddComplexLineType adds a new linetype with text strings or shapes
+// (see table.TextElement and table.ShapeElement).
+func (d *Drawing) AddComplexLineType(name, desc string, es ...*table.LineTypeElement) (*table.LineType, error) {
+	lt, err := d.AddLineType(name, desc)
+	if err != nil {
+		return lt, err
+	}
+	lt.SetElements(es...)
+	return lt, nil
+}
+
+// AddShapeFile returns the STYLE entry of shape file fontname (e.g.
+// "ltypeshp.shx", flag 1 and no name), adding it if it does not exist.
+// It is used by the shapes of complex linetypes.
+func (d *Drawing) AddShapeFile(fontname string) *table.Style {
+	t := d.Sections[TABLES].(table.Tables)[table.STYLE]
+	for _, st := range t.Entries() {
+		if s, ok := st.(*table.Style); ok && s.Flags&1 != 0 && strings.EqualFold(s.FontName, fontname) {
+			return s
+		}
+	}
+	s := table.NewStyle("")
+	s.FontName = fontname
+	s.Flags = 1
+	s.LastHeightUsed = 0
+	t.Add(s)
+	return s
+}
+
 // Entities returns slice of all entities contained in Drawing.
 func (d *Drawing) Entities() entity.Entities {
 	return d.Sections[ENTITIES].(entity.Entities)

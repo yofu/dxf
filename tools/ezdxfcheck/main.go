@@ -18,6 +18,7 @@ import (
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/format"
+	"github.com/yofu/dxf/table"
 )
 
 func must[T any](v T, err error) T {
@@ -76,6 +77,24 @@ func blocks() *drawing.Drawing {
 	d.SyncAttributes(ins2)
 	ins3 := must(d.Insert("TITLE", 0, 300, 0))
 	ins3.Columns, ins3.ColumnSpacing = 3, 150
+	return d
+}
+
+// linetypes uses complex linetypes with a text string and a shape.
+func linetypes() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	shx := d.AddShapeFile("ltypeshp.shx")
+	gas := must(d.AddComplexLineType("GAS_LINE", "Gas line ----GAS----GAS----",
+		&table.LineTypeElement{Length: 0.5},
+		table.TextElement(-0.2, "GAS", d.CurrentStyle, 0.1, 0, -0.1, -0.05),
+		&table.LineTypeElement{Length: -0.25}))
+	tracks := must(d.AddComplexLineType("TRACKS", "Tracks -|-|-|-|-|-|-|-",
+		table.ShapeElement(0.15, 132, shx, 0.25, 0, 0, 0),
+		&table.LineTypeElement{Length: 0.15}))
+	l := must(d.Line(0, 0, 0, 10, 0, 0))
+	l.SetLineType(gas)
+	c := must(d.Circle(0, 0, 0, 5))
+	c.SetLineType(tracks)
 	return d
 }
 
@@ -186,6 +205,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
+		"linetypes": linetypes,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {

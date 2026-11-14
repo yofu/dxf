@@ -12,6 +12,19 @@ def r(v):
     except TypeError:
         return v
 
+def ltype_pattern(doc, lt):
+    """pattern tags without the optional (74, 0); 340 as the style's (name, font)"""
+    out = []
+    for t in (lt.pattern_tags.tags if lt.pattern_tags else []):
+        v = t.value
+        if (t.code == 74 and v == 0) or t.code == 5:  # R12 files have the handle here
+            continue
+        if t.code == 340:
+            st = doc.entitydb.get(v)
+            v = (st.dxf.name, st.dxf.font) if st else v
+        out.append((t.code, r(v)))
+    return tuple(out)
+
 def summary(doc):
     s = {}
     for layout in doc.layouts:
@@ -19,7 +32,7 @@ def summary(doc):
     s["layers"] = sorted((l.dxf.name, l.dxf.color, l.dxf.linetype, l.dxf.get("lineweight"), l.dxf.get("plot", 1), l.is_on(),
                           l.dxf.get("true_color"), round(l.transparency, 3)) for l in doc.layers)
     s["version"] = doc.dxfversion
-    s["linetypes"] = sorted(lt.dxf.name for lt in doc.linetypes)
+    s["linetypes"] = sorted((lt.dxf.name, ltype_pattern(doc, lt)) for lt in doc.linetypes)
     s["styles"] = sorted((st.dxf.name, st.dxf.font) for st in doc.styles)
     s["dimstyles"] = sorted(ds.dxf.name for ds in doc.dimstyles)
     s["blocks"] = sorted((b.name, len(b)) for b in doc.blocks if not b.name.lower().startswith("*paper_space"))

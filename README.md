@@ -70,6 +70,18 @@ l.SetVisible(false)        // 60
 l.SetTrueColor(255, 128, 0) // 420 (AC1018 or later); 62 is set to the nearest color number
 l.SetTransparency(0.5)      // 440 (AC1018 or later); also layers: layer.SetTransparency
 l.SetXData([][2]string{{"1001", "MYAPP"}, {"1000", "data"}}) // APPID is registered when writing
+
+// linetypes: dashes (> 0), spaces (< 0) and dots (0)
+d.AddLineType("DASHED2", "Dashed __ __ __", 0.5, -0.25)
+// complex linetypes with text strings and shapes
+gas, _ := d.AddComplexLineType("GAS_LINE", "Gas line ----GAS----",
+	&table.LineTypeElement{Length: 0.5},
+	table.TextElement(-0.2, "GAS", d.CurrentStyle, 0.1, 0, -0.1, -0.05), // scale, rotation (rad), offset
+	&table.LineTypeElement{Length: -0.25})
+shx := d.AddShapeFile("ltypeshp.shx")
+d.AddComplexLineType("TRACKS", "Tracks -|-|-|-",
+	table.ShapeElement(0.15, 132, shx, 0.25, 0, 0, 0), &table.LineTypeElement{Length: 0.15})
+l.SetLineType(gas)
 ```
 
 ### Blocks and attributes
