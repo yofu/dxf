@@ -466,19 +466,6 @@ func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	return a, nil
 }
 
-// ParseDimStyle parses DIMSTYLE tables.
-func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	var name string
-	for _, dt := range data {
-		switch dt[0] {
-		case "2":
-			name = dt[1]
-		}
-	}
-	ds := table.NewDimStyle(name)
-	return ds, nil
-}
-
 // ParseBlockRecord parses BLOCK_RECORD tables.
 func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
@@ -757,6 +744,10 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseEllipse, nil
 	case "HATCH":
 		return ParseHatch, nil
+	case "SOLID":
+		return ParseSolid, nil
+	case "DIMENSION":
+		return ParseDimension, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}

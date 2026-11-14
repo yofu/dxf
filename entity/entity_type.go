@@ -19,6 +19,8 @@ const (
 	MTEXT
 	ELLIPSE
 	HATCH
+	SOLID
+	DIMENSION
 )
 
 // EntityTypeString converts EntityType to string.
@@ -53,6 +55,10 @@ func EntityTypeString(t EntityType) string {
 		return "ELLIPSE"
 	case HATCH:
 		return "HATCH"
+	case SOLID:
+		return "SOLID"
+	case DIMENSION:
+		return "DIMENSION"
 	default:
 		return ""
 	}
@@ -90,6 +96,10 @@ func EntityTypeValue(t string) EntityType {
 		return ELLIPSE
 	case "HATCH":
 		return HATCH
+	case "SOLID":
+		return SOLID
+	case "DIMENSION":
+		return DIMENSION
 	default:
 		return -1
 	}

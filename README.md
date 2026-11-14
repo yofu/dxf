@@ -89,6 +89,22 @@ h.SetPattern("ANSI31", 0.0, 1.0)                   // or SetUserPattern(angle, s
 h.AddPolylinePath([][]float64{{10, 10}, {20, 10}, {20, 20}}, nil) // inner boundary (hole)
 ```
 
+### Dimensions
+
+The graphics of a dimension are generated in an anonymous block (`*Dn`)
+using the dimension style (`d.DimStyle("Standard")`: arrow size, text height, ...).
+
+```go
+d.LinearDimension([]float64{0, 0, 0}, []float64{100, 0, 0}, []float64{50, 20, 0}, 0.0) // 0: horizontal, 90: vertical
+d.AlignedDimension(p1, p2, location)
+d.RadiusDimension(center, pointOnArc)
+d.DiameterDimension(center, pointOnCircle)
+d.AngularDimension(vertex, p1, p2, location)
+
+dim.Text = "<> mm"            // "<>" is replaced by the measurement
+d.RegenerateDimension(dim)    // after changing a dimension
+```
+
 ### Multiline text (MTEXT)
 
 ```go

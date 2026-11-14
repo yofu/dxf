@@ -598,6 +598,23 @@ const maxInsertDepth = 16
 // For INSERT, the contents of the referenced block are transformed
 // (scale, rotation, array; the extrusion direction is ignored).
 func (d *Drawing) bbox(en entity.Entity, depth int) ([]float64, []float64) {
+	if dim, ok := en.(*entity.Dimension); ok {
+		// the dimension block is drawn in WCS without transformation
+		b, err := d.Block(dim.BlockName)
+		if err != nil || len(b.Entities) == 0 || depth >= maxInsertDepth {
+			return dim.BBox()
+		}
+		mins := []float64{math.Inf(1), math.Inf(1), math.Inf(1)}
+		maxs := []float64{math.Inf(-1), math.Inf(-1), math.Inf(-1)}
+		for _, e := range b.Entities {
+			emins, emaxs := d.bbox(e, depth+1)
+			for i := 0; i < 3; i++ {
+				mins[i] = math.Min(mins[i], emins[i])
+				maxs[i] = math.Max(maxs[i], emaxs[i])
+			}
+		}
+		return mins, maxs
+	}
 	ins, ok := en.(*entity.Insert)
 	if !ok {
 		return en.BBox()
