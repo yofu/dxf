@@ -12,32 +12,11 @@ import (
 	"testing"
 
 	"github.com/yofu/dxf/color"
-	"github.com/yofu/dxf/insunit"
-	"github.com/yofu/dxf/table"
-
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/insunit"
+	"github.com/yofu/dxf/table"
 )
-
-// TOLERANCE is the epsilon value used in comparing floats.
-const TOLERANCE = 0.000001
-
-// cmpF64 compares two floats to see if they are within the given tolerance.
-func cmpF64(f1, f2 float64) bool {
-	if math.IsInf(f1, 1) {
-		return math.IsInf(f2, 1)
-	}
-	if math.IsInf(f2, 1) {
-		return math.IsInf(f1, 1)
-	}
-	if math.IsInf(f1, -1) {
-		return math.IsInf(f2, -1)
-	}
-	if math.IsInf(f2, -1) {
-		return math.IsInf(f1, -1)
-	}
-	return math.Abs(f1-f2) < TOLERANCE
-}
 
 func checkEntities(t *testing.T, expected, got entity.Entities) bool {
 	if len(expected) != len(got) {
@@ -71,6 +50,7 @@ func checkEntities(t *testing.T, expected, got entity.Entities) bool {
 func hashBytes(b []byte) string {
 	return fmt.Sprintf("%x", sha1.Sum(b))
 }
+
 func hashFile(filename string) (string, error) {
 	tfile := filepath.Join("testdata", filename)
 	f, err := os.Open(tfile)

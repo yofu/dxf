@@ -11,32 +11,6 @@ import (
 	"github.com/yofu/dxf/entity"
 )
 
-// Regression tests checked against the DXF reference.
-
-func entitiesSection(ents string) string {
-	return "0\nSECTION\n2\nENTITIES\n" + ents + "0\nENDSEC\n0\nEOF\n"
-}
-
-func writeString(t *testing.T, d *drawing.Drawing) string {
-	t.Helper()
-	var b bytes.Buffer
-	if _, err := d.WriteTo(&b); err != nil {
-		t.Fatal(err)
-	}
-	return b.String()
-}
-
-// groupValue returns the value following the first "\n<code>\n" in s.
-func groupValue(s, code string) (string, bool) {
-	key := "\n" + code + "\n"
-	i := strings.Index(s, key)
-	if i < 0 {
-		return "", false
-	}
-	v := s[i+len(key):]
-	return v[:strings.Index(v, "\n")], true
-}
-
 func TestLwPolylineBulgeBelongsToPrecedingVertex(t *testing.T) {
 	// In LWPOLYLINE, 42 follows the 10/20 of the vertex it belongs to.
 	src := entitiesSection("0\nLWPOLYLINE\n8\n0\n90\n3\n70\n0\n" +

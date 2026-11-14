@@ -39,15 +39,6 @@ const preserveSrc = "0\nSECTION\n2\nHEADER\n" +
 	"0\nIMAGEDEF\n5\n60\n102\n{ACAD_REACTORS\n330\n61\n102\n}\n330\n61\n100\nAcDbRasterImageDef\n90\n0\n1\nplan.png\n10\n640\n20\n480\n" +
 	"0\nENDSEC\n0\nEOF\n"
 
-func readPreserve(t *testing.T, src string) *drawing.Drawing {
-	t.Helper()
-	d, err := FromStringData(src)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return d
-}
-
 func checkPreserved(t *testing.T, d *drawing.Drawing) {
 	t.Helper()
 	h := d.Header()

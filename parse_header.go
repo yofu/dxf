@@ -5,10 +5,30 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/header"
 	"github.com/yofu/dxf/insunit"
 )
+
+// ParseClasses parses CLASSES section. The classes are kept as read: they
+// define the types of objects and entities kept as read (e.g. IMAGEDEF).
+func ParseClasses(d *drawing.Drawing, line int, data [][2]string) error {
+	var cs class.Classes
+	for _, dt := range data {
+		if dt[0] == "0" {
+			cs = append(cs, &class.Class{})
+			continue
+		}
+		if len(cs) > 0 {
+			cs[len(cs)-1].Data = append(cs[len(cs)-1].Data, dt)
+		}
+	}
+	d.Sections[drawing.CLASSES] = cs
+	return nil
+}
+
+// TABLES
 
 // headerVars returns setters for the header variables supported by this
 // package, keyed by variable name and group code.

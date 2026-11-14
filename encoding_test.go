@@ -5,21 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"golang.org/x/text/encoding/japanese"
-
 	"github.com/yofu/dxf/codepage"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/entity"
 )
-
-func sjis(t *testing.T, s string) string {
-	t.Helper()
-	b, err := japanese.ShiftJIS.NewEncoder().String(s)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return b
-}
 
 func japaneseDrawing(t *testing.T) []byte {
 	t.Helper()

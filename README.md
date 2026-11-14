@@ -251,6 +251,24 @@ or output:
 - `table.LY_0`, `table.ST_STANDARD` and `table.LT_*` are templates: each
   drawing has its own layer "0", style "Standard" and linetypes.
 
+## Package layout
+
+| Path | Contents |
+|---|---|
+| `dxf.go` | `NewDrawing`, `FromFile`, `FromReader`, ... |
+| `edit.go` | `Copy`, `CopyEntities`, `Explode`, `SetExtrusion` |
+| `parse.go`, `parse_*.go` | reading: `parse_pairs.go` (ASCII/binary group codes), `parse_header.go`, `parse_tables.go`, `parse_blocks.go`, `parse_entities.go` (dispatch and common codes), one file per entity group (`parse_basic.go`, `parse_polyline.go`, `parse_text.go`, `parse_hatch.go`, `parse_dimension.go`, ...), `parse_objects.go` and `parse_preserve.go` (data kept as read) |
+| `drawing/` | `Drawing`: sections, creation and editing API |
+| `header/`, `class/`, `table/`, `block/`, `entity/`, `object/` | the sections and their records |
+| `format/` | ASCII and binary formatters, DXF versions |
+| `color/`, `codepage/`, `handle/`, `insunit/`, `geometry/` | color numbers and true colors, code pages, handles, units, geometry |
+| `testdata/` | expected output of the tests |
+| `example/` | examples |
+| `tools/ezdxfcheck/` | validation with ezdxf |
+
+Tests are in `*_test.go` next to the code; helpers shared by them are in
+`helpers_test.go`.
+
 ## References
 
 - DXF reference of AutoCAD R12:

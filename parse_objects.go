@@ -248,15 +248,6 @@ func parseGroups(d *drawing.Drawing, items map[string]string, objects []objRecor
 	return nil
 }
 
-func sortedKeys(m map[string]string) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 // parseUnderlayDefinitions creates the underlay definitions of the
 // dictionaries ACAD_PDFDEFINITIONS, ACAD_DWFDEFINITIONS and
 // ACAD_DGNDEFINITIONS, and links the underlays read to them.

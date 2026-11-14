@@ -61,15 +61,6 @@ func groups102(data [][2]string) [][2]string {
 	return gs
 }
 
-// codes returns a set of group codes.
-func codes(cs ...string) map[string]bool {
-	m := make(map[string]bool, len(cs))
-	for _, c := range cs {
-		m[c] = true
-	}
-	return m
-}
-
 // splitXData splits the group codes of an entity at the first 1001
 // (extended data).
 func splitXData(data [][2]string) ([][2]string, [][2]string) {

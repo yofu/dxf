@@ -9,7 +9,58 @@ import (
 	"github.com/yofu/dxf/codepage"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/entity"
+	"github.com/yofu/dxf/format"
 )
+
+func TestMTextBackground(t *testing.T) {
+	d := NewDrawing()
+	m1, _ := d.MText("color", 0, 0, 0, 1, 10)
+	m1.SetBackgroundColor(color.Yellow, 1.2)
+	m2, _ := d.MText("true color", 0, 5, 0, 1, 10)
+	m2.SetBackgroundTrueColor(10, 20, 30, 2)
+	m2.SetTextFrame(true)
+	m3, _ := d.MText("canvas", 0, 10, 0, 1, 10)
+	m3.SetBackgroundCanvas(1.5)
+	m4, _ := d.MText("frame", 0, 15, 0, 1, 10)
+	m4.SetTextFrame(true)
+
+	if out := writeString(t, d); strings.Contains(out, groups(45, 1.2)) || strings.Contains(out, groups(90, 16, 0, "ENDSEC")) {
+		t.Error("background fill should not be written for AC1015")
+	}
+	d.SetVersion(format.R2004)
+	out := writeString(t, d)
+	for _, w := range []string{
+		groups(44, 1.0, 45, 1.2, 90, 1, 63, 2, 0, "MTEXT"),
+		groups(44, 1.0, 45, 2.0, 90, 17, 63, int(color.Nearest(10, 20, 30)), 421, 660510, 0, "MTEXT"),
+		groups(44, 1.0, 45, 1.5, 90, 3, 63, 0, 0, "MTEXT"),
+		groups(44, 1.0, 90, 16, 0, "ENDSEC"),
+	} {
+		if !strings.Contains(out, w) {
+			t.Errorf("%q not found", w)
+		}
+	}
+	checkStructure(t, d)
+
+	d2 := readPreserve(t, out)
+	es := d2.Entities()
+	r1, r2, r3, r4 := es[0].(*entity.MText), es[1].(*entity.MText), es[2].(*entity.MText), es[3].(*entity.MText)
+	if r1.BackgroundFill != 1 || r1.BackgroundColor != 2 || r1.BackgroundScale != 1.2 || r1.BackgroundTrueColor != -1 {
+		t.Errorf("color: %+v", r1)
+	}
+	if r2.BackgroundFill != 17 || r2.BackgroundTrueColor != color.RGB(10, 20, 30) || r2.BackgroundColor == 0 {
+		t.Errorf("true color: %+v", r2)
+	}
+	if r3.BackgroundFill != 3 || r4.BackgroundFill != 16 {
+		t.Errorf("canvas %d, frame %d", r3.BackgroundFill, r4.BackgroundFill)
+	}
+	if writeString(t, d2) != out {
+		t.Error("writing a read drawing again should give the same output")
+	}
+	r2.ClearBackground()
+	if r2.BackgroundFill != 16 || r2.BackgroundTrueColor != -1 {
+		t.Errorf("clear: %+v", r2)
+	}
+}
 
 func TestMTextRoundTrip(t *testing.T) {
 	d := NewDrawing()

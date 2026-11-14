@@ -1,7 +1,6 @@
 package dxf
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -81,8 +80,4 @@ func TestComplexLineTypeUnresolved(t *testing.T) {
 	if out := writeString(t, d); !strings.Contains(out, "\n340\nABC\n46\n") {
 		t.Error("unresolved handle should be written as read")
 	}
-}
-
-func hexHandle(h int) string {
-	return fmt.Sprintf("%X", h)
 }

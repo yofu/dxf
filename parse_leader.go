@@ -75,13 +75,3 @@ func ParseLeader(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	}
 	return l, nil
 }
-
-// value returns the value of the first group code in data.
-func value(data [][2]string, code string) (string, bool) {
-	for _, dt := range data {
-		if dt[0] == code {
-			return dt[1], true
-		}
-	}
-	return "", false
-}

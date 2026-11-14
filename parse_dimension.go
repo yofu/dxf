@@ -3,7 +3,6 @@ package dxf
 import (
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
-	"github.com/yofu/dxf/table"
 )
 
 // pointTarget returns the coordinate addressed by a point group code
@@ -92,79 +91,4 @@ func ParseDimension(d *drawing.Drawing, data [][2]string) (entity.Entity, error)
 		}
 	}
 	return dim, nil
-}
-
-// ParseSolid parses SOLID entities.
-func ParseSolid(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
-	s := entity.NewSolid()
-	points := map[string][]float64{
-		"10": s.Points[0], "11": s.Points[1], "12": s.Points[2], "13": s.Points[3], "210": s.Extrusion,
-	}
-	fourth := false
-	var err error
-	for _, dt := range data {
-		switch dt[0] {
-		case "8":
-			if layer, lerr := d.Layer(dt[1], false); lerr == nil {
-				s.SetLayer(layer)
-			}
-		case "48":
-			err = setFloat(dt, func(val float64) { s.SetLtscale(val) })
-		case "39":
-			err = setFloat(dt, func(val float64) { s.Thickness = val })
-		default:
-			if target, ok := pointTarget(dt[0], points); ok {
-				if dt[0] == "13" || dt[0] == "23" {
-					fourth = true
-				}
-				err = setFloat(dt, func(val float64) { *target = val })
-			}
-		}
-		if err != nil {
-			return s, err
-		}
-	}
-	if !fourth { // triangle: the fourth point is the same as the third
-		copy(s.Points[3], s.Points[2])
-	}
-	return s, nil
-}
-
-// ParseDimStyle parses DIMSTYLE tables.
-func ParseDimStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
-	ds := table.NewDimStyle("")
-	name := ""
-	var err error
-	for _, dt := range data {
-		switch dt[0] {
-		case "2":
-			name = dt[1]
-		case "40":
-			err = setFloat(dt, func(val float64) { ds.Scale = val })
-		case "41":
-			err = setFloat(dt, func(val float64) { ds.ArrowSize = val })
-		case "42":
-			err = setFloat(dt, func(val float64) { ds.ExtOffset = val })
-		case "44":
-			err = setFloat(dt, func(val float64) { ds.ExtExtend = val })
-		case "73":
-			err = setInt(dt, func(val int) { ds.TextInsideHorizontal = val != 0 })
-		case "74":
-			err = setInt(dt, func(val int) { ds.TextOutsideHorizontal = val != 0 })
-		case "77":
-			err = setInt(dt, func(val int) { ds.TextAbove = val != 0 })
-		case "140":
-			err = setFloat(dt, func(val float64) { ds.TextHeight = val })
-		case "147":
-			err = setFloat(dt, func(val float64) { ds.TextGap = val })
-		case "271":
-			err = setInt(dt, func(val int) { ds.Decimals = val })
-		}
-		if err != nil {
-			return ds, err
-		}
-	}
-	ds.SetName(name)
-	ds.Extra = rawExtra(data, codes("2", "70", "40", "41", "42", "44", "73", "74", "77", "140", "147", "271"), false)
-	return ds, nil
 }
