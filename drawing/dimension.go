@@ -86,7 +86,7 @@ func point3(p []float64) []float64 {
 
 func (d *Drawing) addDimension(dim *entity.Dimension, set func()) (*entity.Dimension, error) {
 	set()
-	dim.SetLayer(d.CurrentLayer)
+	d.applyCurrent(dim)
 	if err := d.RegenerateDimension(dim); err != nil {
 		return nil, err
 	}

@@ -100,8 +100,16 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 		return codepage.Unescape(raw)
 	}
 	finish := func() {
+		h := d.Header()
 		if !declared && codePage != "" {
-			d.Header().CodePage = codePage
+			h.CodePage = codePage
+		}
+		// current layer and text style from $CLAYER and $TEXTSTYLE
+		if l, ok := d.Layers[h.CLayer]; ok {
+			d.CurrentLayer = l
+		}
+		if st, ok := findStyle(d, h.TextStyle); ok {
+			d.CurrentStyle = st
 		}
 	}
 	defer finish()

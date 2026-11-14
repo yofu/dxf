@@ -353,7 +353,7 @@ func (d *Drawing) Insert(name string, x, y, z float64) (*entity.Insert, error) {
 	}
 	i := entity.NewInsert(b.Name)
 	i.Coord = []float64{x, y, z}
-	i.SetLayer(d.CurrentLayer)
+	d.applyCurrent(i)
 	if err := d.SyncAttributes(i); err != nil {
 		return nil, err
 	}
@@ -373,7 +373,7 @@ func (d *Drawing) AttributeDefinition(tag, prompt, defaultValue string, x, y, z,
 	a.Coord1 = []float64{x, y, z}
 	a.Coord2 = []float64{x, y, z}
 	a.Height = height
-	a.SetLayer(d.CurrentLayer)
+	d.applyCurrent(a)
 	a.Style = d.CurrentStyle
 	a.WidthFactor = a.Style.WidthFactor
 	d.AddEntity(a)
@@ -433,7 +433,7 @@ func (d *Drawing) SyncAttributes(ins *entity.Insert) error {
 func (d *Drawing) Point(x, y, z float64) (*entity.Point, error) {
 	p := entity.NewPoint()
 	p.Coord = []float64{x, y, z}
-	p.SetLayer(d.CurrentLayer)
+	d.applyCurrent(p)
 	d.AddEntity(p)
 	return p, nil
 }
@@ -443,7 +443,7 @@ func (d *Drawing) Line(x1, y1, z1, x2, y2, z2 float64) (*entity.Line, error) {
 	l := entity.NewLine()
 	l.Start = []float64{x1, y1, z1}
 	l.End = []float64{x2, y2, z2}
-	l.SetLayer(d.CurrentLayer)
+	d.applyCurrent(l)
 	d.AddEntity(l)
 	return l, nil
 }
@@ -453,7 +453,7 @@ func (d *Drawing) Circle(x, y, z, r float64) (*entity.Circle, error) {
 	c := entity.NewCircle()
 	c.Center = []float64{x, y, z}
 	c.Radius = r
-	c.SetLayer(d.CurrentLayer)
+	d.applyCurrent(c)
 	d.AddEntity(c)
 	return c, nil
 }
@@ -463,7 +463,7 @@ func (d *Drawing) Arc(x, y, z, r, start, end float64) (*entity.Arc, error) {
 	c := entity.NewCircle()
 	c.Center = []float64{x, y, z}
 	c.Radius = r
-	c.SetLayer(d.CurrentLayer)
+	d.applyCurrent(c)
 	a := entity.NewArc(c)
 	a.Angle[0] = start
 	a.Angle[1] = end
@@ -474,7 +474,7 @@ func (d *Drawing) Arc(x, y, z, r, start, end float64) (*entity.Arc, error) {
 // Polyline creates a new POLYLINE with given vertices.
 func (d *Drawing) Polyline(closed bool, vertices ...[]float64) (*entity.Polyline, error) {
 	p := entity.NewPolyline()
-	p.SetLayer(d.CurrentLayer)
+	d.applyCurrent(p)
 	for _, v := range vertices {
 		p.AddVertex(v[0], v[1], v[2])
 	}
@@ -495,7 +495,7 @@ func (d *Drawing) LwPolyline(closed bool, vertices ...[]float64) (*entity.LwPoly
 	if closed {
 		l.Close()
 	}
-	l.SetLayer(d.CurrentLayer)
+	d.applyCurrent(l)
 	d.AddEntity(l)
 	return l, nil
 }
@@ -514,7 +514,7 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 	} else {
 		f.Points[3] = points[2]
 	}
-	f.SetLayer(d.CurrentLayer)
+	d.applyCurrent(f)
 	d.AddEntity(f)
 	return f, nil
 }
@@ -526,7 +526,7 @@ func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error
 	t.Coord2 = []float64{x, y, z} // alignment point used when justified (see Text.Anchor)
 	t.Height = height
 	t.Value = str
-	t.SetLayer(d.CurrentLayer)
+	d.applyCurrent(t)
 	t.Style = d.CurrentStyle
 	t.WidthFactor = t.Style.WidthFactor
 	t.ObliqueAngle = t.Style.ObliqueAngle
@@ -546,7 +546,7 @@ func (d *Drawing) MText(str string, x, y, z, height, width float64) (*entity.MTe
 	t.Height = height
 	t.Width = width
 	t.Value = strings.NewReplacer("\r\n", `\P`, "\n", `\P`).Replace(str)
-	t.SetLayer(d.CurrentLayer)
+	d.applyCurrent(t)
 	t.Style = d.CurrentStyle
 	d.AddEntity(t)
 	return t, nil
@@ -588,6 +588,7 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	if d == nil {
 		return 0, nil
 	}
+	d.syncHeader()
 	d.linkOwners()
 	d.setHandle()
 	d.formatter.Reset()
@@ -753,7 +754,7 @@ func (d *Drawing) Spline(p [][]float64) (*entity.Spline, error) {
 		return nil, errors.New("Spline needs 2 or more control points")
 	}
 	l := entity.NewSpline()
-	l.SetLayer(d.CurrentLayer)
+	d.applyCurrent(l)
 	l.Controls = p
 	if l.Degree > len(p)-1 {
 		l.Degree = len(p) - 1
@@ -797,7 +798,7 @@ func (d *Drawing) Ellipse(center, majorAxis []float64, ratio float64) (*entity.E
 	e.Center = []float64{center[0], center[1], center[2]}
 	e.MajorAxis = []float64{majorAxis[0], majorAxis[1], majorAxis[2]}
 	e.Ratio = ratio
-	e.SetLayer(d.CurrentLayer)
+	d.applyCurrent(e)
 	d.AddEntity(e)
 	return e, nil
 }
@@ -818,7 +819,42 @@ func (d *Drawing) Hatch(vertices ...[]float64) (*entity.Hatch, error) {
 	}
 	h := entity.NewHatch()
 	h.AddPolylinePath(vs, nil)
-	h.SetLayer(d.CurrentLayer)
+	d.applyCurrent(h)
 	d.AddEntity(h)
 	return h, nil
+}
+
+// applyCurrent sets the current layer and the current properties of the
+// header ($CECOLOR, $CELTYPE, $CELWEIGHT, $CELTSCALE) to a new entity.
+func (d *Drawing) applyCurrent(e entity.Entity) {
+	e.SetLayer(d.CurrentLayer)
+	h := d.Header()
+	if h.CEColor != entity.ColorByLayer && h.CEColor >= 0 && h.CEColor <= 256 {
+		entity.SetColorIndex(e, h.CEColor)
+	}
+	if lp, ok := e.(entity.LineProperties); ok {
+		if h.CELType != "" && !strings.EqualFold(h.CELType, "ByLayer") {
+			if lt, err := d.LineType(h.CELType); err == nil {
+				lp.SetLineType(lt)
+			}
+		}
+		if h.CELWeight != table.LineWeightByLayer {
+			lp.SetLineWeight(h.CELWeight)
+		}
+	}
+	if h.CELTScale > 0 && h.CELTScale != 1 {
+		e.SetLtscale(h.CELTScale)
+	}
+}
+
+// syncHeader writes the current layer and text style to the header
+// ($CLAYER, $TEXTSTYLE) before writing.
+func (d *Drawing) syncHeader() {
+	h := d.Header()
+	if d.CurrentLayer != nil {
+		h.CLayer = d.CurrentLayer.Name()
+	}
+	if d.CurrentStyle != nil {
+		h.TextStyle = d.CurrentStyle.Name()
+	}
 }

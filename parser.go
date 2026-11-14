@@ -11,8 +11,6 @@ import (
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/entity"
-	"github.com/yofu/dxf/header"
-	"github.com/yofu/dxf/insunit"
 	"github.com/yofu/dxf/table"
 )
 
@@ -39,73 +37,6 @@ func setInt(data [2]string, f func(int)) error {
 }
 
 // HEADER
-
-// ParseHeader parses HEADER section.
-func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
-	h := d.Sections[drawing.HEADER].(*header.Header)
-	var name string
-	var err error
-	for _, dt := range data {
-		switch dt[0] {
-		case "9":
-			name = dt[1]
-		case "1":
-			switch name {
-			case "$ACADVER":
-				h.Version = dt[1]
-			}
-		case "3":
-			switch name {
-			case "$DWGCODEPAGE":
-				h.CodePage = strings.TrimSpace(dt[1])
-			}
-		case "10":
-			switch name {
-			case "$INSBASE":
-				err = setFloat(dt, func(val float64) { h.InsBase[0] = val })
-			case "$EXTMIN":
-				err = setFloat(dt, func(val float64) { h.ExtMin[0] = val })
-			case "$EXTMAX":
-				err = setFloat(dt, func(val float64) { h.ExtMax[0] = val })
-			}
-		case "20":
-			switch name {
-			case "$INSBASE":
-				err = setFloat(dt, func(val float64) { h.InsBase[1] = val })
-			case "$EXTMIN":
-				err = setFloat(dt, func(val float64) { h.ExtMin[1] = val })
-			case "$EXTMAX":
-				err = setFloat(dt, func(val float64) { h.ExtMax[1] = val })
-			}
-		case "30":
-			switch name {
-			case "$INSBASE":
-				err = setFloat(dt, func(val float64) { h.InsBase[2] = val })
-			case "$EXTMIN":
-				err = setFloat(dt, func(val float64) { h.ExtMin[2] = val })
-			case "$EXTMAX":
-				err = setFloat(dt, func(val float64) { h.ExtMax[2] = val })
-			}
-		case "40":
-			switch name {
-			case "$LTSCALE":
-				err = setFloat(dt, func(val float64) { h.LtScale = val })
-			}
-		case "70":
-			switch name {
-			case "$INSUNITS":
-				err = setInt(dt, func(val int) { h.InsUnit = insunit.Unit(val) })
-			case "$LUNITS":
-				// Need to adjust the value back to the constants
-				err = setInt(dt, func(val int) { h.InsLUnit = insunit.Type(val - 2) })
-			}
-		}
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 // CLASSES
 

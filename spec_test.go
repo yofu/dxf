@@ -390,7 +390,8 @@ func TestEntityColor(t *testing.T) {
 	pl.Vertices[1].SetColor(color.Red)
 
 	out := writeString(t, d)
-	if strings.Count(out, "\n62\n") != 8+1+len(d.Layers) {
+	// 8 entities + 1 vertex + layers + $CECOLOR in the header
+	if strings.Count(out, "\n62\n") != 8+1+len(d.Layers)+1 {
 		t.Errorf("62 should be written for non-BYLAYER entities only: got %d", strings.Count(out, "\n62\n"))
 	}
 	d2, err := FromStringData(out)
