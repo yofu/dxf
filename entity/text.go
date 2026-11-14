@@ -25,6 +25,7 @@ const (
 type Text struct {
 	*entity
 	Coord1         []float64    // 10, 20, 30
+	Thickness      float64      // 39
 	Coord2         []float64    // 11, 21, 31
 	Height         float64      // 40
 	Rotation       float64      // 50
@@ -63,6 +64,7 @@ func NewText() *Text {
 func (t *Text) Format(f format.Formatter) {
 	t.entity.Format(f)
 	f.WriteString(100, "AcDbText")
+	writeThickness(f, t.Thickness)
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, t.Coord1[i])
 	}
@@ -171,5 +173,5 @@ func (t *Text) BBox() ([]float64, []float64) {
 	// TODO: text length, anchor point
 	mins := []float64{t.Coord1[0], t.Coord1[1], t.Coord1[2]}
 	maxs := []float64{t.Coord1[0], t.Coord1[1] + t.Height, t.Coord1[2]}
-	return mins, maxs
+	return extrude(mins, maxs, t.Thickness)
 }

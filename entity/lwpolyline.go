@@ -14,6 +14,7 @@ type LwPolyline struct {
 	Plinegen      bool        // 70 & 128: linetype generated continuously around vertices
 	ConstantWidth float64     // 43 (used when Widths are all 0)
 	Elevation     float64     // 38
+	Thickness     float64     // 39
 	Vertices      [][]float64 // 10, 20
 	Widths        [][]float64 // 40, 41: starting and ending width of each segment
 	Bulges        []float64   // 42
@@ -87,6 +88,7 @@ func (l *LwPolyline) Format(f format.Formatter) {
 	if l.Elevation != 0 {
 		f.WriteFloat(38, l.Elevation)
 	}
+	writeThickness(f, l.Thickness)
 	for i := 0; i < l.Num; i++ {
 		for j := 0; j < 2; j++ {
 			f.WriteFloat((j+1)*10, l.Vertices[i][j])
@@ -155,7 +157,7 @@ func (l *LwPolyline) BBox() ([]float64, []float64) {
 		mins[i] -= w / 2
 		maxs[i] += w / 2
 	}
-	return mins, maxs
+	return extrude(mins, maxs, l.Thickness)
 }
 
 // Bulge computes the center and the radius of the arc to reach the vertex.

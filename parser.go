@@ -717,6 +717,12 @@ func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
 				lt = table.NewLineType(name, "")
 			}
 			lp.SetLineType(lt)
+		case "39":
+			if th, ok := e.(entity.Thick); ok {
+				if err := setFloat(dt, func(val float64) { th.SetThickness(val) }); err != nil {
+					return err
+				}
+			}
 		case "370":
 			if !hasLine {
 				continue

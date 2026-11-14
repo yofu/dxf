@@ -260,3 +260,48 @@ func (e *entity) SetLineWeight(w int) int {
 }
 
 var _ LineProperties = &entity{}
+
+// Thick is implemented by entities with a thickness (code 39):
+// LINE, CIRCLE, ARC, POINT, TEXT, ATTDEF, ATTRIB, LWPOLYLINE, POLYLINE and SOLID.
+// The thickness is the extrusion along the extrusion direction.
+type Thick interface {
+	SetThickness(float64)
+}
+
+func writeThickness(f format.Formatter, t float64) {
+	if t != 0 {
+		f.WriteFloat(39, t)
+	}
+}
+
+// extrude extends a bounding box by thickness t along Z
+// (the extrusion direction is assumed to be the Z axis).
+func extrude(mins, maxs []float64, t float64) ([]float64, []float64) {
+	if t > 0 {
+		maxs[2] += t
+	} else {
+		mins[2] += t
+	}
+	return mins, maxs
+}
+
+// SetThickness sets the thickness.
+func (l *Line) SetThickness(t float64) { l.Thickness = t }
+
+// SetThickness sets the thickness.
+func (c *Circle) SetThickness(t float64) { c.Thickness = t }
+
+// SetThickness sets the thickness.
+func (p *Point) SetThickness(t float64) { p.Thickness = t }
+
+// SetThickness sets the thickness.
+func (t *Text) SetThickness(v float64) { t.Thickness = v }
+
+// SetThickness sets the thickness.
+func (l *LwPolyline) SetThickness(t float64) { l.Thickness = t }
+
+// SetThickness sets the thickness.
+func (p *Polyline) SetThickness(t float64) { p.Thickness = t }
+
+// SetThickness sets the thickness.
+func (s *Solid) SetThickness(t float64) { s.Thickness = t }

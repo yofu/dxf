@@ -41,6 +41,7 @@ func (a *AttributeDefinition) Format(f format.Formatter) {
 	t := a.Text
 	t.entity.Format(f)
 	f.WriteString(100, "AcDbText")
+	writeThickness(f, t.Thickness)
 	writePoint(f, 10, t.Coord1)
 	f.WriteFloat(40, t.Height)
 	f.WriteString(1, t.Value)
@@ -86,6 +87,7 @@ func (a *Attribute) Format(f format.Formatter) {
 	t := a.Text
 	t.entity.Format(f)
 	f.WriteString(100, "AcDbText")
+	writeThickness(f, t.Thickness)
 	writePoint(f, 10, t.Coord1)
 	f.WriteFloat(40, t.Height)
 	f.WriteString(1, t.Value)

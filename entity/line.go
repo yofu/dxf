@@ -9,8 +9,9 @@ import (
 // Line represents LINE Entity.
 type Line struct {
 	*entity
-	Start []float64 // 10, 20, 30
-	End   []float64 // 11, 21, 31
+	Start     []float64 // 10, 20, 30
+	End       []float64 // 11, 21, 31
+	Thickness float64   // 39
 }
 
 // IsEntity is for Entity interface.
@@ -32,6 +33,7 @@ func NewLine() *Line {
 func (l *Line) Format(f format.Formatter) {
 	l.entity.Format(f)
 	f.WriteString(100, "AcDbLine")
+	writeThickness(f, l.Thickness)
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, l.Start[i])
 	}
@@ -64,7 +66,7 @@ func (l *Line) BBox() ([]float64, []float64) {
 			maxs[i] = l.Start[i]
 		}
 	}
-	return mins, maxs
+	return extrude(mins, maxs, l.Thickness)
 }
 
 func (l *Line) Length() float64 {

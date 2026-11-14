@@ -7,7 +7,8 @@ import (
 // Point represents POINT Entity.
 type Point struct {
 	*entity
-	Coord []float64 // 10, 20, 30
+	Coord     []float64 // 10, 20, 30
+	Thickness float64   // 39
 }
 
 // IsEntity is for Entity interface.
@@ -43,6 +44,7 @@ func (p *Point) Format(f format.Formatter) {
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, p.Coord[i])
 	}
+	writeThickness(f, p.Thickness)
 }
 
 // String outputs data using default formatter.
@@ -58,5 +60,5 @@ func (p *Point) FormatString(f format.Formatter) string {
 }
 
 func (p *Point) BBox() ([]float64, []float64) {
-	return []float64{p.Coord[0], p.Coord[1], p.Coord[2]}, []float64{p.Coord[0], p.Coord[1], p.Coord[2]}
+	return extrude([]float64{p.Coord[0], p.Coord[1], p.Coord[2]}, []float64{p.Coord[0], p.Coord[1], p.Coord[2]}, p.Thickness)
 }

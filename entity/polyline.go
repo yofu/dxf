@@ -8,6 +8,7 @@ import (
 type Polyline struct {
 	*entity
 	Flag      int
+	Thickness float64 // 39
 	size      int
 	Vertices  []*Vertex
 	endhandle int
@@ -39,6 +40,7 @@ func (p *Polyline) Format(f format.Formatter) {
 	f.WriteString(10, "0.0")
 	f.WriteString(20, "0.0")
 	f.WriteString(30, "0.0")
+	writeThickness(f, p.Thickness)
 	f.WriteInt(70, p.Flag)
 	for _, v := range p.Vertices {
 		v.Format(f)
@@ -125,7 +127,7 @@ func (p *Polyline) BBox() ([]float64, []float64) {
 			}
 		}
 	}
-	return mins, maxs
+	return extrude(mins, maxs, p.Thickness)
 }
 
 // Bulge computes the center and the radius of the arc from the vertex at index

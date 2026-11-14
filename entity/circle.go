@@ -8,6 +8,7 @@ import (
 type Circle struct {
 	*entity
 	Center    []float64 // 10, 20, 30
+	Thickness float64   // 39
 	Radius    float64   // 40
 	Direction []float64 // 210, 220, 230
 }
@@ -32,6 +33,7 @@ func NewCircle() *Circle {
 func (c *Circle) Format(f format.Formatter) {
 	c.entity.Format(f)
 	f.WriteString(100, "AcDbCircle")
+	writeThickness(f, c.Thickness)
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, c.Center[i])
 	}
@@ -75,5 +77,5 @@ func (c *Circle) SetCoord(co []float64) {
 
 func (c *Circle) BBox() ([]float64, []float64) {
 	// TODO: extrusion
-	return []float64{c.Center[0] - c.Radius, c.Center[1] - c.Radius, c.Center[2]}, []float64{c.Center[0] + c.Radius, c.Center[1] + c.Radius, c.Center[2]}
+	return extrude([]float64{c.Center[0] - c.Radius, c.Center[1] - c.Radius, c.Center[2]}, []float64{c.Center[0] + c.Radius, c.Center[1] + c.Radius, c.Center[2]}, c.Thickness)
 }
