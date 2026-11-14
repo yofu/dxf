@@ -108,6 +108,8 @@ func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	}
 	parseUnderlayDefinitions(d, items, byHandle, modeled)
 	parseImageDefinitions(d, items, objects, byHandle, modeled)
+	parseMLineStyles(d, items, byHandle, modeled)
+	parseMLeaderStyles(d, items, byHandle, modeled)
 	// the other objects are kept as read, with their handles
 	rootKeys := map[string]string{}
 	for name, h := range items {
@@ -382,5 +384,208 @@ func parseImageDefinitions(d *drawing.Drawing, items map[string]string, objects 
 	link(d.Entities())
 	for _, b := range d.Blocks() {
 		link(b.Entities)
+	}
+}
+
+// parseMLineStyles creates the MLINESTYLE objects of the dictionary
+// ACAD_MLINESTYLE and links the MLINE entities read to them.
+func parseMLineStyles(d *drawing.Drawing, items map[string]string, byHandle map[string]objRecord, modeled map[string]bool) {
+	h, ok := items["ACAD_MLINESTYLE"]
+	if !ok || byHandle[h].typ != "DICTIONARY" {
+		return
+	}
+	modeled[h] = true
+	d.SetObjectSourceHandle("ACAD_MLINESTYLE", h)
+	styles := map[int]*entity.MLineStyle{}
+	dictItems := byHandle[h].dictionaryItems()
+	for _, key := range sortedKeys(dictItems) {
+		sh := dictItems[key]
+		o, ok := byHandle[sh]
+		if !ok || o.typ != "MLINESTYLE" {
+			continue
+		}
+		name := key
+		var s *entity.MLineStyle
+		var el *entity.MLineStyleElement
+		data := o.after("AcDbMlineStyle")
+		counted := false
+		for _, dt := range data {
+			switch dt[0] {
+			case "2":
+				name = dt[1]
+			}
+		}
+		s = entity.NewMLineStyle(name)
+		for _, dt := range data {
+			switch dt[0] {
+			case "70":
+				setInt(dt, func(v int) { s.Flags = v })
+			case "3":
+				s.Description = dt[1]
+			case "62":
+				if counted {
+					if el != nil {
+						setInt(dt, func(v int) { el.Color = v })
+					}
+				} else {
+					setInt(dt, func(v int) { s.FillColor = v })
+				}
+			case "51":
+				setFloat(dt, func(v float64) { s.StartAngle = v })
+			case "52":
+				setFloat(dt, func(v float64) { s.EndAngle = v })
+			case "71":
+				counted = true
+			case "49":
+				s.Elements = append(s.Elements, entity.MLineStyleElement{LineType: "BYLAYER"})
+				el = &s.Elements[len(s.Elements)-1]
+				setFloat(dt, func(v float64) { el.Offset = v })
+			case "6":
+				if el != nil {
+					el.LineType = dt[1]
+				}
+			}
+		}
+		s.SetSourceHandle(sh)
+		if err := d.AddMLineStyleObject(s); err != nil {
+			continue
+		}
+		modeled[sh] = true
+		styles[handle.Parse(sh)] = s
+	}
+	d.ForEachEntity(func(e entity.Entity) {
+		m, ok := e.(*entity.MLine)
+		if !ok || m.Style != nil {
+			return
+		}
+		name, h := m.StyleReference()
+		if s, ok := styles[handle.Parse(h)]; ok && h != "" {
+			m.Style = s
+		} else if s, err := d.MLineStyle(name); err == nil && (h == "" || h == "0") {
+			m.Style = s
+		}
+	})
+}
+
+// parseMLeaderStyles creates the MLEADERSTYLE objects of the dictionary
+// ACAD_MLEADERSTYLE (references by handle are kept as read).
+func parseMLeaderStyles(d *drawing.Drawing, items map[string]string, byHandle map[string]objRecord, modeled map[string]bool) {
+	h, ok := items["ACAD_MLEADERSTYLE"]
+	if !ok || byHandle[h].typ != "DICTIONARY" {
+		return
+	}
+	modeled[h] = true
+	d.SetObjectSourceHandle("ACAD_MLEADERSTYLE", h)
+	dictItems := byHandle[h].dictionaryItems()
+	for _, key := range sortedKeys(dictItems) {
+		sh := dictItems[key]
+		o, ok := byHandle[sh]
+		if !ok || o.typ != "MLEADERSTYLE" {
+			continue
+		}
+		s := entity.NewMLeaderStyle(key)
+		ref := func(v string) entity.Ref { return entity.Ref{Raw: strings.TrimSpace(v)} }
+		for _, dt := range o.after("AcDbMLeaderStyle") {
+			v := strings.TrimSpace(dt[1])
+			i, _ := strconv.Atoi(v)
+			f, _ := strconv.ParseFloat(v, 64)
+			switch dt[0] {
+			case "179":
+				s.Unknown179 = i
+			case "170":
+				s.ContentType = i
+			case "171":
+				s.DrawMLeaderOrder = i
+			case "172":
+				s.DrawLeaderOrder = i
+			case "90":
+				s.MaxLeaderPoints = i
+			case "40":
+				s.FirstAngle = f
+			case "41":
+				s.SecondAngle = f
+			case "173":
+				s.LeaderType = i
+			case "91":
+				s.LeaderColor = i
+			case "340":
+				s.LeaderLineType = ref(v)
+			case "92":
+				s.LeaderLineWeight = i
+			case "290":
+				s.HasLanding = i != 0
+			case "42":
+				s.LandingGap = f
+			case "291":
+				s.HasDogleg = i != 0
+			case "43":
+				s.DoglegLength = f
+			case "3":
+				s.Description = dt[1]
+			case "341":
+				s.Arrow = ref(v)
+			case "44":
+				s.ArrowSize = f
+			case "300":
+				s.DefaultText = dt[1]
+			case "342":
+				s.TextStyle = ref(v)
+			case "174":
+				s.TextLeftAttachment = i
+			case "175":
+				s.TextAngleType = i
+			case "176":
+				s.TextAlignmentType = i
+			case "178":
+				s.TextRightAttachment = i
+			case "93":
+				s.TextColor = i
+			case "45":
+				s.CharHeight = f
+			case "292":
+				s.HasTextFrame = i != 0
+			case "297":
+				s.TextAlignAlwaysLeft = i != 0
+			case "46":
+				s.AlignSpace = f
+			case "293":
+				s.HasBlockScaling = i != 0
+			case "343":
+				s.Block = ref(v)
+			case "94":
+				s.BlockColor = i
+			case "47":
+				s.BlockScale[0] = f
+			case "49":
+				s.BlockScale[1] = f
+			case "140":
+				s.BlockScale[2] = f
+			case "294":
+				s.HasBlockRotation = i != 0
+			case "141":
+				s.BlockRotation = f
+			case "177":
+				s.BlockConnectionType = i
+			case "142":
+				s.Scale = f
+			case "295":
+				s.OverwriteProperty = i != 0
+			case "296":
+				s.Annotative = i != 0
+			case "143":
+				s.BreakGapSize = f
+			case "271":
+				s.TextAttachmentDir = i
+			case "272":
+				s.TextBottomAttachment = i
+			case "273":
+				s.TextTopAttachment = i
+			}
+		}
+		s.SetSourceHandle(sh)
+		if err := d.AddMLeaderStyleObject(s); err != nil {
+			continue
+		}
+		modeled[sh] = true
 	}
 }

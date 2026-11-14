@@ -177,3 +177,27 @@ for v in ["R2010", "R2018"]:
     dim = mm.add_arc_dim_3p(base=(0, 6), center=(0, 0), p1=(5, 0), p2=(0, 5))
     dim.render()
     md.saveas(os.path.join(out, f"ez_more_{v}.dxf"))
+
+# phase B: MLINE, MULTILEADER (MTEXT and block content)
+from ezdxf.math import Vec2
+from ezdxf.render import mleader as mlr
+for v in ["R2010", "R2018"]:
+    bd = ezdxf.new(v, setup=True)
+    bm = bd.modelspace()
+    bm.add_mline([(0, 0), (10, 0), (10, 10)], dxfattribs={"scale_factor": 2, "justification": 1})
+    st = bd.mline_styles.new("WALL")
+    st.elements.append(0.1, 1)
+    st.elements.append(-0.1, 5)
+    bm.add_mline([(0, 0), (4, 0), (4, 4), (0, 4)], close=True, dxfattribs={"style_name": "WALL"})
+    ml = bm.add_multileader_mtext("Standard")
+    ml.set_content(r"Note\Psecond line", char_height=2.5)
+    ml.add_leader_line(mlr.ConnectionSide.left, [Vec2(0, 0), Vec2(5, 8)])
+    ml.add_leader_line(mlr.ConnectionSide.right, [Vec2(30, 0)])
+    ml.build(insert=Vec2(10, 10))
+    blk = bd.blocks.new("MARK")
+    blk.add_circle((0, 0), 1)
+    mb = bm.add_multileader_block("Standard")
+    mb.set_content(name="MARK", scale=2)
+    mb.add_leader_line(mlr.ConnectionSide.left, [Vec2(-10, -10)])
+    mb.build(insert=Vec2(20, 20))
+    bd.saveas(os.path.join(out, f"ez_phaseb_{v}.dxf"))

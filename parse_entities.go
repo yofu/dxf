@@ -294,6 +294,12 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseImage, nil
 	case "XLINE", "RAY":
 		return ParseXLine, nil
+	case "MLINE":
+		return ParseMLine, nil
+	case "ACAD_TABLE":
+		return ParseAcadTable, nil
+	case "MULTILEADER", "MLEADER":
+		return ParseMultiLeader, nil
 	case "TRACE":
 		return ParseTrace, nil
 	case "SHAPE":

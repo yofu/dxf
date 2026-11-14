@@ -74,6 +74,11 @@ func (d *Drawing) RemoveEntity(es ...entity.Entity) int {
 	return len(removed)
 }
 
+// ForEachEntity calls f for the entities of the ENTITIES section and blocks.
+func (d *Drawing) ForEachEntity(f func(entity.Entity)) {
+	d.forEachEntity(f)
+}
+
 // forEachEntity calls f for the entities of the ENTITIES section and blocks.
 func (d *Drawing) forEachEntity(f func(entity.Entity)) {
 	for _, e := range d.Entities() {

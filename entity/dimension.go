@@ -8,20 +8,20 @@ import (
 
 // Dimension types (code 70, lower bits).
 const (
-	DIM_LINEAR      = 0 // rotated, horizontal or vertical
-	DIM_ALIGNED     = 1
-	DIM_ANGULAR     = 2 // 2 lines
-	DIM_DIAMETER    = 3
-	DIM_RADIUS      = 4
-	DIM_ANGULAR3P   = 5 // 3 points
-	DIM_ORDINATE    = 6
+	DIM_LINEAR    = 0 // rotated, horizontal or vertical
+	DIM_ALIGNED   = 1
+	DIM_ANGULAR   = 2 // 2 lines
+	DIM_DIAMETER  = 3
+	DIM_RADIUS    = 4
+	DIM_ANGULAR3P = 5 // 3 points
+	DIM_ORDINATE  = 6
 	// ARC_DIMENSION (arc length; written as 5, or 8 for AC1032) and
 	// LARGE_RADIAL_DIMENSION (jogged radius; 9) are entities of their own
 	DIM_ARC          = 8
 	DIM_LARGE_RADIAL = 9
-	DIM_BLOCK_OWNED = 32  // the block is referenced by this dimension only
-	DIM_ORDINATE_X  = 64  // ordinate type is X (otherwise Y)
-	DIM_USER_TEXT   = 128 // text is at a user-defined location
+	DIM_BLOCK_OWNED  = 32  // the block is referenced by this dimension only
+	DIM_ORDINATE_X   = 64  // ordinate type is X (otherwise Y)
+	DIM_USER_TEXT    = 128 // text is at a user-defined location
 )
 
 // Dimension represents DIMENSION Entity.

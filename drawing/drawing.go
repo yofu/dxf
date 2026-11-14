@@ -43,6 +43,9 @@ type Drawing struct {
 	underlayDefs  []*entity.UnderlayDefinition
 	imageDict     *object.Dictionary // ACAD_IMAGE_DICT
 	imageDefs     []*entity.ImageDefinition
+	namedDicts    map[string]*object.Dictionary // dictionaries of the root dictionary (ACAD_MLINESTYLE, ...)
+	mlineStyles   []*entity.MLineStyle
+	mleaderStyles []*entity.MLeaderStyle
 	// savebuff is used internally for the io.Reader options.
 	savebuff *bytes.Buffer
 
@@ -644,6 +647,8 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	d.ensureAppIDs()
 	d.linkOwners()
 	d.linkUnderlays()
+	d.linkMLines()
+	d.linkMLeaders()
 	d.linkImages()
 	d.ensureEntityClasses()
 	d.setHandle()
@@ -1057,6 +1062,8 @@ func (d *Drawing) SetObjectSourceHandle(key, h string) {
 		d.layoutdict.SetSourceHandle(h)
 	case "ACAD_PLOTSTYLENAME":
 		d.plotstyles.SetSourceHandle(h)
+	case "ACAD_MLINESTYLE", "ACAD_MLEADERSTYLE", "ACAD_TABLESTYLE":
+		d.namedDictionary(key).SetSourceHandle(h)
 	case "ACAD_IMAGE_DICT":
 		d.imageDictionary().SetSourceHandle(h)
 	case "ACAD_PDFDEFINITIONS", "ACAD_DWFDEFINITIONS", "ACAD_DGNDEFINITIONS":

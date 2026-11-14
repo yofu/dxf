@@ -104,6 +104,21 @@ func more() *drawing.Drawing {
 	return d
 }
 
+// phaseB uses MLINE (Standard and a style), MULTILEADER with MTEXT
+// content (AC1027).
+func phaseB() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	must(0, d.SetVersion(format.R2013))
+	must(d.MLine("", [][]float64{{0, 0}, {10, 0}, {10, 10}}, false, 2, entity.MLINE_ZERO))
+	w := must(d.AddMLineStyle("WALL", entity.MLineStyleElement{Offset: 0.1, Color: 1, LineType: "BYLAYER"},
+		entity.MLineStyleElement{Offset: -0.1, Color: 5, LineType: "BYLAYER"}))
+	w.Flags = entity.MLINESTYLE_FILL
+	must(d.MLine("WALL", [][]float64{{0, 0}, {4, 0}, {4, 4}, {0, 4}}, true, 1, entity.MLINE_TOP))
+	must(d.MultiLeaderText(`Note\Psecond line`, []float64{10, 10, 0}, 2.5,
+		[][]float64{{0, 0, 0}, {5, 8, 0}}, [][]float64{{30, 0, 0}}))
+	return d
+}
+
 // cubeSAT is minimal SAT data (the geometry is not checked).
 var cubeSAT = []string{"700 0 1 0", "@33 Open Design Alliance ACIS Builder @12 ACIS 32.0 NT @24 Thu Jan 01 00:00:00 2026 ", "1 9.9999999999999995e-07 1e-10 ", "End-of-ACIS-data"}
 
@@ -325,7 +340,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
-		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more,
+		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more, "phaseb": phaseB,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {

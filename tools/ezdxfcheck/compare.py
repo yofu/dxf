@@ -63,6 +63,11 @@ def summary(doc):
             ud = e.get_underlay_def()
             d += [r(a.insert), r(e.scaling), a.rotation, a.flags, a.contrast, a.fade, r(list(e.boundary_path)),
                   (ud.dxftype(), ud.dxf.filename, ud.dxf.name) if ud else None]
+        elif t == "MLINE": d += [a.style_name, a.scale_factor, a.justification, a.flags, r([v.location for v in e.vertices]), r([tuple(p[0] for p in v.line_params) for v in e.vertices])]
+        elif t == "MULTILEADER":
+            c = e.context
+            d += [r(c.base_point), c.char_height, c.mtext.default_content if c.mtext else None, r(c.mtext.insert) if c.mtext else None,
+                  r(c.block.insert) if c.block else None, [(r(l.last_leader_point), [r(ln.vertices) for ln in l.lines]) for l in c.leaders]]
         elif t in ("XLINE", "RAY"): d += [r(a.start), r(a.unit_vector)]
         elif t == "SHAPE": d += [a.name, r(a.insert), a.size, r(a.get("rotation", 0)), r(a.get("xscale", 1))]
         elif t == "TOLERANCE": d += [a.content, r(a.insert), a.dimstyle, r(a.get("x_axis_vector"))]

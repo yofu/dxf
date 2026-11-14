@@ -136,6 +136,7 @@ var entityClasses = map[string][]string{
 	"LOFTEDSURFACE":          {"LOFTEDSURFACE", "AcDbLoftedSurface", "ObjectDBX Classes", "0", "1"},
 	"REVOLVEDSURFACE":        {"REVOLVEDSURFACE", "AcDbRevolvedSurface", "ObjectDBX Classes", "0", "1"},
 	"SWEPTSURFACE":           {"SWEPTSURFACE", "AcDbSweptSurface", "ObjectDBX Classes", "0", "1"},
+	"ACAD_TABLE":             {"ACAD_TABLE", "AcDbTable", "ObjectDBX Classes", "1025", "1"},
 }
 
 // entityTypeName returns the DXF type name of e.
@@ -147,6 +148,8 @@ func entityTypeName(e entity.Entity) string {
 		return "HELIX"
 	case *entity.MPolygon:
 		return "MPOLYGON"
+	case *entity.AcadTable:
+		return "ACAD_TABLE"
 	case *entity.Dimension:
 		switch x.Type {
 		case entity.DIM_ARC:
@@ -160,9 +163,28 @@ func entityTypeName(e entity.Entity) string {
 
 // ensureEntityClasses adds the classes of the entity types used.
 func (d *Drawing) ensureEntityClasses() {
+	if len(d.mleaderStyles) > 0 {
+		d.ensureClass([]string{"MLEADERSTYLE", "AcDbMLeaderStyle", "ACDB_MLEADERSTYLE_CLASS", "4095", "0"})
+	}
 	d.forEachEntity(func(e entity.Entity) {
 		if c, ok := entityClasses[entityTypeName(e)]; ok {
 			d.ensureClass(c)
 		}
 	})
+}
+
+// TableToBlockReference replaces an ACAD_TABLE by a block reference
+// (INSERT) of its graphics block at its insertion point and on its layer,
+// as ezdxf's acad_table_to_block does.
+func (d *Drawing) TableToBlockReference(t *entity.AcadTable) (*entity.Insert, error) {
+	if _, err := d.Block(t.BlockName); err != nil {
+		return nil, err
+	}
+	ins := entity.NewInsert(t.BlockName)
+	ins.Coord = append([]float64{}, t.Insert...)
+	ins.SetLayer(t.Layer())
+	if !d.ReplaceEntity(t, ins) {
+		return nil, errors.New("table is not in the drawing")
+	}
+	return ins, nil
 }

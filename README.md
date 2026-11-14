@@ -10,7 +10,8 @@ DXF (Drawing Exchange Format by Autodesk, Inc.) library for Go.
 - Entities: LINE, XLINE, RAY, CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT,
   SHAPE, 3DFACE, SOLID, TRACE, LWPOLYLINE, POLYLINE (2D, 3D, meshes), MESH,
   SPLINE, HELIX, INSERT, ATTDEF, ATTRIB, HATCH, MPOLYGON, DIMENSION
-  (also ARC_DIMENSION and LARGE_RADIAL_DIMENSION), LEADER, TOLERANCE,
+  (also ARC_DIMENSION and LARGE_RADIAL_DIMENSION), LEADER, MULTILEADER,
+  MLINE, ACAD_TABLE (block and cell texts; the table data is kept), TOLERANCE,
   VIEWPORT, IMAGE, WIPEOUT, LIGHT, underlays (PDFUNDERLAY, DWFUNDERLAY,
   DGNUNDERLAY) and ACIS entities (3DSOLID, BODY, REGION and surfaces: the
   ACIS data as SAT text, the geometry is not interpreted). Other entity
@@ -118,6 +119,17 @@ d.MPolygon(outer, hole) // polygon with holes, solid fill
 d.Light("L1", entity.LIGHT_SPOT, []float64{0, 0, 10})
 solid, _ := d.Body("3DSOLID", satLines) // ACIS data as SAT text
 fmt.Println(solid.SAT)
+
+// multilines: MLINESTYLE "Standard" (added when needed) or styles of your own
+d.AddMLineStyle("WALL", entity.MLineStyleElement{Offset: 0.1, Color: 1, LineType: "BYLAYER"},
+	entity.MLineStyleElement{Offset: -0.1, Color: 5, LineType: "BYLAYER"})
+d.MLine("WALL", [][]float64{{0, 0}, {4, 0}, {4, 4}}, false, 1, entity.MLINE_ZERO) // closed, scale, justification
+// multileader with MTEXT content at (10, 10); leaders from their arrow heads
+// (the text size is estimated from the number of characters)
+d.MultiLeaderText(`Note\Psecond line`, []float64{10, 10, 0}, 2.5, [][]float64{{0, 0, 0}, {5, 8, 0}})
+// tables: cell texts and conversion to a block reference
+content := table.Content()  // [][]string
+d.TableToBlockReference(table)
 ```
 
 ### Text, dimensions, leaders and hatches

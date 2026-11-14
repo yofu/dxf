@@ -36,6 +36,9 @@ const (
 	MESH
 	MPOLYGON
 	LIGHT
+	MLINE
+	MULTILEADER
+	ACAD_TABLE
 	BODY     // BODY, REGION, 3DSOLID and surfaces (see Body.TypeName)
 	UNDERLAY // PDFUNDERLAY, DWFUNDERLAY, DGNUNDERLAY (see Underlay.TypeName)
 	UNKNOWN  // entity types not supported by this package (see Unknown)
@@ -103,6 +106,12 @@ func EntityTypeString(t EntityType) string {
 		return "MPOLYGON"
 	case LIGHT:
 		return "LIGHT"
+	case MLINE:
+		return "MLINE"
+	case MULTILEADER:
+		return "MULTILEADER"
+	case ACAD_TABLE:
+		return "ACAD_TABLE"
 	case BODY:
 		return "BODY"
 	case IMAGE:
@@ -178,6 +187,12 @@ func EntityTypeValue(t string) EntityType {
 		return MPOLYGON
 	case "LIGHT":
 		return LIGHT
+	case "MLINE":
+		return MLINE
+	case "MULTILEADER", "MLEADER":
+		return MULTILEADER
+	case "ACAD_TABLE":
+		return ACAD_TABLE
 	case "BODY", "REGION", "3DSOLID", "SURFACE", "PLANESURFACE", "EXTRUDEDSURFACE", "LOFTEDSURFACE", "REVOLVEDSURFACE", "SWEPTSURFACE":
 		return BODY
 	case "IMAGE":

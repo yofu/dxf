@@ -535,3 +535,116 @@ func ParseSpecialDimension(d *drawing.Drawing, data [][2]string) (entity.Entity,
 	}
 	return dim, nil
 }
+
+// ParseMLine parses MLINE entities. The style (340) is resolved by
+// ParseObjects.
+func ParseMLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	m := entity.NewMLine(nil)
+	head, body := splitAt(data, "AcDbMline")
+	for _, dt := range head {
+		if err := setLayerAndLtscale(d, m, dt); err != nil {
+			return m, err
+		}
+	}
+	var name, h string
+	count := 0
+	var v *entity.MLineVertex
+	r := &groupReader{data: body}
+	var err error
+	for !r.done() && err == nil {
+		switch r.peek() {
+		case "2":
+			name = r.next()[1]
+		case "340":
+			h = strings.TrimSpace(r.next()[1])
+		case "40":
+			m.Scale, err = r.float("40", 1)
+		case "70":
+			m.Justification, err = r.int("70", 0)
+		case "71":
+			m.Flags, err = r.int("71", 0)
+		case "73":
+			count, err = r.int("73", 0)
+		case "210", "220", "230":
+			err = setPoint(r.next(), m.Extrusion)
+		case "11":
+			v = &entity.MLineVertex{Location: []float64{0, 0, 0}, LineDirection: []float64{1, 0, 0}, MiterDirection: []float64{0, 1, 0}}
+			m.Vertices = append(m.Vertices, v)
+			err = setPoint(r.next(), v.Location)
+		case "21", "31":
+			if v != nil {
+				err = setPoint(r.next(), v.Location)
+			} else {
+				r.next()
+			}
+		case "12", "22", "32":
+			if v != nil {
+				err = setPoint(r.next(), v.LineDirection)
+			} else {
+				r.next()
+			}
+		case "13", "23", "33":
+			if v != nil {
+				err = setPoint(r.next(), v.MiterDirection)
+			} else {
+				r.next()
+			}
+		case "74", "75":
+			code, valCode := r.peek(), "41"
+			if code == "75" {
+				valCode = "42"
+			}
+			var n int
+			if n, err = r.int(code, 0); err != nil {
+				break
+			}
+			params := make([]float64, 0, n)
+			for i := 0; i < n && err == nil; i++ {
+				var p float64
+				p, err = r.float(valCode, 0)
+				params = append(params, p)
+			}
+			if v != nil {
+				if code == "74" {
+					v.LineParams = append(v.LineParams, params)
+				} else {
+					v.FillParams = append(v.FillParams, params)
+				}
+			}
+		default:
+			r.next()
+		}
+	}
+	m.SetStyleReference(name, h, count)
+	return m, err
+}
+
+// ParseAcadTable parses ACAD_TABLE entities: the block reference part;
+// the table data is kept as read.
+func ParseAcadTable(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	t := entity.NewAcadTable("", nil)
+	head, rest := splitAt(data, "AcDbBlockReference")
+	ref, table := splitAt(rest, "AcDbTable")
+	for _, dt := range head {
+		if err := setLayerAndLtscale(d, t, dt); err != nil {
+			return t, err
+		}
+	}
+	for _, dt := range ref {
+		var err error
+		switch dt[0] {
+		case "2":
+			t.BlockName = dt[1]
+		case "10", "20", "30":
+			err = setPoint(dt, t.Insert)
+		default:
+			t.BlockReference = append(t.BlockReference, dt)
+		}
+		if err != nil {
+			return t, err
+		}
+	}
+	body, _ := splitXData(table)
+	t.Data = append([][2]string{}, body...)
+	return t, nil
+}
