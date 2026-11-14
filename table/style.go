@@ -25,6 +25,9 @@ type Style struct {
 	ObliqueAngle    float64 // 50
 	Flags           int     // 70: 1 shape file, 4 vertical text
 	GenFlag         int     // 71: text generation flags (2 backward, 4 upside down)
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewStyle create a new Style.
@@ -62,6 +65,7 @@ func (st *Style) Format(f format.Formatter) {
 	f.WriteFloat(42, st.LastHeightUsed)
 	f.WriteString(3, st.FontName)
 	f.WriteString(4, st.BigFontName)
+	writeRaw(f, st.Extra)
 }
 
 // String outputs data using default formatter.

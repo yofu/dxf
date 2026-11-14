@@ -115,6 +115,16 @@ func (g *Group) Entities() []entity.Entity {
 	return g.entities
 }
 
+// ReplaceEntity replaces old by n in the group.
+func (g *Group) ReplaceEntity(old, n entity.Entity) {
+	for i, e := range g.entities {
+		if e == old {
+			n.SetBlockRecord(g)
+			g.entities[i] = n
+		}
+	}
+}
+
 // RemoveEntity removes entities from the group.
 func (g *Group) RemoveEntity(es ...entity.Entity) {
 	kept := make([]entity.Entity, 0, len(g.entities))

@@ -9,8 +9,8 @@ DXF (Drawing Exchange Format by Autodesk, Inc.) library for Go.
   read is written again.
 - Entities: LINE, CIRCLE, ARC, ELLIPSE, POINT, TEXT, MTEXT, 3DFACE, SOLID,
   LWPOLYLINE, POLYLINE (2D, 3D, meshes), SPLINE, INSERT, ATTDEF, ATTRIB,
-  HATCH, DIMENSION, LEADER, VIEWPORT and underlays (PDFUNDERLAY,
-  DWFUNDERLAY, DGNUNDERLAY). Other entity types are kept as read
+  HATCH, DIMENSION, LEADER, VIEWPORT, IMAGE, WIPEOUT and underlays
+  (PDFUNDERLAY, DWFUNDERLAY, DGNUNDERLAY). Other entity types are kept as read
   (`entity.Unknown`).
 - Blocks with attributes, groups, layouts and viewports, extended data,
   text in code pages (e.g. Shift_JIS for Japanese), and editing (query,
@@ -132,6 +132,12 @@ u, _ := d.Underlay(def, 0, 0, 0, 1) // insertion point, scale
 u.Rotation = 30
 u.SetClipping([]float64{0, 0}, []float64{100, 50}) // in underlay coordinates
 u.Fade = 25                                        // also Contrast, Flags (UNDERLAY_MONOCHROME, ...)
+
+// raster image: the definition (OBJECTS, ACAD_IMAGE_DICT) and its reference
+img, _ := d.AddImageDefinition("images/plan.png", 640, 480) // size in pixels
+im, _ := d.Image(img, 0, 0, 0, 64, 48, 0)                    // corner, width, height, rotation
+im.SetBoundary([]float64{-0.5, -0.5}, []float64{319.5, 239.5}) // clipping in pixels
+d.Wipeout([]float64{0, 0}, []float64{10, 0}, []float64{10, 5}) // masking polygon
 ```
 
 ### Layouts and viewports
@@ -156,15 +162,31 @@ d.UseLayout("Model")
 ```go
 walls := d.EntitiesOnLayer("WALL") // or d.Query(func(e entity.Entity) bool { ... })
 d.Move(10, 0, 0, walls...)         // also Rotate(base, angle, ...), Scale(base, factor, ...)
+d.Mirror([]float64{0, 0}, []float64{0, 1}, walls...) // about the line through two points
+d.ScaleXYZ([]float64{0, 0, 0}, 2, 1, 1, walls...)    // non-uniform; circles become ellipses
 copies, _ := dxf.CopyEntities(d, entity.Rotate([]float64{0, 0, 0}, 90), walls...)
 d.RemoveEntity(walls[0])
 exploded, _ := dxf.Explode(d, insert) // block reference -> entities
 d.RenameLayer("WALL", "A-WALL")       // also RemoveLayer, RenameBlock, RemoveBlock
 ```
 
-Transformations are moves, rotations about the Z axis and uniform scaling
-(`entity.Transform`); entities with an extrusion direction other than the
-Z axis cannot be transformed.
+Transformations (`entity.Transform`) are affine in the XY plane: moves,
+rotations about the Z axis, scaling (also non-uniform, and along Z) and
+mirrors (negative factors, `entity.MirrorBy`).
+
+- Mirrored entities keep the Z axis as extrusion direction: arcs, bulges
+  and hatch edges change their direction, block references get a negative
+  Y scale. Text stays readable (its alignment is mirrored, like AutoCAD
+  with MIRRTEXT = 0) unless `Transform.MirrorText` is set; `Explode`
+  mirrors text as in the block reference.
+- Under non-uniform scaling circles and arcs become ellipses
+  (`entity.TransformEntity`, `Drawing.TransformEntities`); ellipses,
+  splines, lines and hatch patterns are transformed exactly. Entities
+  that cannot keep their shape give `entity.ErrNonUniform`: polylines
+  with arcs or widths, hatches with arcs, rotated text and block
+  references whose axes would not stay orthogonal, dimensions and leaders.
+- Entities with an extrusion direction other than the Z axis cannot be
+  transformed (`entity.ErrTransform`).
 
 ## Files
 
@@ -222,7 +244,7 @@ When a file is read and written again, the handles of the objects read are
 kept (new objects get handles above them), so references by handle stay
 valid. Data this package does not interpret is kept as well: unknown header
 variables (`Header().Extra`), entities of unsupported types
-(`entity.Unknown`, e.g. IMAGE, WIPEOUT, MLINE), extended data (`XData()`),
+(`entity.Unknown`, e.g. MLINE, MULTILEADER), extended data (`XData()`),
 extension dictionaries and reactors (102 groups), other values of table
 entries (`Extra`), the CLASSES section and the objects of the OBJECTS
 section (`RawObjects()`). Groups (`Groups`) and layouts (`Layouts()`) are

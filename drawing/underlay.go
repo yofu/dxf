@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/yofu/dxf/class"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/object"
@@ -116,21 +115,10 @@ func (d *Drawing) linkUnderlays() {
 	for _, b := range d.Blocks() {
 		add(b.Entities)
 	}
-	cs := d.Sections[CLASSES].(class.Classes)
 	for _, def := range d.underlayDefs {
 		def.SetReactors(refs[def]...)
 		for _, c := range underlayClasses[def.FileFormat] {
-			found := false
-			for _, x := range cs {
-				found = found || strings.EqualFold(x.Name(), c[0])
-			}
-			if !found {
-				cs = append(cs, &class.Class{Data: [][2]string{
-					{"1", c[0]}, {"2", c[1]}, {"3", "ObjectDBX Classes"},
-					{"90", c[2]}, {"280", "0"}, {"281", c[3]},
-				}})
-			}
+			d.ensureClass([]string{c[0], c[1], "ObjectDBX Classes", c[2], c[3]})
 		}
 	}
-	d.Sections[CLASSES] = cs
 }

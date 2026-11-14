@@ -26,6 +26,9 @@ type Viewport struct {
 	BackClip      float64
 	SnapAngle     float64
 	TwistAngle    float64
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewViewport creates a new Viewport.
@@ -98,6 +101,7 @@ func (v *Viewport) Format(f format.Formatter) {
 	f.WriteFloat(44, v.BackClip)
 	f.WriteFloat(50, v.SnapAngle)
 	f.WriteFloat(51, v.TwistAngle)
+	writeRaw(f, v.Extra)
 }
 
 // String outputs data using default formatter.

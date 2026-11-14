@@ -64,7 +64,9 @@ def summary(doc):
             ud = e.get_underlay_def()
             d += [r(a.insert), r(e.scaling), a.rotation, a.flags, a.contrast, a.fade, r(list(e.boundary_path)),
                   (ud.dxftype(), ud.dxf.filename, ud.dxf.name) if ud else None]
-        elif t == "IMAGE": d += [r(a.insert), e.image_def.dxf.filename if e.image_def else None]
+        elif t in ("IMAGE", "WIPEOUT"):
+            d += [r(a.insert), r(a.u_pixel), r(a.v_pixel), r(a.image_size), a.flags, a.clipping, a.fade, r(list(e.boundary_path)),
+                  e.image_def.dxf.filename if t == "IMAGE" and e.image_def else None]
         elif t == "WIPEOUT": d += [r(a.insert), len(e.boundary_path)]
         elif t == "MLINE": d += [len(e.vertices), e.style.dxf.name if e.style else None]
         if e.has_extension_dict:

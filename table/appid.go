@@ -11,6 +11,9 @@ type AppID struct {
 	src    int // handle in the file it was read from (kept when writing)
 	owner  handle.Handler
 	name   string
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewAppID create a new AppID.
@@ -36,6 +39,7 @@ func (a *AppID) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbRegAppTableRecord")
 	f.WriteString(2, a.name)
 	f.WriteInt(70, 0)
+	writeRaw(f, a.Extra)
 }
 
 // String outputs data using default formatter.

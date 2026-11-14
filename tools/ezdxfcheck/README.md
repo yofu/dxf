@@ -20,7 +20,15 @@ venv/bin/python tools/ezdxfcheck/audit.py out/gen
 venv/bin/python tools/ezdxfcheck/make_ezdxf.py out/ez
 go run ./tools/ezdxfcheck roundtrip out/ez out/rt
 venv/bin/python tools/ezdxfcheck/compare.py out/ez out/rt
+
+# 3. transformations (mirror, non-uniform scaling) compared with ezdxf
+go run ./tools/ezdxfcheck transform out/xf
+venv/bin/python tools/ezdxfcheck/transform_check.py out/xf
 ```
+
+`transform_check.py` transforms the paths of the original entities by the
+matrix of each transformation with ezdxf and compares them with the
+entities transformed by this package (largest distance between them).
 
 `audit.py` prints the result of `doc.audit()` (errors and fixes) and the
 contents of each file. `compare.py` prints the audit result of the files

@@ -290,6 +290,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseLeader, nil
 	case "PDFUNDERLAY", "PDFREFERENCE", "DWFUNDERLAY", "DGNUNDERLAY":
 		return ParseUnderlay, nil
+	case "IMAGE", "WIPEOUT":
+		return ParseImage, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}

@@ -53,8 +53,10 @@ func (o objRecord) after(marker string) [][2]string {
 }
 
 // ParseObjects parses OBJECTS section: groups (GROUP in the ACAD_GROUP
-// dictionary), layouts (LAYOUT in the ACAD_LAYOUT dictionary) and underlay
-// definitions (PDFDEFINITION in the ACAD_PDFDEFINITIONS dictionary, ...).
+// dictionary), layouts (LAYOUT in the ACAD_LAYOUT dictionary), underlay
+// definitions (PDFDEFINITION in the ACAD_PDFDEFINITIONS dictionary, ...)
+// and image definitions (IMAGEDEF in the ACAD_IMAGE_DICT dictionary, and
+// IMAGEDEF_REACTOR).
 // Other objects are kept as read (object.Raw) and written again.
 func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 	var objects []objRecord
@@ -105,6 +107,7 @@ func ParseObjects(d *drawing.Drawing, line int, data [][2]string) error {
 		}
 	}
 	parseUnderlayDefinitions(d, items, byHandle, modeled)
+	parseImageDefinitions(d, items, objects, byHandle, modeled)
 	// the other objects are kept as read, with their handles
 	rootKeys := map[string]string{}
 	for name, h := range items {
@@ -297,6 +300,82 @@ func parseUnderlayDefinitions(d *drawing.Drawing, items map[string]string, byHan
 			if def, ok := defs[handle.Parse(u.DefinitionHandle())]; ok {
 				u.Definition = def
 				u.SetDefinitionHandle("")
+			}
+		}
+	}
+	link(d.Entities())
+	for _, b := range d.Blocks() {
+		link(b.Entities)
+	}
+}
+
+// parseImageDefinitions creates the image definitions of the dictionary
+// ACAD_IMAGE_DICT and the IMAGEDEF_REACTOR objects, and links the images
+// read to them.
+func parseImageDefinitions(d *drawing.Drawing, items map[string]string, objects []objRecord, byHandle map[string]objRecord, modeled map[string]bool) {
+	defs := map[int]*entity.ImageDefinition{} // by handle in the file
+	if h, ok := items["ACAD_IMAGE_DICT"]; ok && byHandle[h].typ == "DICTIONARY" {
+		modeled[h] = true
+		d.SetObjectSourceHandle("ACAD_IMAGE_DICT", h)
+		dictItems := byHandle[h].dictionaryItems()
+		for _, name := range sortedKeys(dictItems) {
+			dh := dictItems[name]
+			o, ok := byHandle[dh]
+			if !ok || o.typ != "IMAGEDEF" {
+				continue
+			}
+			def := entity.NewImageDefinition("", 0, 0)
+			for _, dt := range o.after("AcDbRasterImageDef") {
+				switch dt[0] {
+				case "1":
+					def.FileName = dt[1]
+				case "10", "20":
+					setFloat(dt, func(v float64) { def.Size[int(dt[0][0]-'1')] = v })
+				case "11", "21":
+					setFloat(dt, func(v float64) { def.PixelSize[int(dt[0][0]-'1')] = v })
+				case "280":
+					setInt(dt, func(v int) { def.Loaded = v != 0 })
+				case "281":
+					setInt(dt, func(v int) { def.ResolutionUnits = v })
+				}
+			}
+			def.SetSourceHandle(dh)
+			if err := d.AddImageDefinitionWithKey(def, name); err != nil {
+				continue
+			}
+			modeled[dh] = true
+			defs[handle.Parse(dh)] = def
+		}
+	}
+	reactors := map[int]*entity.ImageDefReactor{}
+	reactorHandles := map[*entity.ImageDefReactor]string{} // as read
+	for _, o := range objects {
+		if o.typ == "IMAGEDEF_REACTOR" {
+			r := &entity.ImageDefReactor{}
+			r.SetSourceHandle(o.handle())
+			reactors[handle.Parse(o.handle())] = r
+			reactorHandles[r] = o.handle()
+		}
+	}
+	if len(defs) == 0 && len(reactors) == 0 {
+		return
+	}
+	link := func(es entity.Entities) {
+		for _, e := range es {
+			im, ok := e.(*entity.Image)
+			if !ok || im.IsWipeout() {
+				continue
+			}
+			if def, ok := defs[handle.Parse(im.DefinitionHandle())]; ok && im.DefinitionHandle() != "" {
+				im.Definition = def
+				im.SetDefinitionHandle("")
+			}
+			if im.Definition == nil {
+				continue // the reactor is kept as read
+			}
+			if r, ok := reactors[handle.Parse(im.ReactorHandle())]; ok && im.ReactorHandle() != "" {
+				im.SetReactor(r)
+				modeled[reactorHandles[r]] = true
 			}
 		}
 	}

@@ -210,6 +210,8 @@ func ParseViewport(d *drawing.Drawing, data [][2]string) (table.SymbolTable, err
 			return v, err
 		}
 	}
+	v.Extra = rawExtra(data, codes("2", "70", "10", "20", "11", "21", "12", "22", "13", "23", "14", "24",
+		"15", "25", "16", "26", "36", "17", "27", "37", "40", "41", "42", "43", "44", "50", "51"), false)
 	return v, nil
 }
 
@@ -270,6 +272,7 @@ func ParseLtype(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	nlt := table.NewLineType(name, lt.Description)
 	nlt.SetElements(es...)
 	nlt.SetTotalLength(total)
+	nlt.Extra = rawExtra(data, codes("2", "3", "70", "72", "73", "40", "49", "74", "75", "340", "46", "50", "44", "45", "9"), false)
 	return nlt, nil
 }
 
@@ -411,6 +414,7 @@ func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 		}
 	}
 	s.SetName(name)
+	s.Extra = rawExtra(data, codes("2", "3", "4", "40", "41", "42", "50", "70", "71"), false)
 	return s, nil
 }
 
@@ -452,6 +456,7 @@ func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 		}
 	}
 	a := table.NewAppID(name)
+	a.Extra = rawExtra(data, codes("2", "70"), false)
 	return a, nil
 }
 

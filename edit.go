@@ -91,6 +91,13 @@ func Copy(d *drawing.Drawing, e entity.Entity) (entity.Entity, error) {
 		u.Definition = src.Definition
 		u.SetDefinitionHandle(src.DefinitionHandle())
 	}
+	if im, ok := c.(*entity.Image); ok {
+		// the definition is shared; the copy gets its own reactor when written
+		src := e.(*entity.Image)
+		im.Definition = src.Definition
+		im.SetDefinitionHandle(src.DefinitionHandle())
+		im.SetReactorHandle("")
+	}
 	if dim, ok := c.(*entity.Dimension); ok && dim.BlockName != "" {
 		if err := copyDimensionBlock(d, dim); err != nil {
 			return nil, err
@@ -130,9 +137,11 @@ func CopyEntities(d *drawing.Drawing, t entity.Transform, es ...entity.Entity) (
 		if err != nil {
 			return copies, err
 		}
-		if err := d.TransformEntities(t, c); err != nil {
+		ts, err := d.TransformEntitiesReplacing(t, c)
+		if err != nil {
 			return copies, err
 		}
+		c = ts[0] // circles become ellipses under non-uniform scaling
 		if !insertAfter(d, e, c) {
 			d.AddEntity(c)
 		}
@@ -171,16 +180,21 @@ func insertAfter(d *drawing.Drawing, e entity.Entity, n ...entity.Entity) bool {
 // the reference. Entities on layer 0 take the layer of the reference, and
 // BYBLOCK color, linetype and lineweight are resolved. Visible attributes
 // become TEXT entities; attribute definitions are dropped. Nested block
-// references are exploded by one level only. The scale must be uniform.
+// references are exploded by one level only. Mirrored (negative) and
+// non-uniform scales are applied as entity.Transform does: under
+// non-uniform scales circles and arcs become ellipses, and entities that
+// cannot be scaled so (e.g. polylines with arcs) give entity.ErrNonUniform.
+// Mirrored text is mirrored as in the block reference (upside down).
 // It returns the new entities.
 func Explode(d *drawing.Drawing, ins *entity.Insert) (entity.Entities, error) {
 	b, err := d.Block(ins.BlockName)
 	if err != nil {
 		return nil, err
 	}
-	s := ins.Scale[0]
-	if s <= 0 || math.Abs(ins.Scale[1]-s) > 1e-12 || math.Abs(ins.Scale[2]-s) > 1e-12 {
-		return nil, errors.New("explode: the scale must be uniform and positive")
+	scale := []float64{1, 1, 1}
+	copy(scale, ins.Scale)
+	if scale[0] == 0 || scale[1] == 0 || scale[2] == 0 {
+		return nil, errors.New("explode: the scale must not be 0")
 	}
 	if len(ins.Direction) >= 3 && (ins.Direction[0] != 0 || ins.Direction[1] != 0 || ins.Direction[2] <= 0) {
 		return nil, entity.ErrTransform
@@ -199,9 +213,12 @@ func Explode(d *drawing.Drawing, ins *entity.Insert) (entity.Entities, error) {
 		for r := 0; r < rows; r++ {
 			ax, ay := float64(c)*ins.ColumnSpacing, float64(r)*ins.RowSpacing
 			t := entity.Transform{
-				Base:  b.Coord,
-				Angle: ins.Rotation,
-				Scale: s,
+				Base:       b.Coord,
+				Angle:      ins.Rotation,
+				ScaleX:     scale[0],
+				ScaleY:     scale[1],
+				ScaleZ:     scale[2],
+				MirrorText: true,
 				Offset: []float64{
 					ins.Coord[0] - b.Coord[0] + ax*cos - ay*sin,
 					ins.Coord[1] - b.Coord[1] + ax*sin + ay*cos,
@@ -217,10 +234,11 @@ func Explode(d *drawing.Drawing, ins *entity.Insert) (entity.Entities, error) {
 					return nil, err
 				}
 				inheritFromBlockReference(d, cp, ins)
-				if err := d.TransformEntities(t, cp); err != nil {
+				ts, err := d.TransformEntitiesReplacing(t, cp)
+				if err != nil {
 					return nil, err
 				}
-				out = out.Add(cp)
+				out = out.Add(ts[0])
 			}
 		}
 	}

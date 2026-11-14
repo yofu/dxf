@@ -3,6 +3,7 @@
 //
 //	go run ./tools/ezdxfcheck generate <dir>        sample files written by this package
 //	go run ./tools/ezdxfcheck roundtrip <in> <out>  read files and write them back
+//	go run ./tools/ezdxfcheck transform <dir>       entities before and after transformations
 package main
 
 import (
@@ -78,6 +79,86 @@ func blocks() *drawing.Drawing {
 	ins3 := must(d.Insert("TITLE", 0, 300, 0))
 	ins3.Columns, ins3.ColumnSpacing = 3, 150
 	return d
+}
+
+// images uses an image, a clipped rotated image and a wipeout.
+func images() *drawing.Drawing {
+	d := dxf.NewDrawing()
+	def := must(d.AddImageDefinition("images/plan.png", 640, 480))
+	must(d.Image(def, 0, 0, 0, 6.4, 4.8, 0))
+	im := must(d.Image(def, 10, 20, 0, 64, 48, 90))
+	im.SetBoundary([]float64{-0.5, -0.5}, []float64{319.5, 239.5})
+	im.Fade = 30
+	must(d.Wipeout([]float64{0, 0}, []float64{10, 0}, []float64{10, 5}, []float64{0, 5}))
+	return d
+}
+
+// transformations checked by transform_check.py (the same parameters)
+var transforms = []struct {
+	name    string
+	t       entity.Transform
+	uniform bool // conformal: all entities
+}{
+	{"mirror", entity.MirrorBy([]float64{1, 1}, []float64{3, 2}), true},
+	{"mirror_scale", entity.Transform{Base: []float64{2, 0, 0}, Angle: 40, ScaleX: -2, ScaleY: 2, ScaleZ: 2}, true},
+	{"scalexyz", entity.ScaleXYZ([]float64{1, 2, 0}, 2, 0.5, 1), false},
+	{"general", entity.Transform{Angle: 30, ScaleX: 1.5, ScaleY: -0.7, Offset: []float64{5, 5, 0}}, false},
+}
+
+// transformEntities returns a drawing with entities to transform; uniform
+// adds the entities that need a conformal transformation.
+func transformEntities(uniform bool) *drawing.Drawing {
+	d := dxf.NewDrawing()
+	d.BeginBlock("B", 0, 0, 0)
+	must(d.Line(0, 0, 0, 2, 0, 0))
+	must(d.Arc(1, 0, 0, 1, 0, 90))
+	d.EndBlock()
+	must(d.Line(0, 0, 0, 3, 1, 0))
+	must(d.Circle(2, 2, 0, 1.5))
+	must(d.Arc(-1, 1, 0, 2, 30, 200))
+	e := must(d.Ellipse([]float64{4, -2, 0}, []float64{2, 1, 0}, 0.5))
+	e.Start, e.End = 0.5, 4
+	must(d.LwPolyline(true, []float64{0, 0}, []float64{4, 0}, []float64{4, 3}))
+	must(d.Spline([][]float64{{0, 0, 0}, {1, 2, 0}, {3, 1, 0}, {4, 3, 0}}))
+	must(d.ThreeDFace([][]float64{{0, 0, 0}, {1, 0, 0}, {1, 1, 0}, {0, 1, 0}}))
+	h := must(d.Hatch([]float64{5, 5}, []float64{8, 5}, []float64{8, 7}))
+	h.SetPattern("ANSI31", 0, 1)
+	ins := must(d.Insert("B", 2, -3, 0))
+	ins.Rotation = 90
+	if uniform {
+		lp := must(d.LwPolyline(false, []float64{0, 5}, []float64{3, 5}, []float64{3, 8}))
+		lp.Bulges[0], lp.Bulges[1] = 0.5, -0.3
+		ha := entity.NewHatch()
+		ha.AddEdgePath(
+			&entity.HatchLine{Start: []float64{10, 0}, End: []float64{12, 0}},
+			&entity.HatchArc{Center: []float64{12, 1}, Radius: 1, Start: 270, End: 90, CCW: true},
+			&entity.HatchArc{Center: []float64{11, 2}, Radius: 1, Start: 0, End: 180, CCW: false},
+			&entity.HatchLine{Start: []float64{10, 2}, End: []float64{10, 0}},
+		)
+		d.AddEntity(ha)
+		ins2 := must(d.Insert("B", -3, -3, 0))
+		ins2.Rotation = 25
+		ins2.Scale = []float64{1, 2, 1}
+		must(d.Text("ABC", 1, 1, 0, 1))
+	}
+	return d
+}
+
+func transformSamples(out string) {
+	for _, tr := range transforms {
+		d := transformEntities(tr.uniform)
+		if err := d.SaveAs(filepath.Join(out, "xf_"+tr.name+"_orig.dxf")); err != nil {
+			panic(err)
+		}
+		d = transformEntities(tr.uniform)
+		if err := d.TransformEntities(tr.t, d.Entities()...); err != nil {
+			panic(fmt.Sprintf("%s: %v", tr.name, err))
+		}
+		if err := d.SaveAs(filepath.Join(out, "xf_"+tr.name+".dxf")); err != nil {
+			panic(err)
+		}
+	}
+	fmt.Println("written in", out)
 }
 
 // linetypes uses complex linetypes with a text string and a shape.
@@ -218,7 +299,7 @@ func layouts() *drawing.Drawing {
 func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
-		"linetypes": linetypes, "underlays": underlays,
+		"linetypes": linetypes, "underlays": underlays, "images": images,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {
@@ -280,6 +361,10 @@ func main() {
 		roundtrip(os.Args[2], os.Args[3])
 		return
 	}
-	fmt.Fprintln(os.Stderr, "usage: ezdxfcheck generate <dir> | roundtrip <in> <out>")
+	if len(os.Args) >= 3 && os.Args[1] == "transform" {
+		transformSamples(os.Args[2])
+		return
+	}
+	fmt.Fprintln(os.Stderr, "usage: ezdxfcheck generate <dir> | roundtrip <in> <out> | transform <dir>")
 	os.Exit(2)
 }

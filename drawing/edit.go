@@ -87,31 +87,87 @@ func (d *Drawing) forEachEntity(f func(entity.Entity)) {
 }
 
 // TransformEntities applies t to entities (see entity.Transform). The
-// graphics of dimensions are transformed with them. It stops at the first
+// graphics of dimensions are transformed with them. Under non-uniform
+// scaling, circles and arcs are replaced by ellipses (in the drawing,
+// blocks and groups; see entity.TransformEntity). It stops at the first
 // entity that cannot be transformed (entity.ErrTransform: an extrusion
-// direction other than the Z axis, or an unsupported entity type).
+// direction other than the Z axis, an unsupported entity type, or
+// entity.ErrNonUniform).
 func (d *Drawing) TransformEntities(t entity.Transform, es ...entity.Entity) error {
+	_, err := d.TransformEntitiesReplacing(t, es...)
+	return err
+}
+
+// TransformEntitiesReplacing is TransformEntities returning the
+// transformed entities: es, except for circles and arcs replaced by
+// ellipses.
+func (d *Drawing) TransformEntitiesReplacing(t entity.Transform, es ...entity.Entity) (entity.Entities, error) {
+	out := make(entity.Entities, 0, len(es))
 	for _, e := range es {
-		tr, ok := e.(entity.Transformable)
-		if !ok {
-			return fmt.Errorf("%T: %w", e, entity.ErrTransform)
+		n, err := entity.TransformEntity(e, t)
+		if err != nil {
+			return out, fmt.Errorf("%T: %w", e, err)
 		}
-		if err := tr.ApplyTransform(t); err != nil {
-			return fmt.Errorf("%T: %w", e, err)
+		if n != e {
+			d.ReplaceEntity(e, n)
 		}
+		out = append(out, n)
 		if dim, ok := e.(*entity.Dimension); ok && dim.Flags&entity.DIM_BLOCK_OWNED != 0 {
 			if b, err := d.Block(dim.BlockName); err == nil {
 				for _, be := range b.Entities {
 					if bt, ok := be.(entity.Transformable); ok {
 						if err := bt.ApplyTransform(t); err != nil {
-							return fmt.Errorf("dimension block %s: %w", b.Name, err)
+							return out, fmt.Errorf("dimension block %s: %w", b.Name, err)
 						}
 					}
 				}
 			}
 		}
 	}
-	return nil
+	return out, nil
+}
+
+// ReplaceEntity replaces old by n where old is: the ENTITIES section,
+// blocks, groups and leader annotations. It reports whether old was found.
+func (d *Drawing) ReplaceEntity(old, n entity.Entity) bool {
+	found := false
+	replace := func(list entity.Entities) {
+		for i, e := range list {
+			if e == old {
+				list[i] = n
+				found = true
+			}
+		}
+	}
+	replace(d.Entities())
+	for _, b := range d.Blocks() {
+		replace(b.Entities)
+	}
+	for _, g := range d.Groups {
+		g.ReplaceEntity(old, n)
+	}
+	d.forEachEntity(func(e entity.Entity) {
+		if l, ok := e.(*entity.Leader); ok && l.Annotation == old {
+			l.Annotation = n
+		}
+	})
+	return found
+}
+
+// Mirror mirrors entities about the line through p1 and p2 (in the XY
+// plane). Text stays readable (see entity.Transform.MirrorText).
+func (d *Drawing) Mirror(p1, p2 []float64, es ...entity.Entity) error {
+	return d.TransformEntities(entity.MirrorBy(p1, p2), es...)
+}
+
+// ScaleXYZ scales entities by sx, sy and sz (non-zero; negative values
+// mirror) around base. Circles and arcs become ellipses when sx and sy
+// differ (see TransformEntities).
+func (d *Drawing) ScaleXYZ(base []float64, sx, sy, sz float64, es ...entity.Entity) error {
+	if sx == 0 || sy == 0 || sz == 0 {
+		return errors.New("scale factors must not be 0")
+	}
+	return d.TransformEntities(entity.ScaleXYZ(base, sx, sy, sz), es...)
 }
 
 // Move moves entities by (dx, dy, dz).

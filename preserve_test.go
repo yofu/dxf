@@ -94,9 +94,9 @@ func checkPreserved(t *testing.T, d *drawing.Drawing) {
 	if g := x.ExtensionGroups(); len(g) != 3 || g[1] != [2]string{"330", "42"} {
 		t.Errorf("xline reactors: %v", g)
 	}
-	img := es[2].(*entity.Unknown)
-	if v, _ := value(img.Data, "340"); img.TypeName() != "IMAGE" || v != "60" || img.SourceHandle() != "42" {
-		t.Errorf("image: %+v", img.Data)
+	img := es[2].(*entity.Image)
+	if def := img.Definition; def == nil || def.FileName != "plan.png" || def.Size[0] != 640 || def.SourceHandle() != "60" || img.SourceHandle() != "42" {
+		t.Errorf("image: %+v", img)
 	}
 	classes := map[string]bool{}
 	for _, c := range d.Sections[drawing.CLASSES].(class.Classes) {
@@ -105,9 +105,11 @@ func checkPreserved(t *testing.T, d *drawing.Drawing) {
 	if !classes["IMAGE"] || !classes["IMAGEDEF"] {
 		t.Errorf("CLASSES should be kept: %v", classes)
 	}
-	raws := d.RawObjects()
-	if len(raws) != 2 || raws[0].Type != "DICTIONARY" || raws[1].Type != "IMAGEDEF" || raws[1].SourceHandle() != "60" {
+	if raws := d.RawObjects(); len(raws) != 0 {
 		t.Errorf("raw objects: %v", raws)
+	}
+	if defs := d.ImageDefinitions(); len(defs) != 1 || defs[0] != img.Definition {
+		t.Errorf("image definitions: %v", defs)
 	}
 	tr := es[3].(*entity.Unknown)
 	if tr.TypeName() != "TRACE" || tr.ColorIndex() != 2 || len(tr.Data) != 8 {

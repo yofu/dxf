@@ -25,6 +25,8 @@ const (
 	ATTRIB
 	VIEWPORT
 	LEADER
+	IMAGE
+	WIPEOUT
 	UNDERLAY // PDFUNDERLAY, DWFUNDERLAY, DGNUNDERLAY (see Underlay.TypeName)
 	UNKNOWN  // entity types not supported by this package (see Unknown)
 )
@@ -73,6 +75,10 @@ func EntityTypeString(t EntityType) string {
 		return "VIEWPORT"
 	case LEADER:
 		return "LEADER"
+	case IMAGE:
+		return "IMAGE"
+	case WIPEOUT:
+		return "WIPEOUT"
 	case UNDERLAY:
 		return "PDFUNDERLAY"
 	default:
@@ -124,6 +130,10 @@ func EntityTypeValue(t string) EntityType {
 		return VIEWPORT
 	case "LEADER":
 		return LEADER
+	case "IMAGE":
+		return IMAGE
+	case "WIPEOUT":
+		return WIPEOUT
 	case "PDFUNDERLAY", "PDFREFERENCE", "DWFUNDERLAY", "DGNUNDERLAY":
 		return UNDERLAY
 	default:

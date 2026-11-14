@@ -317,9 +317,26 @@ func TestExplode(t *testing.T) {
 	}
 	checkStructure(t, d)
 
+	// non-uniform scale: the circle becomes an ellipse
 	ins2, _ := d.Insert("B", 0, 0, 0)
 	ins2.Scale = []float64{1, 2, 1}
-	if _, err := Explode(d, ins2); err == nil {
-		t.Error("non-uniform scale should be an error")
+	es2, err := Explode(d, ins2)
+	if err != nil {
+		t.Fatal(err)
 	}
+	el, ok := es2[1].(*entity.Ellipse)
+	if !ok || !near(el.Center, []float64{0, 2, 0}) || !near(el.MajorAxis, []float64{0, 1, 0}) || !cmpF64(el.Ratio, 0.5) || el.Layer().Name() != "A" {
+		t.Errorf("ellipse: %+v", es2[1])
+	}
+	// mirrored block reference
+	ins3, _ := d.Insert("B", 0, 0, 0)
+	ins3.Scale = []float64{-1, 1, 1}
+	es3, err := Explode(d, ins3)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l3 := es3[0].(*entity.Line); !near(l3.Start, []float64{0, 0, 0}) || !near(l3.End, []float64{-1, 0, 0}) {
+		t.Errorf("mirrored line: %v %v", l3.Start, l3.End)
+	}
+	checkStructure(t, d)
 }

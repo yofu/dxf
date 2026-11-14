@@ -27,6 +27,9 @@ type LineType struct {
 	Description string // 3
 	elements    []*LineTypeElement
 	total       float64 // 40 as read (< 0: computed from the elements)
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // Complex element flags of linetypes (code 74).
@@ -151,6 +154,7 @@ func (lt *LineType) Format(f format.Formatter) {
 	for _, e := range lt.elements {
 		e.format(f)
 	}
+	writeRaw(f, lt.Extra)
 }
 
 // String outputs data using default formatter.
@@ -255,6 +259,7 @@ func (lt *LineType) clone() *LineType {
 		c.elements = append(c.elements, e.clone())
 	}
 	c.total = lt.total
+	c.Extra = append([][2]string(nil), lt.Extra...)
 	return c
 }
 
