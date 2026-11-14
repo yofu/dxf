@@ -17,6 +17,8 @@ const (
 	SPLINE
 	INSERT
 	MTEXT
+	ELLIPSE
+	HATCH
 )
 
 // EntityTypeString converts EntityType to string.
@@ -47,6 +49,10 @@ func EntityTypeString(t EntityType) string {
 		return "INSERT"
 	case MTEXT:
 		return "MTEXT"
+	case ELLIPSE:
+		return "ELLIPSE"
+	case HATCH:
+		return "HATCH"
 	default:
 		return ""
 	}
@@ -80,6 +86,10 @@ func EntityTypeValue(t string) EntityType {
 		return INSERT
 	case "MTEXT":
 		return MTEXT
+	case "ELLIPSE":
+		return ELLIPSE
+	case "HATCH":
+		return HATCH
 	default:
 		return -1
 	}

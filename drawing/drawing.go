@@ -681,3 +681,46 @@ func clampedKnots(n, degree int) []float64 {
 	}
 	return knots
 }
+
+// Ellipse creates a new full ELLIPSE with center, endpoint of the major axis
+// relative to the center, and ratio of the minor axis to the major axis (0 < ratio <= 1).
+// Set Start/End (radians) for an elliptical arc.
+func (d *Drawing) Ellipse(center, majorAxis []float64, ratio float64) (*entity.Ellipse, error) {
+	if len(center) < 3 || len(majorAxis) < 3 {
+		return nil, errors.New("Ellipse needs 3D center and major axis")
+	}
+	if ratio <= 0 || ratio > 1 {
+		return nil, fmt.Errorf("Ellipse ratio must be in (0, 1]: %v", ratio)
+	}
+	if majorAxis[0] == 0 && majorAxis[1] == 0 && majorAxis[2] == 0 {
+		return nil, errors.New("Ellipse major axis is zero")
+	}
+	e := entity.NewEllipse()
+	e.Center = []float64{center[0], center[1], center[2]}
+	e.MajorAxis = []float64{majorAxis[0], majorAxis[1], majorAxis[2]}
+	e.Ratio = ratio
+	e.SetLayer(d.CurrentLayer)
+	d.AddEntity(e)
+	return e, nil
+}
+
+// Hatch creates a new solid-filled HATCH bounded by the closed polygon
+// of vertices (2D points). Use Hatch.SetPattern / SetUserPattern for
+// patterns, and AddPolylinePath / AddEdgePath for more boundaries (holes).
+func (d *Drawing) Hatch(vertices ...[]float64) (*entity.Hatch, error) {
+	if len(vertices) < 3 {
+		return nil, errors.New("Hatch needs 3 or more vertices")
+	}
+	vs := make([][]float64, len(vertices))
+	for i, v := range vertices {
+		if len(v) < 2 {
+			return nil, errors.New("Hatch vertices need 2 coordinates")
+		}
+		vs[i] = []float64{v[0], v[1]}
+	}
+	h := entity.NewHatch()
+	h.AddPolylinePath(vs, nil)
+	h.SetLayer(d.CurrentLayer)
+	d.AddEntity(h)
+	return h, nil
+}

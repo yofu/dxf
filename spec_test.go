@@ -103,7 +103,7 @@ func TestBulgeCenter(t *testing.T) {
 
 func TestUnsupportedEntitiesAreSkipped(t *testing.T) {
 	src := entitiesSection("0\nLINE\n8\n0\n10\n0\n20\n0\n11\n1\n21\n1\n" +
-		"0\nHATCH\n8\n0\n2\nSOLID\n10\n0\n20\n0\n" +
+		"0\nACAD_PROXY_ENTITY\n8\n0\n90\n498\n91\n0\n" +
 		"0\nPOINT\n8\n0\n10\n3\n20\n4\n")
 	d, err := FromStringData(src)
 	if err != nil {

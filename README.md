@@ -77,6 +77,18 @@ l.SetLineType(lt)           // 6 (nil: BYLAYER)
 l.SetLineWeight(35)         // 370: 0.35 mm (table.LineWeightByBlock, ...)
 ```
 
+### Ellipse and hatch
+
+```go
+// center, endpoint of the major axis (relative to the center), minor/major ratio
+e, _ := d.Ellipse([]float64{0.0, 0.0, 0.0}, []float64{10.0, 0.0, 0.0}, 0.5)
+e.Start, e.End = 0.0, math.Pi // elliptical arc (parameters in radians)
+
+h, _ := d.Hatch([]float64{0.0, 0.0}, []float64{100.0, 0.0}, []float64{100.0, 50.0}) // solid fill
+h.SetPattern("ANSI31", 0.0, 1.0)                   // or SetUserPattern(angle, spacing, double)
+h.AddPolylinePath([][]float64{{10, 10}, {20, 10}, {20, 20}}, nil) // inner boundary (hole)
+```
+
 ### Multiline text (MTEXT)
 
 ```go

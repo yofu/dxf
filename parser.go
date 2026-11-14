@@ -753,6 +753,10 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseInsert, nil
 	case "MTEXT":
 		return ParseMText, nil
+	case "ELLIPSE":
+		return ParseEllipse, nil
+	case "HATCH":
+		return ParseHatch, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}
@@ -1349,4 +1353,57 @@ func ParseMText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		t.Rotation = math.Atan2(xaxis[1], xaxis[0]) * 180.0 / math.Pi
 	}
 	return t, nil
+}
+
+// ParseEllipse parses ELLIPSE entities.
+func ParseEllipse(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	e := entity.NewEllipse()
+	var err error
+	for _, dt := range data {
+		var target *float64
+		switch dt[0] {
+		default:
+			continue
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				e.SetLayer(layer)
+			}
+			continue
+		case "48":
+			err = setFloat(dt, func(val float64) { e.SetLtscale(val) })
+			if err != nil {
+				return e, err
+			}
+			continue
+		case "10":
+			target = &e.Center[0]
+		case "20":
+			target = &e.Center[1]
+		case "30":
+			target = &e.Center[2]
+		case "11":
+			target = &e.MajorAxis[0]
+		case "21":
+			target = &e.MajorAxis[1]
+		case "31":
+			target = &e.MajorAxis[2]
+		case "210":
+			target = &e.Extrusion[0]
+		case "220":
+			target = &e.Extrusion[1]
+		case "230":
+			target = &e.Extrusion[2]
+		case "40":
+			target = &e.Ratio
+		case "41":
+			target = &e.Start
+		case "42":
+			target = &e.End
+		}
+		if err = setFloat(dt, func(val float64) { *target = val }); err != nil {
+			return e, err
+		}
+	}
+	return e, nil
 }
