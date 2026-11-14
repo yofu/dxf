@@ -92,3 +92,11 @@ func (st *Style) SetOwner(h handle.Handler) {
 func (st *Style) Name() string {
 	return st.name
 }
+
+// clone returns a copy of st without handle and owner.
+func (st *Style) clone() *Style {
+	c := *st
+	c.handle = 0
+	c.owner = nil
+	return &c
+}

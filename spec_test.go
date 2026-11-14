@@ -301,3 +301,64 @@ func TestAddToGroup(t *testing.T) {
 		t.Error("want error for unknown group")
 	}
 }
+
+func TestDrawingsDoNotShareTableEntries(t *testing.T) {
+	d1 := NewDrawing()
+	d2 := NewDrawing()
+	if d1.Layers["0"] == d2.Layers["0"] || d1.CurrentStyle == d2.CurrentStyle {
+		t.Fatal("layer 0 / style Standard must not be shared between drawings")
+	}
+	lt1, _ := d1.LineType("Continuous")
+	lt2, _ := d2.LineType("Continuous")
+	if lt1 == lt2 {
+		t.Fatal("linetypes must not be shared between drawings")
+	}
+	// layer 0 of the first drawing must point to its own plot style placeholder
+	s := writeString(t, d1)
+	ph, _ := groupValue(s, "0\nACDBPLACEHOLDER\n5")
+	ps, _ := groupValue(s, "390")
+	if ph == "" || ph != ps {
+		t.Errorf("layer 0 390 should be %q (placeholder), got %q", ph, ps)
+	}
+	d2.Text("x", 0, 0, 0, 42)
+	if d1.CurrentStyle.LastHeightUsed == 42 {
+		t.Error("style state leaked between drawings")
+	}
+}
+
+func TestLayerOff(t *testing.T) {
+	src := "0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n1\n" +
+		"0\nLAYER\n2\nOFF\n70\n0\n62\n-7\n6\nCONTINUOUS\n0\nENDTAB\n0\nENDSEC\n0\nEOF\n"
+	d, err := FromStringData(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	l := d.Layers["OFF"]
+	if l.Color != 7 || l.IsOn() {
+		t.Fatalf("want color 7 and off, got color %d on=%v", l.Color, l.IsOn())
+	}
+	if !strings.Contains(writeString(t, d), "\n2\nOFF\n70\n0\n62\n-7\n") {
+		t.Error("off layer should be written with negative color")
+	}
+	l.On()
+	if !strings.Contains(writeString(t, d), "\n2\nOFF\n70\n0\n62\n7\n") {
+		t.Error("on layer should be written with positive color")
+	}
+}
+
+func TestConcurrentDrawings(t *testing.T) {
+	done := make(chan struct{})
+	for i := 0; i < 4; i++ {
+		go func() {
+			defer func() { done <- struct{}{} }()
+			d := NewDrawing()
+			d.Line(0, 0, 0, 1, 1, 0)
+			d.Text("x", 0, 0, 0, 1)
+			var b bytes.Buffer
+			d.WriteTo(&b)
+		}()
+	}
+	for i := 0; i < 4; i++ {
+		<-done
+	}
+}

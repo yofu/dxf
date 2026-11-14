@@ -7,6 +7,9 @@ import (
 )
 
 // Default layers.
+//
+// LY_0 is a template only: each Drawing has its own layer "0" in its
+// LAYER table, so changes to LY_0 are not reflected in drawings.
 var (
 	LY_0 = NewLayer("0", color.White, LT_CONTINUOUS)
 )
@@ -17,7 +20,8 @@ type Layer struct {
 	owner     handle.Handler
 	name      string
 	flag      int
-	Color     color.ColorNumber
+	off       bool              // written as negative color number (62)
+	Color     color.ColorNumber // 62 (absolute value)
 	LineType  *LineType
 	lineWidth int
 	PlotStyle handle.Handler
@@ -49,10 +53,36 @@ func (l *Layer) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbLayerTableRecord")
 	f.WriteString(2, l.name)
 	f.WriteInt(70, l.flag)
-	f.WriteInt(62, int(l.Color))
-	f.WriteString(6, l.LineType.Name())
+	// color number is negative if the layer is off (DXF reference, LAYER).
+	if l.off {
+		f.WriteInt(62, -int(l.Color))
+	} else {
+		f.WriteInt(62, int(l.Color))
+	}
+	if l.LineType != nil {
+		f.WriteString(6, l.LineType.Name())
+	} else {
+		f.WriteString(6, LT_CONTINUOUS.Name())
+	}
 	f.WriteInt(370, l.lineWidth)
-	f.WriteHex(390, l.PlotStyle.Handle())
+	if l.PlotStyle != nil {
+		f.WriteHex(390, l.PlotStyle.Handle())
+	}
+}
+
+// On turns the layer on.
+func (l *Layer) On() {
+	l.off = false
+}
+
+// Off turns the layer off.
+func (l *Layer) Off() {
+	l.off = true
+}
+
+// IsOn reports whether the layer is on.
+func (l *Layer) IsOn() bool {
+	return !l.off
 }
 
 // String outputs data using default formatter.

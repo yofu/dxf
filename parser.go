@@ -345,7 +345,8 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 	var flag int
 	var col color.ColorNumber
 	var lt *table.LineType
-	var lw int
+	lw := -3 // default lineweight
+	off := false
 	for _, dt := range data {
 		switch dt[0] {
 		case "2":
@@ -360,6 +361,11 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
 			if err != nil {
 				return nil, err
+			}
+			// negative color number means the layer is off
+			if val < 0 {
+				off = true
+				val = -val
 			}
 			col = color.ColorNumber(val)
 		case "6":
@@ -380,9 +386,16 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 		}
 	}
 	if lt == nil {
-		lt = table.LT_CONTINUOUS
+		if c, err := d.LineType(table.LT_CONTINUOUS.Name()); err == nil {
+			lt = c
+		} else {
+			lt = table.LT_CONTINUOUS
+		}
 	}
 	l := table.NewLayer(name, col, lt)
+	if off {
+		l.Off()
+	}
 	l.SetFlag(flag)
 	l.SetLineWidth(lw)
 	l.SetPlotStyle(d.PlotStyle)

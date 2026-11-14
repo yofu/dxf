@@ -114,3 +114,10 @@ func (lt *LineType) TotalLength() float64 {
 func (lt *LineType) SetLength(ls []float64) {
 	lt.lengths = ls
 }
+
+// clone returns a copy of lt without handle and owner.
+func (lt *LineType) clone() *LineType {
+	ls := make([]float64, len(lt.lengths))
+	copy(ls, lt.lengths)
+	return NewLineType(lt.name, lt.Description, ls...)
+}

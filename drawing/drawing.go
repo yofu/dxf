@@ -39,23 +39,28 @@ type Drawing struct {
 // New creates a new Drawing.
 func New() *Drawing {
 	d := new(Drawing)
-	d.Layers = make(map[string]*table.Layer)
-	d.Layers["0"] = table.LY_0
-	d.Groups = make(map[string]*object.Group)
-	d.CurrentLayer = d.Layers["0"]
-	d.Styles = make(map[string]*table.Style)
-	d.Styles["STANDARD"] = table.ST_STANDARD
-	d.CurrentStyle = d.Styles["STANDARD"]
 	d.formatter = format.NewASCII()
 	d.formatter.SetPrecision(16)
+	tables := table.New()
 	d.Sections = []Section{
 		header.New(),
 		class.New(),
-		table.New(),
+		tables,
 		block.New(),
 		entity.New(),
 		object.New(),
 	}
+	// layer "0" and style "Standard" belong to this drawing's tables
+	// (not the package-level templates table.LY_0 / table.ST_STANDARD).
+	ly0, _ := tables[table.LAYER].Contains("0")
+	st, _ := tables[table.STYLE].Contains(table.ST_STANDARD.Name())
+	d.Layers = make(map[string]*table.Layer)
+	d.Layers["0"] = ly0.(*table.Layer)
+	d.Groups = make(map[string]*object.Group)
+	d.CurrentLayer = d.Layers["0"]
+	d.Styles = make(map[string]*table.Style)
+	d.Styles["STANDARD"] = st.(*table.Style)
+	d.CurrentStyle = d.Styles["STANDARD"]
 	d.dictionary = object.NewDictionary()
 	d.addObject(d.dictionary)
 	wd, ph := object.NewAcDbDictionaryWDFLT(d.dictionary)
