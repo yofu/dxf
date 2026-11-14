@@ -38,8 +38,9 @@ func pointTarget(code string, points map[string][]float64) (*float64, bool) {
 func ParseDimension(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	dim := entity.NewDimension(entity.DIM_LINEAR)
 	dim.Flags = 0
+	clone := []float64{0, 0, 0}
 	points := map[string][]float64{
-		"10": dim.DefPoint, "11": dim.TextMid, "13": dim.DefPoint2, "14": dim.DefPoint3,
+		"10": dim.DefPoint, "11": dim.TextMid, "12": clone, "13": dim.DefPoint2, "14": dim.DefPoint3,
 		"15": dim.DefPoint4, "16": dim.DefPoint5, "210": dim.Extrusion,
 	}
 	var err error
@@ -74,6 +75,13 @@ func ParseDimension(d *drawing.Drawing, data [][2]string) (entity.Entity, error)
 			err = setFloat(dt, func(val float64) { dim.Oblique = val })
 		case "40":
 			err = setFloat(dt, func(val float64) { dim.LeaderLength = val })
+		case "51":
+			err = setFloat(dt, func(val float64) { dim.HorizontalDirection = val })
+		case "12", "22", "32":
+			dim.ClonePoint = clone
+			if target, ok := pointTarget(dt[0], points); ok {
+				err = setFloat(dt, func(val float64) { *target = val })
+			}
 		default:
 			if target, ok := pointTarget(dt[0], points); ok {
 				err = setFloat(dt, func(val float64) { *target = val })

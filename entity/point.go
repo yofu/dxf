@@ -9,6 +9,8 @@ type Point struct {
 	*entity
 	Coord     []float64 // 10, 20, 30
 	Thickness float64   // 39
+	Extrusion []float64 // 210, 220, 230 (nil: 0, 0, 1)
+	Angle     float64   // 50: angle of the X axis of the UCS for the point display (degrees)
 }
 
 // IsEntity is for Entity interface.
@@ -19,8 +21,9 @@ func (p *Point) IsEntity() bool {
 // NewPoint creates a new Point.
 func NewPoint(coord ...float64) *Point {
 	p := &Point{
-		entity: NewEntity(POINT),
-		Coord:  []float64{0.0, 0.0, 0.0},
+		entity:    NewEntity(POINT),
+		Coord:     []float64{0.0, 0.0, 0.0},
+		Extrusion: []float64{0.0, 0.0, 1.0},
 	}
 	ln := len(coord)
 	if ln == 0 {
@@ -45,6 +48,10 @@ func (p *Point) Format(f format.Formatter) {
 		f.WriteFloat((i+1)*10, p.Coord[i])
 	}
 	writeThickness(f, p.Thickness)
+	writeExtrusion(f, p.Extrusion)
+	if p.Angle != 0 {
+		f.WriteFloat(50, p.Angle)
+	}
 }
 
 // String outputs data using default formatter.

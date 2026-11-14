@@ -84,7 +84,7 @@ func splitXData(data [][2]string) ([][2]string, [][2]string) {
 }
 
 // common entity group codes written by entity.Format
-var commonEntityCodes = codes("8", "6", "62", "370", "48", "67")
+var commonEntityCodes = codes("8", "6", "62", "370", "48", "67", "60")
 
 // parseUnknown creates an Unknown entity from the group codes of an entity
 // type not supported by this package. Entities with hard pointers to

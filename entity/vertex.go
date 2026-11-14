@@ -7,9 +7,13 @@ import (
 // Vertex represents VERTEX Entity.
 type Vertex struct {
 	*entity
-	Flag   int
-	Coord  []float64
-	Buldge float64
+	Flag       int       // 70
+	Coord      []float64 // 10, 20, 30
+	StartWidth float64   // 40
+	EndWidth   float64   // 41
+	Buldge     float64   // 42
+	Tangent    float64   // 50: curve fit tangent direction (degrees)
+	Indices    []int     // 71, 72, 73, 74: vertex indices of a polyface mesh face (negative: invisible edge)
 }
 
 // IsEntity is for Entity interface.
@@ -39,10 +43,23 @@ func (v *Vertex) Format(f format.Formatter) {
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, v.Coord[i])
 	}
-	f.WriteInt(70, v.Flag)
-
+	if v.StartWidth != 0 {
+		f.WriteFloat(40, v.StartWidth)
+	}
+	if v.EndWidth != 0 {
+		f.WriteFloat(41, v.EndWidth)
+	}
 	if v.Buldge != 0 {
 		f.WriteFloat(42, v.Buldge)
+	}
+	f.WriteInt(70, v.Flag)
+	if v.Tangent != 0 {
+		f.WriteFloat(50, v.Tangent)
+	}
+	for i, idx := range v.Indices {
+		if i < 4 && idx != 0 {
+			f.WriteInt(71+i, idx)
+		}
 	}
 }
 

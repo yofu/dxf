@@ -21,6 +21,8 @@ type Style struct {
 	WidthFactor     float64 // 41
 	LastHeightUsed  float64 // 42
 	ObliqueAngle    float64 // 50
+	Flags           int     // 70: 1 shape file, 4 vertical text
+	GenFlag         int     // 71: text generation flags (2 backward, 4 upside down)
 }
 
 // NewStyle create a new Style.
@@ -50,11 +52,11 @@ func (st *Style) Format(f format.Formatter) {
 	f.WriteString(100, "AcDbSymbolTableRecord")
 	f.WriteString(100, "AcDbTextStyleTableRecord")
 	f.WriteString(2, st.name)
-	f.WriteInt(70, 0)
+	f.WriteInt(70, st.Flags)
 	f.WriteFloat(40, st.FixedTextHeight)
 	f.WriteFloat(41, st.WidthFactor)
 	f.WriteFloat(50, st.ObliqueAngle)
-	f.WriteInt(71, 0)
+	f.WriteInt(71, st.GenFlag)
 	f.WriteFloat(42, st.LastHeightUsed)
 	f.WriteString(3, st.FontName)
 	f.WriteString(4, st.BigFontName)

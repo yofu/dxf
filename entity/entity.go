@@ -71,6 +71,7 @@ type entity struct {
 	typeName    string          // 0: entity type name of Unknown entities
 	xdata       [][2]string     // 1001-: extended data, kept as read
 	paperSpace  bool            // 67: entity is in paper space
+	invisible   bool            // 60: object visibility (1 = invisible)
 	lineType    *table.LineType // 6: nil = BYLAYER
 	color       int             // 62: 0 = BYBLOCK, 1-255, 256 = BYLAYER
 	lineWeight  int             // 370: -1 = BYLAYER, -2 = BYBLOCK, -3 = DEFAULT, 0-211 (1/100 mm)
@@ -113,8 +114,7 @@ func (e *entity) Format(f format.Formatter) {
 		f.WriteInt(67, 1)
 	}
 	f.WriteString(8, e.layer.Name())
-	// 62 is omitted if BYLAYER (DXF reference, common group codes for entities)
-	// 6, 62 and 370 are omitted if BYLAYER
+	// 6, 62 and 370 are omitted if BYLAYER (DXF reference, common group codes for entities)
 	if e.lineType != nil && !strings.EqualFold(e.lineType.Name(), "BYLAYER") {
 		f.WriteString(6, e.lineType.Name())
 	}
@@ -126,6 +126,9 @@ func (e *entity) Format(f format.Formatter) {
 	}
 	if e.ltscale != 1.0 {
 		f.WriteFloat(48, e.ltscale)
+	}
+	if e.invisible {
+		f.WriteInt(60, 1)
 	}
 }
 
@@ -379,4 +382,36 @@ func writeRaw(f format.Formatter, pairs [][2]string) {
 			f.WriteString(c, p[1])
 		}
 	}
+}
+
+// Visibility is implemented by all entities in this package (code 60).
+type Visibility interface {
+	IsVisible() bool
+	SetVisible(bool)
+}
+
+// IsVisible reports whether the entity is visible (code 60 is 0 or omitted).
+func (e *entity) IsVisible() bool {
+	return !e.invisible
+}
+
+// SetVisible sets the visibility of the entity (code 60).
+func (e *entity) SetVisible(v bool) {
+	e.invisible = !v
+}
+
+// writeExtrusion writes the extrusion direction (210, 220, 230) if it is
+// not the default (0, 0, 1).
+func writeExtrusion(f format.Formatter, e []float64) {
+	if len(e) < 3 || (e[0] == 0 && e[1] == 0 && e[2] == 1) {
+		return
+	}
+	for i := 0; i < 3; i++ {
+		f.WriteFloat(200+(i+1)*10, e[i])
+	}
+}
+
+// Ltscale returns the linetype scale (code 48).
+func (e *entity) Ltscale() float64 {
+	return e.ltscale
 }

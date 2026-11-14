@@ -7,11 +7,20 @@ import (
 // Polyline represents POLYLINE Entity.
 type Polyline struct {
 	*entity
-	Flag      int
-	Thickness float64 // 39
-	size      int
-	Vertices  []*Vertex
-	endhandle int
+	Flag       int       // 70
+	Thickness  float64   // 39
+	Elevation  float64   // 30: elevation of 2D polylines (10 and 20 are 0)
+	StartWidth float64   // 40: default starting width
+	EndWidth   float64   // 41: default ending width
+	MeshM      int       // 71: polygon mesh M vertex count / polyface mesh vertex count
+	MeshN      int       // 72: polygon mesh N vertex count / polyface mesh face count
+	SmoothM    int       // 73: smooth surface M density
+	SmoothN    int       // 74: smooth surface N density
+	CurveType  int       // 75: curves and smooth surface type
+	Extrusion  []float64 // 210, 220, 230 (nil: 0, 0, 1)
+	size       int
+	Vertices   []*Vertex
+	endhandle  int
 }
 
 // IsEntity is for Entity interface.
@@ -39,9 +48,25 @@ func (p *Polyline) Format(f format.Formatter) {
 	f.WriteInt(66, 1)
 	f.WriteString(10, "0.0")
 	f.WriteString(20, "0.0")
-	f.WriteString(30, "0.0")
+	if p.Elevation != 0 {
+		f.WriteFloat(30, p.Elevation)
+	} else {
+		f.WriteString(30, "0.0")
+	}
 	writeThickness(f, p.Thickness)
 	f.WriteInt(70, p.Flag)
+	if p.StartWidth != 0 {
+		f.WriteFloat(40, p.StartWidth)
+	}
+	if p.EndWidth != 0 {
+		f.WriteFloat(41, p.EndWidth)
+	}
+	for i, v := range []int{p.MeshM, p.MeshN, p.SmoothM, p.SmoothN, p.CurveType} {
+		if v != 0 {
+			f.WriteInt(71+i, v)
+		}
+	}
+	writeExtrusion(f, p.Extrusion)
 	p.writeXData(f)
 	for _, v := range p.Vertices {
 		v.Format(f)

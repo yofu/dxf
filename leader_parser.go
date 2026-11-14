@@ -54,6 +54,20 @@ func ParseLeader(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 		case "211", "221", "231":
 			k := int(dt[0][1] - '1')
 			err = setFloat(dt, func(val float64) { l.HorizontalDirection[k] = val })
+		case "212", "222", "232":
+			if l.BlockOffset == nil {
+				l.BlockOffset = []float64{0, 0, 0}
+			}
+			k := int(dt[0][1] - '1')
+			err = setFloat(dt, func(val float64) { l.BlockOffset[k] = val })
+		case "213", "223", "233":
+			if l.AnnotationOffset == nil {
+				l.AnnotationOffset = []float64{0, 0, 0}
+			}
+			k := int(dt[0][1] - '1')
+			err = setFloat(dt, func(val float64) { l.AnnotationOffset[k] = val })
+		case "77":
+			err = setInt(dt, func(val int) { l.DimLineColor = val })
 		}
 		if err != nil {
 			return l, err

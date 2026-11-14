@@ -26,6 +26,7 @@ type Text struct {
 	*entity
 	Coord1         []float64    // 10, 20, 30
 	Thickness      float64      // 39
+	Extrusion      []float64    // 210, 220, 230 (nil: 0, 0, 1)
 	Coord2         []float64    // 11, 21, 31
 	Height         float64      // 40
 	Rotation       float64      // 50
@@ -49,6 +50,7 @@ func NewText() *Text {
 		entity:         NewEntity(TEXT),
 		Coord1:         []float64{0.0, 0.0, 0.0},
 		Coord2:         []float64{0.0, 0.0, 0.0},
+		Extrusion:      []float64{0.0, 0.0, 1.0},
 		Height:         1.0,
 		WidthFactor:    1.0,
 		Value:          "",
@@ -91,6 +93,7 @@ func (t *Text) Format(f format.Formatter) {
 			f.WriteFloat((i+1)*10+1, p[i])
 		}
 	}
+	writeExtrusion(f, t.Extrusion)
 	f.WriteString(100, "AcDbText")
 	if t.VerticalFlag != 0 {
 		f.WriteInt(73, t.VerticalFlag)

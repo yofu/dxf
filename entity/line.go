@@ -12,6 +12,7 @@ type Line struct {
 	Start     []float64 // 10, 20, 30
 	End       []float64 // 11, 21, 31
 	Thickness float64   // 39
+	Extrusion []float64 // 210, 220, 230 (nil: 0, 0, 1)
 }
 
 // IsEntity is for Entity interface.
@@ -22,9 +23,10 @@ func (l *Line) IsEntity() bool {
 // NewLine creates a new Line.
 func NewLine() *Line {
 	l := &Line{
-		entity: NewEntity(LINE),
-		Start:  []float64{0.0, 0.0, 0.0},
-		End:    []float64{0.0, 0.0, 0.0},
+		entity:    NewEntity(LINE),
+		Start:     []float64{0.0, 0.0, 0.0},
+		End:       []float64{0.0, 0.0, 0.0},
+		Extrusion: []float64{0.0, 0.0, 1.0},
 	}
 	return l
 }
@@ -40,6 +42,7 @@ func (l *Line) Format(f format.Formatter) {
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10+1, l.End[i])
 	}
+	writeExtrusion(f, l.Extrusion)
 }
 
 // String outputs data using default formatter.

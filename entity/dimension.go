@@ -56,6 +56,10 @@ type Dimension struct {
 	Angle        float64   // 50: rotation of linear dimensions (degrees)
 	Oblique      float64   // 52: oblique angle of extension lines (degrees)
 	LeaderLength float64   // 40: radius/diameter
+	// HorizontalDirection (51) is the angle of the horizontal direction
+	// of the dimension (degrees), written if not 0.
+	HorizontalDirection float64
+	ClonePoint          []float64 // 12, 22, 32: insertion point for clones (nil if not given)
 }
 
 // IsEntity is for Entity interface.
@@ -101,6 +105,9 @@ func (d *Dimension) Format(f format.Formatter) {
 	if d.TextRotation != 0 {
 		f.WriteFloat(53, d.TextRotation)
 	}
+	if d.HorizontalDirection != 0 {
+		f.WriteFloat(51, d.HorizontalDirection)
+	}
 	if d.Extrusion[0] != 0 || d.Extrusion[1] != 0 || d.Extrusion[2] != 1 {
 		writePoint(f, 210, d.Extrusion)
 	}
@@ -108,6 +115,9 @@ func (d *Dimension) Format(f format.Formatter) {
 	switch d.Type {
 	case DIM_LINEAR, DIM_ALIGNED:
 		f.WriteString(100, "AcDbAlignedDimension")
+		if len(d.ClonePoint) >= 3 {
+			writePoint(f, 12, d.ClonePoint)
+		}
 		writePoint(f, 13, d.DefPoint2)
 		writePoint(f, 14, d.DefPoint3)
 		if d.Type == DIM_LINEAR {

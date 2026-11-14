@@ -134,4 +134,5 @@ func writeTextProperties(f format.Formatter, t *Text) {
 		}
 		writePoint(f, 11, p)
 	}
+	writeExtrusion(f, t.Extrusion)
 }

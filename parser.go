@@ -361,6 +361,10 @@ func ParseStyle(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 			err = setFloat(dt, func(val float64) { s.LastHeightUsed = val })
 		case "50":
 			err = setFloat(dt, func(val float64) { s.ObliqueAngle = val })
+		case "70":
+			err = setInt(dt, func(val int) { s.Flags = val })
+		case "71":
+			err = setInt(dt, func(val int) { s.GenFlag = val })
 		}
 		if err != nil {
 			return s, err
@@ -414,13 +418,25 @@ func ParseAppID(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 // ParseBlockRecord parses BLOCK_RECORD tables.
 func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error) {
 	var name string
+	b := table.NewBlockRecord("")
 	for _, dt := range data {
+		var err error
 		switch dt[0] {
 		case "2":
 			name = dt[1]
+		case "70":
+			err = setInt(dt, func(val int) { b.InsUnits = val })
+		case "280":
+			err = setInt(dt, func(val int) { b.Explodable = val != 0 })
+		case "281":
+			err = setInt(dt, func(val int) { b.Scalable = val != 0 })
+		}
+		if err != nil {
+			return b, err
 		}
 	}
-	b := table.NewBlockRecord(name)
+	b.SetName(name)
+	b.Extra = rawExtra(data, codes("2", "70", "280", "281"), false)
 	return b, nil
 }
 
@@ -697,6 +713,16 @@ func parseCommon(d *drawing.Drawing, e entity.Entity, data [][2]string) error {
 				lt = table.NewLineType(name, "")
 			}
 			lp.SetLineType(lt)
+		case "48":
+			if err := setFloat(dt, func(val float64) { e.SetLtscale(val) }); err != nil {
+				return err
+			}
+		case "60":
+			if v, ok := e.(entity.Visibility); ok {
+				if err := setInt(dt, func(val int) { v.SetVisible(val == 0) }); err != nil {
+					return err
+				}
+			}
 		case "67":
 			if sp, ok := e.(entity.SpaceSelector); ok {
 				if err := setInt(dt, func(val int) { sp.SetPaperSpace(val == 1) }); err != nil {
@@ -786,6 +812,27 @@ func ParsePolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) 
 			err = setFloat(dt, func(val float64) { p.SetLtscale(val) })
 		case "70":
 			err = setInt(dt, func(val int) { p.Flag = val })
+		case "30":
+			err = setFloat(dt, func(val float64) { p.Elevation = val })
+		case "40":
+			err = setFloat(dt, func(val float64) { p.StartWidth = val })
+		case "41":
+			err = setFloat(dt, func(val float64) { p.EndWidth = val })
+		case "71":
+			err = setInt(dt, func(val int) { p.MeshM = val })
+		case "72":
+			err = setInt(dt, func(val int) { p.MeshN = val })
+		case "73":
+			err = setInt(dt, func(val int) { p.SmoothM = val })
+		case "74":
+			err = setInt(dt, func(val int) { p.SmoothN = val })
+		case "75":
+			err = setInt(dt, func(val int) { p.CurveType = val })
+		case "210", "220", "230":
+			if p.Extrusion == nil {
+				p.Extrusion = []float64{0, 0, 1}
+			}
+			err = setExtrusion(dt, p.Extrusion)
 		}
 		if err != nil {
 			return p, err
@@ -821,6 +868,8 @@ func ParseLine(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setFloat(dt, func(val float64) { l.End[1] = val })
 		case "31":
 			err = setFloat(dt, func(val float64) { l.End[2] = val })
+		case "210", "220", "230":
+			err = setExtrusion(dt, l.Extrusion)
 		}
 		if err != nil {
 			return l, err
@@ -1094,6 +1143,20 @@ func ParseVertex(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setFloat(dt, func(val float64) { v.Buldge = val })
 		case "70":
 			err = setInt(dt, func(val int) { v.Flag = val })
+		case "40":
+			err = setFloat(dt, func(val float64) { v.StartWidth = val })
+		case "41":
+			err = setFloat(dt, func(val float64) { v.EndWidth = val })
+		case "50":
+			err = setFloat(dt, func(val float64) { v.Tangent = val })
+		case "71", "72", "73", "74":
+			k := int(dt[0][1] - '1')
+			err = setInt(dt, func(val int) {
+				for len(v.Indices) <= k {
+					v.Indices = append(v.Indices, 0)
+				}
+				v.Indices[k] = val
+			})
 		}
 		if err != nil {
 			return v, err
@@ -1123,6 +1186,10 @@ func ParsePoint(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setFloat(dt, func(val float64) { p.Coord[1] = val })
 		case "30":
 			err = setFloat(dt, func(val float64) { p.Coord[2] = val })
+		case "210", "220", "230":
+			err = setExtrusion(dt, p.Extrusion)
+		case "50":
+			err = setFloat(dt, func(val float64) { p.Angle = val })
 		}
 		if err != nil {
 			return p, err
@@ -1189,8 +1256,19 @@ func parseTextCode(d *drawing.Drawing, t *entity.Text, dt [2]string) error {
 		err = setInt(dt, func(val int) { t.GenFlag = val })
 	case "72":
 		err = setInt(dt, func(val int) { t.HorizontalFlag = val })
+	case "210", "220", "230":
+		err = setExtrusion(dt, t.Extrusion)
 	}
 	return err
+}
+
+// setExtrusion sets a coordinate of an extrusion direction (210, 220, 230).
+func setExtrusion(dt [2]string, v []float64) error {
+	i := int(dt[0][1] - '1')
+	if i < 0 || i >= len(v) {
+		return nil
+	}
+	return setFloat(dt, func(val float64) { v[i] = val })
 }
 
 // ParseAttdef parses ATTDEF entities.
@@ -1295,6 +1373,20 @@ func ParseSpline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setFloat(dt, func(val float64) { s.Tolerance[2] = val })
 		case "40":
 			err = setFloat(dt, func(val float64) { s.Knots = append(s.Knots, val) })
+		case "41":
+			err = setFloat(dt, func(val float64) { s.Weights = append(s.Weights, val) })
+		case "12", "22", "32":
+			if s.StartTangent == nil {
+				s.StartTangent = []float64{0, 0, 0}
+			}
+			k := int(dt[0][0] - '1')
+			err = setFloat(dt, func(val float64) { s.StartTangent[k] = val })
+		case "13", "23", "33":
+			if s.EndTangent == nil {
+				s.EndTangent = []float64{0, 0, 0}
+			}
+			k := int(dt[0][0] - '1')
+			err = setFloat(dt, func(val float64) { s.EndTangent[k] = val })
 		case "10", "20", "30":
 			err = setFloat(dt, func(val float64) {
 				controlPoint = append(controlPoint, val)

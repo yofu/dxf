@@ -4,16 +4,19 @@ import (
 	"github.com/yofu/dxf/format"
 )
 
-// Spline represents LINE Entity.
+// Spline represents SPLINE Entity.
 type Spline struct {
 	*entity
-	Normal    []float64   // 210, 220, 230
-	Flag      int         // 70
-	Degree    int         // 71
-	Knots     []float64   // 72, 40
-	Controls  [][]float64 // 73, 10, 20, 30
-	Fits      [][]float64 // 74, 11, 21, 31
-	Tolerance []float64   // 42, 43, 44
+	Normal       []float64   // 210, 220, 230
+	Flag         int         // 70
+	Degree       int         // 71
+	Knots        []float64   // 72, 40
+	Controls     [][]float64 // 73, 10, 20, 30
+	Fits         [][]float64 // 74, 11, 21, 31
+	Tolerance    []float64   // 42, 43, 44
+	Weights      []float64   // 41: weights of the control points (rational splines; nil if all 1)
+	StartTangent []float64   // 12, 22, 32 (nil if not given)
+	EndTangent   []float64   // 13, 23, 33 (nil if not given)
 }
 
 // IsEntity is for Entity interface.
@@ -51,8 +54,17 @@ func (s *Spline) Format(f format.Formatter) {
 	for i := 0; i < 3; i++ {
 		f.WriteFloat(42+i, s.Tolerance[i])
 	}
+	if len(s.StartTangent) >= 3 {
+		writePoint(f, 12, s.StartTangent)
+	}
+	if len(s.EndTangent) >= 3 {
+		writePoint(f, 13, s.EndTangent)
+	}
 	for _, k := range s.Knots {
 		f.WriteFloat(40, k)
+	}
+	for _, w := range s.Weights {
+		f.WriteFloat(41, w)
 	}
 	for _, c := range s.Controls {
 		for i := 0; i < 3; i++ {

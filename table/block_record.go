@@ -11,12 +11,20 @@ type BlockRecord struct {
 	owner  handle.Handler
 	name   string
 	layout handle.Handler // 340: LAYOUT object (model space and paper space)
+
+	InsUnits   int  // 70: insertion units
+	Explodable bool // 280
+	Scalable   bool // 281: uniform scaling only if false
+	// Extra holds group codes read from a file that are not interpreted by
+	// this package (and XDATA); they are written after the other values.
+	Extra [][2]string
 }
 
 // NewBlockRecord creates a new BlockRecord.
 func NewBlockRecord(name string) *BlockRecord {
 	b := new(BlockRecord)
 	b.name = name
+	b.Explodable = true
 	return b
 }
 
@@ -38,9 +46,10 @@ func (b *BlockRecord) Format(f format.Formatter) {
 	if b.layout != nil {
 		f.WriteHex(340, b.layout.Handle())
 	}
-	f.WriteInt(70, 0)
-	f.WriteInt(280, 1)
-	f.WriteInt(281, 0)
+	f.WriteInt(70, b.InsUnits)
+	f.WriteInt(280, boolInt(b.Explodable))
+	f.WriteInt(281, boolInt(b.Scalable))
+	writeRaw(f, b.Extra)
 }
 
 // String outputs data using default formatter.
@@ -84,4 +93,9 @@ func (b *BlockRecord) Layout() handle.Handler {
 // SetLayout sets the associated LAYOUT object (code 340).
 func (b *BlockRecord) SetLayout(l handle.Handler) {
 	b.layout = l
+}
+
+// SetName sets the name of the block record.
+func (b *BlockRecord) SetName(name string) {
+	b.name = name
 }

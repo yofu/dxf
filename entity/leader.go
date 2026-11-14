@@ -30,6 +30,9 @@ type Leader struct {
 	Annotation          Entity      // 340: annotation (MTEXT, INSERT, ...), nil if none
 	Extrusion           []float64   // 210, 220, 230
 	HorizontalDirection []float64   // 211, 221, 231
+	BlockOffset         []float64   // 212, 222, 232: offset of the annotation block (nil if not given)
+	AnnotationOffset    []float64   // 213, 223, 233: offset of the last vertex from the annotation (nil if not given)
+	DimLineColor        int         // 77: color used if DIMCLRD is BYBLOCK (-1: not written)
 }
 
 // IsEntity is for Entity interface.
@@ -46,6 +49,7 @@ func NewLeader() *Leader {
 		AnnotationType:      LEADER_NONE,
 		Extrusion:           []float64{0, 0, 1},
 		HorizontalDirection: []float64{1, 0, 0},
+		DimLineColor:        -1,
 	}
 }
 
@@ -67,11 +71,20 @@ func (l *Leader) Format(f format.Formatter) {
 		copy(p, v)
 		writePoint(f, 10, p)
 	}
+	if l.DimLineColor >= 0 {
+		f.WriteInt(77, l.DimLineColor)
+	}
 	if l.Annotation != nil {
 		f.WriteHex(340, l.Annotation.Handle())
 	}
 	writePoint(f, 210, l.Extrusion)
 	writePoint(f, 211, l.HorizontalDirection)
+	if len(l.BlockOffset) >= 3 {
+		writePoint(f, 212, l.BlockOffset)
+	}
+	if len(l.AnnotationOffset) >= 3 {
+		writePoint(f, 213, l.AnnotationOffset)
+	}
 }
 
 // String outputs data using default formatter.

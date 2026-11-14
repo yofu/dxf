@@ -920,6 +920,8 @@ func (d *Drawing) ensureAppIDs() {
 				register(r.Extra)
 			case *table.DimStyle:
 				register(r.Extra)
+			case *table.BlockRecord:
+				register(r.Extra)
 			}
 		}
 	}
