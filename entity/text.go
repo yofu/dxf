@@ -49,6 +49,7 @@ func NewText() *Text {
 		Coord1:         []float64{0.0, 0.0, 0.0},
 		Coord2:         []float64{0.0, 0.0, 0.0},
 		Height:         1.0,
+		WidthFactor:    1.0,
 		Value:          "",
 		Style:          table.ST_STANDARD,
 		GenFlag:        0,
@@ -76,10 +77,16 @@ func (t *Text) Format(f format.Formatter) {
 	}
 	if t.HorizontalFlag != 0 {
 		f.WriteInt(72, t.HorizontalFlag)
-		if t.VerticalFlag != 0 {
-			for i := 0; i < 3; i++ {
-				f.WriteFloat((i+1)*10+1, t.Coord1[i])
-			}
+	}
+	// The alignment point (11, 21, 31) is required unless the justification
+	// is baseline/left (both 72 and 73 are 0).
+	if t.HorizontalFlag != 0 || t.VerticalFlag != 0 {
+		p := t.Coord2
+		if len(p) < 3 {
+			p = t.Coord1
+		}
+		for i := 0; i < 3; i++ {
+			f.WriteFloat((i+1)*10+1, p[i])
 		}
 	}
 	f.WriteString(100, "AcDbText")

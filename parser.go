@@ -1,6 +1,7 @@
 package dxf
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -182,9 +183,7 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 					return err
 				}
 				t.Add(st)
-				if layer, ok := st.(*table.Layer); ok {
-					d.Layers[layer.Name()] = layer
-				}
+				register(d, st)
 				tmpdata = make([][2]string, 0)
 			}
 			add = true
@@ -200,11 +199,40 @@ func ParseTable(d *drawing.Drawing, data [][2]string, index int, parser func(*dr
 			return err
 		}
 		t.Add(st)
-		if layer, ok := st.(*table.Layer); ok {
-			d.Layers[layer.Name()] = layer
-		}
+		register(d, st)
 	}
 	return nil
+}
+
+// register adds layers and styles read from TABLES to the drawing's lookup maps.
+func register(d *drawing.Drawing, st table.SymbolTable) {
+	switch s := st.(type) {
+	case *table.Layer:
+		d.Layers[s.Name()] = s
+	case *table.Style:
+		for k := range d.Styles {
+			if strings.EqualFold(k, s.Name()) {
+				if d.CurrentStyle == d.Styles[k] {
+					d.CurrentStyle = s
+				}
+				delete(d.Styles, k)
+			}
+		}
+		d.Styles[s.Name()] = s
+	}
+}
+
+// findStyle looks up a text style by name (case-insensitive).
+func findStyle(d *drawing.Drawing, name string) (*table.Style, bool) {
+	if s, ok := d.Styles[name]; ok {
+		return s, true
+	}
+	for k, s := range d.Styles {
+		if strings.EqualFold(k, name) {
+			return s, true
+		}
+	}
+	return nil, false
 }
 
 // ParseViewport parses VPORT tables.
@@ -300,7 +328,7 @@ func ParseLtype(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 			if ind >= len(lengths) {
 				return nil, fmt.Errorf("ltype too long")
 			}
-			val, err := strconv.ParseFloat(dt[1], 64)
+			val, err := strconv.ParseFloat(strings.TrimSpace(dt[1]), 64)
 			if err != nil {
 				return nil, err
 			}
@@ -337,7 +365,8 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 		case "6":
 			l, err := d.LineType(dt[1])
 			if err != nil {
-				return nil, err
+				// keep the reference even if the linetype is not defined
+				l = table.NewLineType(dt[1], "")
 			}
 			lt = l
 		case "370":
@@ -349,6 +378,9 @@ func ParseLayer(d *drawing.Drawing, data [][2]string) (table.SymbolTable, error)
 		case "390":
 			// plotstyle
 		}
+	}
+	if lt == nil {
+		lt = table.LT_CONTINUOUS
 	}
 	l := table.NewLayer(name, col, lt)
 	l.SetFlag(flag)
@@ -446,50 +478,64 @@ func ParseBlockRecord(d *drawing.Drawing, data [][2]string) (table.SymbolTable, 
 // ParseBlocks parses BLOCKS section.
 func ParseBlocks(d *drawing.Drawing, line int, data [][2]string) error {
 	tmpdata := make([][2]string, 0)
-	add := true // skip ENDBLK
+	start := 0
+	add := false // skip ENDBLK and anything outside BLOCK ... ENDBLK
 	for i, dt := range data {
 		if dt[0] == entityTypeCode {
 			switch strings.ToUpper(dt[1]) {
 			case "BLOCK":
 				add = true
+				start = i + 1
+				tmpdata = make([][2]string, 0)
+				continue
 			case "ENDBLK":
-				if len(tmpdata) > 0 {
-					err := ParseBlock(d, tmpdata)
-					if err != nil {
-						return fmt.Errorf("line %d: %w", line+2*i-len(tmpdata)*2, err)
-					}
-					tmpdata = make([][2]string, 0)
-				}
-				add = false
-			default:
 				if add {
-					tmpdata = append(tmpdata, dt)
+					if err := ParseBlock(d, tmpdata); err != nil {
+						return fmt.Errorf("line %d: %w", line+2*start, err)
+					}
 				}
-			}
-		} else {
-			if add {
-				tmpdata = append(tmpdata, dt)
+				tmpdata = make([][2]string, 0)
+				add = false
+				continue
 			}
 		}
+		if add {
+			tmpdata = append(tmpdata, dt)
+		}
 	}
-	if len(tmpdata) > 0 {
-		err := ParseBlock(d, tmpdata)
-		if err != nil {
-			return fmt.Errorf("line %d: %w", line+2*len(data)-len(tmpdata)*2, err)
+	if add && len(tmpdata) > 0 {
+		if err := ParseBlock(d, tmpdata); err != nil {
+			return fmt.Errorf("line %d: %w", line+2*start, err)
 		}
 	}
 	return nil
 }
 
 // ParseBlock parses each BLOCK, which starts with "0\nBLOCK\n" and ends with "0\nENDBLK\n".
+// data contains the group codes after "0\nBLOCK\n": the BLOCK header followed by its entities.
+// The parsed block replaces the block of the same name in the drawing, or is appended.
 func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 	b := block.NewBlock("", "")
 	var err error
-	for _, dt := range data {
+	header := data
+	for i, dt := range data {
+		if dt[0] == entityTypeCode {
+			header = data[:i]
+			es, err := parseEntityList(d, data[i:])
+			if err != nil {
+				return err
+			}
+			b.Entities = es
+			break
+		}
+	}
+	for _, dt := range header {
 		switch dt[0] {
 		case "2":
 			b.Name = dt[1]
-		case "1": // 4?
+		case "1":
+			b.XrefPath = dt[1]
+		case "4":
 			b.Description = dt[1]
 		case "8":
 			layer, err := d.Layer(dt[1], false)
@@ -503,45 +549,107 @@ func ParseBlock(d *drawing.Drawing, data [][2]string) error {
 		case "30":
 			err = setFloat(dt, func(val float64) { b.Coord[2] = val })
 		case "70":
-			val, err := strconv.ParseInt(strings.TrimSpace(dt[1]), 10, 64)
-			if err != nil {
-				return err
-			}
-			b.Flag = int(val)
+			err = setInt(dt, func(val int) { b.Flag = val })
 		}
 		if err != nil {
 			return err
 		}
 	}
+	bs := d.Sections[drawing.BLOCKS].(block.Blocks)
+	for i, ob := range bs {
+		if strings.EqualFold(ob.Name, b.Name) {
+			bs[i] = b
+			return nil
+		}
+	}
+	d.Sections[drawing.BLOCKS] = bs.Add(b)
 	return nil
 }
 
 // ENTITIES
 
+// ErrUnknownEntity is returned by ParseEntity for entity types this package does not support.
+var ErrUnknownEntity = errors.New("unknown entity type")
+
 // ParseEntities parses ENTITIES section.
+// Unsupported entity types are skipped.
 func ParseEntities(d *drawing.Drawing, line int, data [][2]string) error {
-	tmpdata := make([][2]string, 0)
-	for i, dt := range data {
-		if dt[0] == entityTypeCode {
-			if len(tmpdata) > 0 {
-				e, err := ParseEntity(d, tmpdata)
-				if err != nil {
-					return fmt.Errorf("line %d: %w", line+2*i-len(tmpdata)*2, err)
-				}
-				d.AddEntity(e)
-				tmpdata = make([][2]string, 0)
-			}
+	es, err := parseEntityList(d, data)
+	if err != nil {
+		var pe *entityError
+		if errors.As(err, &pe) {
+			return fmt.Errorf("line %d: %w", line+2*pe.index, pe.err)
 		}
-		tmpdata = append(tmpdata, dt)
+		return err
 	}
-	if len(tmpdata) > 0 {
-		e, err := ParseEntity(d, tmpdata)
-		if err != nil {
-			return fmt.Errorf("line %d: %w", line+2*len(data)-len(tmpdata)*2, err)
-		}
+	for _, e := range es {
 		d.AddEntity(e)
 	}
 	return nil
+}
+
+type entityError struct {
+	index int // index of the first group of the entity in data
+	err   error
+}
+
+func (e *entityError) Error() string { return e.err.Error() }
+func (e *entityError) Unwrap() error { return e.err }
+
+// parseEntityList parses a sequence of entities.
+// VERTEX entities following a POLYLINE are attached to it until SEQEND.
+// Entity types not supported by this package are skipped.
+func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, error) {
+	es := entity.New()
+	var poly *entity.Polyline
+	start := 0
+	flush := func(end int) error {
+		chunk := data[start:end]
+		if len(chunk) == 0 || chunk[0][0] != entityTypeCode {
+			return nil // groups before the first entity (should not happen)
+		}
+		switch strings.ToUpper(strings.TrimSpace(chunk[0][1])) {
+		case "SEQEND":
+			poly = nil
+			return nil
+		case "VERTEX":
+			e, err := ParseVertex(d, chunk)
+			if err != nil {
+				return &entityError{start, err}
+			}
+			if poly != nil {
+				poly.AppendVertex(e.(*entity.Vertex))
+			} else {
+				es = es.Add(e)
+			}
+			return nil
+		}
+		poly = nil
+		e, err := ParseEntity(d, chunk)
+		if errors.Is(err, ErrUnknownEntity) {
+			return nil
+		}
+		if err != nil {
+			return &entityError{start, err}
+		}
+		if p, ok := e.(*entity.Polyline); ok {
+			poly = p
+		}
+		es = es.Add(e)
+		return nil
+	}
+	for i, dt := range data {
+		if dt[0] == entityTypeCode && i > start {
+			if err := flush(i); err != nil {
+				return es, err
+			}
+			start = i
+		}
+	}
+	if err := flush(len(data)); err != nil {
+		return es, err
+	}
+	return es, nil
 }
 
 // ParseEntity parses each entity.
@@ -561,7 +669,7 @@ func ParseEntity(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 
 // ParseEntityFunc returns a function for parsing acoording to entity type string.
 func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Entity, error), error) {
-	switch t {
+	switch strings.ToUpper(strings.TrimSpace(t)) {
 	case "LINE":
 		return ParseLine, nil
 	case "3DFACE":
@@ -572,8 +680,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseCircle, nil
 	case "ARC":
 		return ParseArc, nil
-	// case "POLYLINE":
-	// 	return ParsePolyline, nil
+	case "POLYLINE":
+		return ParsePolyline, nil
 	case "VERTEX":
 		return ParseVertex, nil
 	case "POINT":
@@ -583,8 +691,33 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 	case "SPLINE":
 		return ParseSpline, nil
 	default:
-		return nil, fmt.Errorf("unknown entity type: %s", t)
+		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}
+}
+
+// ParsePolyline parses the POLYLINE entity header.
+// Its VERTEX entities are attached by ParseEntities.
+func ParsePolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
+	p := entity.NewPolyline()
+	p.Flag = 0
+	var err error
+	for _, dt := range data {
+		switch dt[0] {
+		case "8":
+			layer, err := d.Layer(dt[1], false)
+			if err == nil {
+				p.SetLayer(layer)
+			}
+		case "48":
+			err = setFloat(dt, func(val float64) { p.SetLtscale(val) })
+		case "70":
+			err = setInt(dt, func(val int) { p.Flag = val })
+		}
+		if err != nil {
+			return p, err
+		}
+	}
+	return p, nil
 }
 
 // ParseLine parses LINE entities.
@@ -689,8 +822,9 @@ func Parse3DFace(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 // ParseLwPolyline parses LWPOLYLINE entities.
 func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	lw := entity.NewLwPolyline(0)
-	ind := 0
-	read := 0
+	// ind is the index of the current vertex. Each vertex starts with code 10,
+	// and the following 20, 40, 41, 42 belong to it (DXF reference, LWPOLYLINE).
+	ind := -1
 	var err error
 	for _, dt := range data {
 		switch dt[0] {
@@ -713,34 +847,28 @@ func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error
 				lw.Bulges = make([]float64, val)
 			})
 		case "10":
-			if lw.Num > ind {
-				err = setFloat(dt, func(val float64) {
-					lw.Vertices[ind][0] = val
-					read |= 1
-				})
+			ind++
+			if ind < lw.Num {
+				err = setFloat(dt, func(val float64) { lw.Vertices[ind][0] = val })
 			} else {
 				err = fmt.Errorf("LWPOLYLINE extra vertices")
 			}
 		case "20":
-			if lw.Num > ind {
-				err = setFloat(dt, func(val float64) {
-					lw.Vertices[ind][1] = val
-					read |= 2
-				})
+			if ind >= 0 && ind < lw.Num {
+				err = setFloat(dt, func(val float64) { lw.Vertices[ind][1] = val })
 			} else {
-				err = fmt.Errorf("LWPOLYLINE extra vertices")
+				err = fmt.Errorf("LWPOLYLINE code 20 without code 10")
 			}
 		case "42":
-			if lw.Num > ind {
-				err = setFloat(dt, func(val float64) {
-					lw.Bulges[ind] = val
-				})
+			if ind >= 0 && ind < lw.Num {
+				err = setFloat(dt, func(val float64) { lw.Bulges[ind] = val })
 			} else {
-				err = fmt.Errorf("LWPOLYLINE extra vertice buldge")
+				err = fmt.Errorf("LWPOLYLINE bulge without vertex")
 			}
 		case "70":
+			// bit-coded: 1 = closed, 128 = plinegen
 			err = setInt(dt, func(val int) {
-				if val == 1 {
+				if val&1 != 0 {
 					lw.Close()
 				}
 			})
@@ -748,12 +876,8 @@ func ParseLwPolyline(d *drawing.Drawing, data [][2]string) (entity.Entity, error
 		if err != nil {
 			return lw, err
 		}
-		if read == 3 {
-			read = 0
-			ind++
-		}
 	}
-	if ind != lw.Num {
+	if ind+1 != lw.Num {
 		return lw, fmt.Errorf("LWPOLYLINE not enough vertices")
 	}
 	return lw, nil
@@ -848,6 +972,7 @@ func ParseArc(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 
 func ParseVertex(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 	v := entity.NewDefaultVertex()
+	v.Flag = 0 // default of code 70 is 0
 	var err error
 	for _, dt := range data {
 		switch dt[0] {
@@ -868,6 +993,8 @@ func ParseVertex(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setFloat(dt, func(val float64) { v.Coord[2] = val })
 		case "42":
 			err = setFloat(dt, func(val float64) { v.Buldge = val })
+		case "70":
+			err = setInt(dt, func(val int) { v.Flag = val })
 		}
 		if err != nil {
 			return v, err
@@ -936,10 +1063,14 @@ func ParseText(d *drawing.Drawing, data [][2]string) (entity.Entity, error) {
 			err = setFloat(dt, func(val float64) { t.Height = val })
 		case "50":
 			err = setFloat(dt, func(val float64) { t.Rotation = val })
+		case "41":
+			err = setFloat(dt, func(val float64) { t.WidthFactor = val })
+		case "51":
+			err = setFloat(dt, func(val float64) { t.ObliqueAngle = val })
 		case "1":
 			t.Value = dt[1]
 		case "7":
-			if s, ok := d.Styles[dt[1]]; ok {
+			if s, ok := findStyle(d, dt[1]); ok {
 				t.Style = s
 			}
 		case "71":

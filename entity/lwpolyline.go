@@ -75,8 +75,14 @@ func (l *LwPolyline) Close() {
 func (l *LwPolyline) BBox() ([]float64, []float64) {
 	mins := make([]float64, 3)
 	maxs := make([]float64, 3)
+	for i := 0; i < len(mins) && len(l.Vertices) > 0; i++ {
+		if i < len(l.Vertices[0]) {
+			mins[i] = l.Vertices[0][i]
+			maxs[i] = l.Vertices[0][i]
+		}
+	}
 	for _, p := range l.Vertices {
-		for i := 0; i < len(p); i++ {
+		for i := 0; i < len(p) && i < 3; i++ {
 			if p[i] < mins[i] {
 				mins[i] = p[i]
 			}
@@ -88,11 +94,12 @@ func (l *LwPolyline) BBox() ([]float64, []float64) {
 	return mins, maxs
 }
 
-// Bulge computes the center and the ray of the arc to reach the vertex.
+// Bulge computes the center and the radius of the arc to reach the vertex.
+// The bulge of a segment is stored on its start vertex (Bulges[index-1]).
 func (l LwPolyline) Bulge(index int) ([]float64, float64) {
 	if index > len(l.Vertices)-1 || index < 1 {
 		return nil, 0
 	}
 
-	return bulge(l.Bulges[index], l.Vertices[index-1], l.Vertices[index])
+	return bulge(l.Bulges[index-1], l.Vertices[index-1], l.Vertices[index])
 }

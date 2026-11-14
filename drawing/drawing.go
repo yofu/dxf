@@ -304,6 +304,7 @@ func (d *Drawing) ThreeDFace(points [][]float64) (*entity.ThreeDFace, error) {
 func (d *Drawing) Text(str string, x, y, z, height float64) (*entity.Text, error) {
 	t := entity.NewText()
 	t.Coord1 = []float64{x, y, z}
+	t.Coord2 = []float64{x, y, z} // alignment point used when justified (see Text.Anchor)
 	t.Height = height
 	t.Value = str
 	t.SetLayer(d.CurrentLayer)
@@ -338,6 +339,7 @@ func (d *Drawing) Group(name, desc string, es ...entity.Entity) (*object.Group, 
 func (d *Drawing) AddToGroup(name string, es ...entity.Entity) error {
 	if g, exist := d.Groups[name]; exist {
 		g.AddEntity(es...)
+		return nil
 	}
 	return fmt.Errorf("group %s doesn't exist", name)
 }
@@ -416,11 +418,37 @@ func (d *Drawing) SetExt() {
 	}
 }
 
+// Spline creates a clamped uniform B-spline from the control points p.
+// The degree is 3, or len(p)-1 if fewer than 4 control points are given.
+// The knot vector has len(p)+degree+1 values as required by the DXF reference.
 func (d *Drawing) Spline(p [][]float64) (*entity.Spline, error) {
+	if len(p) < 2 {
+		return nil, errors.New("Spline needs 2 or more control points")
+	}
 	l := entity.NewSpline()
 	l.SetLayer(d.CurrentLayer)
 	l.Controls = p
-	l.Knots = []float64{0, 0, 0, 0, 1, 1, 1, 1}
+	if l.Degree > len(p)-1 {
+		l.Degree = len(p) - 1
+	}
+	l.Knots = clampedKnots(len(p), l.Degree)
 	d.AddEntity(l)
 	return l, nil
+}
+
+// clampedKnots returns a clamped uniform knot vector on [0, 1].
+func clampedKnots(n, degree int) []float64 {
+	knots := make([]float64, n+degree+1)
+	spans := n - degree
+	for i := range knots {
+		switch {
+		case i <= degree:
+			knots[i] = 0
+		case i >= n:
+			knots[i] = 1
+		default:
+			knots[i] = float64(i-degree) / float64(spans)
+		}
+	}
+	return knots
 }

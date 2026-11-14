@@ -82,15 +82,22 @@ func (s *Spline) FormatString(f format.Formatter) string {
 func (s *Spline) BBox() ([]float64, []float64) {
 	mins := make([]float64, 3)
 	maxs := make([]float64, 3)
-
-	// Initialize mins and maxs with the first control point
-	for i := 0; i < 3; i++ {
-		mins[i] = s.Controls[0][i]
-		maxs[i] = s.Controls[0][i]
+	pts := s.Controls
+	if len(pts) == 0 {
+		pts = s.Fits // spline defined by fit points only
+	}
+	if len(pts) == 0 {
+		return mins, maxs
 	}
 
-	// Iterate through the control points to find the minimum and maximum values
-	for _, p := range s.Controls {
+	// Initialize mins and maxs with the first point
+	for i := 0; i < 3; i++ {
+		mins[i] = pts[0][i]
+		maxs[i] = pts[0][i]
+	}
+
+	// Iterate through the points to find the minimum and maximum values
+	for _, p := range pts {
 		for i := 0; i < 3; i++ {
 			if p[i] < mins[i] {
 				mins[i] = p[i]

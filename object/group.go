@@ -31,6 +31,9 @@ func NewGroup(name, desc string, es ...entity.Entity) *Group {
 		entities:    es,
 		selectable:  true,
 	}
+	for _, e := range es {
+		e.SetBlockRecord(g)
+	}
 	return g
 }
 

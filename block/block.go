@@ -1,14 +1,17 @@
 package block
 
 import (
+	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/format"
 	"github.com/yofu/dxf/table"
 )
 
 // Block represents each BLOCK.
 type Block struct {
-	Name        string
-	Description string
+	Name        string          // 2, 3
+	Description string          // 4 (optional)
+	XrefPath    string          // 1 (only present if the Block is an Xref)
+	Entities    entity.Entities // entities between BLOCK and ENDBLK
 	handle      int
 	endhandle   int
 	layer       *table.Layer
@@ -42,7 +45,13 @@ func (b *Block) Format(f format.Formatter) {
 		f.WriteFloat((i+1)*10, b.Coord[i])
 	}
 	f.WriteString(3, b.Name)
-	f.WriteString(1, b.Description)
+	f.WriteString(1, b.XrefPath)
+	if b.Description != "" {
+		f.WriteString(4, b.Description)
+	}
+	for _, e := range b.Entities {
+		e.Format(f)
+	}
 	f.WriteString(0, "ENDBLK")
 	f.WriteHex(5, b.endhandle)
 	f.WriteString(100, "AcDbEntity")
@@ -71,6 +80,9 @@ func (b *Block) Handle() int {
 func (b *Block) SetHandle(v *int) {
 	b.handle = *v
 	(*v)++
+	for _, e := range b.Entities {
+		e.SetHandle(v)
+	}
 	b.endhandle = *v
 	(*v)++
 }

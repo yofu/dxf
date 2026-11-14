@@ -71,6 +71,9 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 			}
 		} else {
 			value = scanner.Text()
+			if code == "999" { // comment
+				continue
+			}
 			if setparser {
 				if code != "2" {
 					return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
@@ -90,6 +93,9 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 					case "SECTION":
 						setparser = true
 					case "ENDSEC":
+						if parser == nil {
+							return d, fmt.Errorf("line %d: ENDSEC without SECTION", line)
+						}
 						err := parser(d, startline, data)
 						if err != nil {
 							return d, err
@@ -108,7 +114,7 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 	if err := scanner.Err(); err != nil {
 		return d, err
 	}
-	if len(data) > 0 {
+	if len(data) > 0 && parser != nil {
 		err := parser(d, startline, data)
 		if err != nil {
 			return d, err

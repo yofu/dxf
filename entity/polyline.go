@@ -34,7 +34,7 @@ func NewPolyline() *Polyline {
 // Format writes data to formatter.
 func (p *Polyline) Format(f format.Formatter) {
 	p.entity.Format(f)
-	f.WriteString(100, "AcDb3dPolyline")
+	f.WriteString(100, p.subclass())
 	f.WriteInt(66, 1)
 	f.WriteString(10, "0.0")
 	f.WriteString(20, "0.0")
@@ -59,6 +59,27 @@ func (p *Polyline) String() string {
 func (p *Polyline) FormatString(f format.Formatter) string {
 	p.Format(f)
 	return f.Output()
+}
+
+// subclass returns the subclass marker according to the polyline flag (code 70).
+func (p *Polyline) subclass() string {
+	switch {
+	case p.Flag&8 != 0:
+		return "AcDb3dPolyline"
+	case p.Flag&16 != 0:
+		return "AcDbPolygonMesh"
+	case p.Flag&64 != 0:
+		return "AcDbPolyFaceMesh"
+	default:
+		return "AcDb2dPolyline"
+	}
+}
+
+// AppendVertex appends an existing Vertex (e.g. read from a file) to Polyline.
+func (p *Polyline) AppendVertex(v *Vertex) {
+	p.Vertices = append(p.Vertices, v)
+	p.size++
+	v.SetOwner(p)
 }
 
 // Close closes Polyline.
@@ -89,6 +110,10 @@ func (p *Polyline) SetHandle(h *int) {
 func (p *Polyline) BBox() ([]float64, []float64) {
 	mins := make([]float64, 3)
 	maxs := make([]float64, 3)
+	if len(p.Vertices) > 0 {
+		copy(mins, p.Vertices[0].Coord)
+		copy(maxs, p.Vertices[0].Coord)
+	}
 	for _, v := range p.Vertices {
 		for i := 0; i < 3; i++ {
 			if v.Coord[i] < mins[i] {
@@ -102,7 +127,8 @@ func (p *Polyline) BBox() ([]float64, []float64) {
 	return mins, maxs
 }
 
-// Bulge computes the center and the ray of the arc to reach the vertex.
+// Bulge computes the center and the radius of the arc from the vertex at index
+// to the next vertex.
 func (p Polyline) Bulge(index int) ([]float64, float64) {
 	if index > len(p.Vertices)-2 {
 		return nil, 0

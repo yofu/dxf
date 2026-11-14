@@ -39,36 +39,27 @@ func (es Entities) SetHandle(v *int) {
 	}
 }
 
-// bulge computes the center and the ray of arc between 2 vertices.
+// bulge computes the center and the radius of the arc between 2 vertices.
+//
+// bulge is the tangent of 1/4 of the included angle of the arc, negative
+// if the arc goes clockwise from start to end (DXF reference, VERTEX/LWPOLYLINE).
 func bulge(bulge float64, start []float64, end []float64) ([]float64, float64) {
 	if bulge == 0 {
 		return nil, 0
 	}
-
-	verticesDistance := math.Sqrt(math.Pow(end[0]-start[0], 2) + math.Pow(end[1]-start[1], 2))
-
-	teta := math.Atan(math.Abs(bulge)) * 4
-
-	radius := verticesDistance / (2 * math.Sin(teta/2))
-
-	h := math.Sqrt(radius*radius - verticesDistance*verticesDistance/4)
-
-	solutions := [][]float64{
-		{
-			0.5*(end[0]-start[0]) + (h/verticesDistance)*(end[1]-start[1]) + start[0],
-			0.5*(end[1]-start[1]) - (h/verticesDistance)*(end[0]-start[0]) + start[1],
-		},
-		{
-			0.5*(end[0]-start[0]) - (h/verticesDistance)*(end[1]-start[1]) + start[0],
-			0.5*(end[1]-start[1]) + (h/verticesDistance)*(end[0]-start[0]) + start[1],
-		},
+	dx := end[0] - start[0]
+	dy := end[1] - start[1]
+	chord := math.Sqrt(dx*dx + dy*dy)
+	if chord == 0 {
+		return nil, 0
 	}
-
-	firstSolutionIsLeft := (end[0]-start[0])*(solutions[0][1]-start[1])-(end[1]-start[1])*(solutions[0][0]-start[0]) > 0
-
-	if firstSolutionIsLeft && bulge > 0 {
-		return solutions[1], radius
+	// signed distance from the chord midpoint to the center, measured along
+	// the left normal of the chord (start -> end).
+	offset := chord / 2 * (1 - bulge*bulge) / (2 * bulge)
+	radius := chord / 4 * (1 + bulge*bulge) / math.Abs(bulge)
+	center := []float64{
+		(start[0]+end[0])/2 - offset*dy/chord,
+		(start[1]+end[1])/2 + offset*dx/chord,
 	}
-
-	return solutions[0], radius
+	return center, radius
 }
