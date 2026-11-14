@@ -9,6 +9,7 @@ import (
 // Header contains information written in HEADER section.
 type Header struct {
 	Version  string
+	CodePage string // $DWGCODEPAGE: code page of text in the file (e.g. "ANSI_932" for Japanese)
 	InsBase  []float64
 	InsUnit  insunit.Unit
 	InsLUnit insunit.Type
@@ -22,6 +23,7 @@ type Header struct {
 func New() *Header {
 	h := new(Header)
 	h.Version = "AC1015"
+	h.CodePage = "ANSI_1252"
 	h.InsBase = make([]float64, 3)
 	h.ExtMin = make([]float64, 3)
 	h.ExtMax = make([]float64, 3)
@@ -35,6 +37,10 @@ func (h *Header) Format(f format.Formatter) {
 	f.WriteString(2, "HEADER")
 	f.WriteString(9, "$ACADVER")
 	f.WriteString(1, h.Version)
+	if h.CodePage != "" {
+		f.WriteString(9, "$DWGCODEPAGE")
+		f.WriteString(3, h.CodePage)
+	}
 	f.WriteString(9, "$INSBASE")
 	for i := 0; i < 3; i++ {
 		f.WriteFloat((i+1)*10, h.InsBase[i])

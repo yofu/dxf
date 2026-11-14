@@ -12,6 +12,7 @@ import (
 
 	"github.com/yofu/dxf/block"
 	"github.com/yofu/dxf/class"
+	"github.com/yofu/dxf/codepage"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/format"
@@ -450,7 +451,14 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 		s.Format(d.formatter)
 	}
 	d.formatter.WriteString(0, "EOF")
-	return d.formatter.WriteTo(w)
+	h := d.Header()
+	if codepage.IsUnicodeVersion(h.Version) {
+		return d.formatter.WriteTo(w) // AC1021 or later: UTF-8
+	}
+	// Text is written in the code page of $DWGCODEPAGE, and characters
+	// outside it as \U+XXXX escapes.
+	n2, err := io.WriteString(w, codepage.Encode(d.formatter.Output(), h.CodePage))
+	return int64(n2), err
 }
 
 var _ io.WriterTo = &Drawing{}

@@ -53,6 +53,11 @@ func ParseHeader(d *drawing.Drawing, line int, data [][2]string) error {
 			case "$ACADVER":
 				h.Version = dt[1]
 			}
+		case "3":
+			switch name {
+			case "$DWGCODEPAGE":
+				h.CodePage = strings.TrimSpace(dt[1])
+			}
 		case "10":
 			switch name {
 			case "$INSBASE":

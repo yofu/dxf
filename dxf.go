@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/yofu/dxf/codepage"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
 	"github.com/yofu/dxf/table"
@@ -43,9 +44,32 @@ func FromStringData(d string) (*drawing.Drawing, error) {
 	return FromReader(sr)
 }
 
-// Main logic to create a drawing
+// FromFileWithCodePage creates a drawing from file, using codePage
+// (e.g. "ANSI_932" for Shift_JIS) for text if the file has no $DWGCODEPAGE.
+func FromFileWithCodePage(fn string, codePage string) (*drawing.Drawing, error) {
+	f, err := os.Open(fn)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return FromReaderWithCodePage(f, codePage)
+}
+
+// Main logic to create a drawing.
+//
+// Text is decoded according to $DWGCODEPAGE (AC1018 or earlier) or as UTF-8
+// (AC1021 or later), and \U+XXXX / \M+nXXXX escapes are converted.
+// If the file has no $DWGCODEPAGE, text is read as UTF-8 if valid,
+// otherwise as ANSI_1252. Use FromReaderWithCodePage for files that
+// omit $DWGCODEPAGE but are written in another code page (e.g. Shift_JIS).
 func FromReader(r io.Reader) (*drawing.Drawing, error) {
-	var err error
+	return FromReaderWithCodePage(r, "")
+}
+
+// FromReaderWithCodePage creates a drawing from r, using codePage
+// (e.g. "ANSI_932" for Shift_JIS) for text if the file has no $DWGCODEPAGE.
+// The code page is kept in Header().CodePage and used when the drawing is written.
+func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, error) {
 	scanner := bufio.NewScanner(r)
 	d := NewDrawing()
 	var code, value string
@@ -62,54 +86,90 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 	var parser func(*drawing.Drawing, int, [][2]string) error
 	line := 0
 	startline := 0
+
+	// text decoding state, taken from the HEADER section
+	section := ""
+	variable := ""
+	unicode := false
+	cp := codePage
+	declared := false
+	decode := func(raw string) string {
+		if !unicode {
+			raw = codepage.Decode(raw, cp)
+		}
+		return codepage.Unescape(raw)
+	}
+	finish := func() {
+		if !declared && codePage != "" {
+			d.Header().CodePage = codePage
+		}
+	}
+	defer finish()
+
 	for scanner.Scan() {
 		line++
 		if line%2 == 1 {
 			code = strings.TrimSpace(scanner.Text())
-			if err != nil {
-				return d, err
+			if line == 1 {
+				code = strings.TrimPrefix(code, "\uFEFF") // UTF-8 BOM
 			}
-		} else {
-			value = scanner.Text()
-			if code == "999" { // comment
-				continue
-			}
-			if setparser {
-				if code != "2" {
-					return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
+			continue
+		}
+		if code == "999" { // comment
+			continue
+		}
+		value = decode(scanner.Text())
+		if section == "HEADER" {
+			switch code {
+			case "9":
+				variable = strings.TrimSpace(value)
+			case "1":
+				if variable == "$ACADVER" {
+					unicode = codepage.IsUnicodeVersion(value)
 				}
-				ind := drawing.SectionTypeValue(strings.ToUpper(value))
-				if ind < 0 {
-					return d, fmt.Errorf("line %d: unknown section name: %s", line, value)
-				}
-				parser = parsers[ind]
-				startline = line + 1
-				setparser = false
-			} else {
-				if code == "0" {
-					switch strings.ToUpper(value) {
-					case "EOF":
-						return d, nil
-					case "SECTION":
-						setparser = true
-					case "ENDSEC":
-						if parser == nil {
-							return d, fmt.Errorf("line %d: ENDSEC without SECTION", line)
-						}
-						err := parser(d, startline, data)
-						if err != nil {
-							return d, err
-						}
-						data = make([][2]string, 0)
-						startline = line + 1
-					default:
-						data = append(data, [2]string{code, scanner.Text()})
-					}
-				} else {
-					data = append(data, [2]string{code, scanner.Text()})
+			case "3":
+				if variable == "$DWGCODEPAGE" {
+					cp = strings.TrimSpace(value)
+					declared = true
 				}
 			}
 		}
+		if setparser {
+			if code != "2" {
+				return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
+			}
+			section = strings.ToUpper(strings.TrimSpace(value))
+			ind := drawing.SectionTypeValue(section)
+			if ind < 0 {
+				return d, fmt.Errorf("line %d: unknown section name: %s", line, value)
+			}
+			parser = parsers[ind]
+			startline = line + 1
+			setparser = false
+			continue
+		}
+		if code == "0" {
+			switch strings.ToUpper(strings.TrimSpace(value)) {
+			case "EOF":
+				return d, nil
+			case "SECTION":
+				setparser = true
+				continue
+			case "ENDSEC":
+				if parser == nil {
+					return d, fmt.Errorf("line %d: ENDSEC without SECTION", line)
+				}
+				err := parser(d, startline, data)
+				if err != nil {
+					return d, err
+				}
+				data = make([][2]string, 0)
+				startline = line + 1
+				section = ""
+				continue
+			}
+		}
+		data = append(data, [2]string{code, value})
 	}
 	if err := scanner.Err(); err != nil {
 		return d, err

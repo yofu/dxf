@@ -65,6 +65,28 @@ ins.Scale = []float64{2.0, 2.0, 1.0}
 ins.Rotation = 45.0
 ```
 
+### Text encoding (non-ASCII text)
+
+Up to AC1018, text in DXF files is stored in the code page of `$DWGCODEPAGE`.
+
+```go
+d := dxf.NewDrawing()
+// default "ANSI_1252": non-ASCII characters are written as \U+XXXX escapes,
+// which AutoCAD reads in any locale.
+d.Text("日本語", 0.0, 0.0, 0.0, 10.0)
+
+// write text in Shift_JIS (e.g. for applications that do not read \U+XXXX)
+d.Header().CodePage = codepage.Japanese // "ANSI_932"
+```
+
+When reading, text is decoded according to `$DWGCODEPAGE` (or as UTF-8 for
+AC1021 and later), and `\U+XXXX` / `\M+nXXXX` escapes are converted.
+For files without `$DWGCODEPAGE`, the code page can be given:
+
+```go
+d, err := dxf.FromFileWithCodePage("sjis.dxf", codepage.Japanese)
+```
+
 ## Installation
 
 ```
