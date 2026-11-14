@@ -47,9 +47,12 @@ func (b *BlockRecord) Format(f format.Formatter) {
 	if b.layout != nil {
 		f.WriteHex(340, b.layout.Handle())
 	}
-	f.WriteInt(70, b.InsUnits)
-	f.WriteInt(280, boolInt(b.Explodable))
-	f.WriteInt(281, boolInt(b.Scalable))
+	// insertion units, explodability and scalability: AC1021 and later
+	if format.AtLeast(f, format.R2007) {
+		f.WriteInt(70, b.InsUnits)
+		f.WriteInt(280, boolInt(b.Explodable))
+		f.WriteInt(281, boolInt(b.Scalable))
+	}
 	writeRaw(f, b.Extra)
 }
 

@@ -9,7 +9,9 @@ import (
 )
 
 // values of supported entities and table entries that were not kept before
-const keepSrc = "0\nSECTION\n2\nTABLES\n" +
+// (AC1021: BLOCK_RECORD 70, 280, 281 are written for AC1021 and later)
+const keepSrc = "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1021\n0\nENDSEC\n" +
+	"0\nSECTION\n2\nTABLES\n" +
 	"0\nTABLE\n2\nSTYLE\n70\n1\n0\nSTYLE\n2\nTATE\n70\n4\n40\n0\n41\n1\n50\n0\n71\n6\n42\n2.5\n3\nmsgothic.ttc\n0\nENDTAB\n" +
 	"0\nTABLE\n2\nBLOCK_RECORD\n70\n1\n0\nBLOCK_RECORD\n2\nB\n70\n4\n280\n0\n281\n1\n1001\nACAD\n1000\nDesignCenter Data\n0\nENDTAB\n" +
 	"0\nENDSEC\n" +

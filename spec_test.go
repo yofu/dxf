@@ -465,7 +465,7 @@ func TestBlockAndInsert(t *testing.T) {
 	ins.SetColor(color.Red)
 
 	out := writeString(t, d)
-	if !strings.Contains(out, "\n0\nBLOCK_RECORD\n") || !strings.Contains(out, "\n2\nBOLT\n70\n0\n280\n") {
+	if !strings.Contains(out, "\n0\nBLOCK_RECORD\n") || !strings.Contains(out, "AcDbBlockTableRecord\n2\nBOLT\n") {
 		t.Error("BLOCK_RECORD for BOLT should be written")
 	}
 	if !strings.Contains(out, "AcDbBlockReference\n2\nBOLT\n") {

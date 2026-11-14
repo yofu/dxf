@@ -80,6 +80,22 @@ ln.transparency = 0.5
 m10.add_circle((0, 0), 5, dxfattribs={"true_color": ezdxf.colors.rgb2int((1, 2, 3)), "color_name": "BOOK$NAME"})
 c10.saveas(os.path.join(out, "ez_r2010.dxf"))
 
+# other versions: Japanese text (UTF-8 for R2007 and later), true color, image, mline
+for v in ["R2004", "R2007", "R2013", "R2018"]:
+    vd = ezdxf.new(v, setup=True)
+    vd.layers.add("壁", color=1)
+    vm = vd.modelspace()
+    vm.add_text("日本語", dxfattribs={"layer": "壁", "height": 2.5})
+    vl = vm.add_line((0, 0), (10, 5))
+    vl.rgb = (12, 34, 56)
+    if v != "R2004":
+        vl.transparency = 0.4
+    vdef = vd.add_image_def(filename="plan.png", size_in_pixel=(640, 480))
+    vm.add_image(insert=(0, 0), size_in_units=(6.4, 4.8), image_def=vdef, rotation=0)
+    vm.add_mline([(0, 0), (10, 0)])
+    vm.add_mtext(r"複数行\P文字", dxfattribs={"char_height": 2})
+    vd.saveas(os.path.join(out, f"ez_{v.lower()}.dxf"))
+
 # Japanese drawing in Shift_JIS (cp932)
 jdoc = ezdxf.new("R2000")
 jdoc.encoding = "cp932"

@@ -606,6 +606,7 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 	}
 	d.syncHeader()
 	d.ensureDefaults()
+	d.ensureClasses()
 	d.ensureAppIDs()
 	d.linkOwners()
 	d.setHandle()
@@ -1049,7 +1050,7 @@ func (d *Drawing) RawObjects() []*object.Raw {
 // (AC1015, default), format.R2004 (AC1018), format.R2007 (AC1021),
 // format.R2010 (AC1024), format.R2013 (AC1027) or format.R2018 (AC1032).
 // Group codes introduced in later versions (e.g. true color 420 in AC1018,
-// transparency 440 in AC1024) are written only for those versions, and
+// transparency 440 in AC1018) are written only for those versions, and
 // text is written in UTF-8 for AC1021 and later.
 func (d *Drawing) SetVersion(v string) error {
 	v = strings.ToUpper(strings.TrimSpace(v))
@@ -1065,4 +1066,24 @@ func (d *Drawing) SetVersion(v string) error {
 // Version returns the DXF version written ($ACADVER).
 func (d *Drawing) Version() string {
 	return d.Header().Version
+}
+
+// ensureClasses adds the classes of the object types this package writes
+// (class.Defaults) if they are not defined (e.g. a file without them was
+// read).
+func (d *Drawing) ensureClasses() {
+	cs := d.Sections[CLASSES].(class.Classes)
+	for _, def := range class.Defaults() {
+		found := false
+		for _, c := range cs {
+			if strings.EqualFold(c.Name(), def.Name()) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			cs = append(cs, def)
+		}
+	}
+	d.Sections[CLASSES] = cs
 }

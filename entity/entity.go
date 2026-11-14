@@ -140,7 +140,7 @@ func (e *entity) Format(f format.Formatter) {
 			f.WriteString(430, e.colorName)
 		}
 	}
-	if e.transparency != 0 && format.AtLeast(f, format.R2010) {
+	if e.transparency != 0 && format.AtLeast(f, format.R2004) {
 		f.WriteInt(440, e.transparency)
 	}
 }
@@ -487,7 +487,7 @@ const TransparencyByBlock = color.TransparencyByBlock
 
 // TrueColorer is implemented by all entities in this package: true color
 // (code 420, AC1018 or later), color name (430, AC1018 or later) and
-// transparency (440, AC1024 or later). They are not written for earlier
+// transparency (440, AC1018 or later). They are not written for earlier
 // versions.
 type TrueColorer interface {
 	TrueColor() (r, g, b uint8, ok bool)

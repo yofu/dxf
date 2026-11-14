@@ -27,26 +27,23 @@ func TestEntityTrueColorAndTransparency(t *testing.T) {
 	if out := writeString(t, d); strings.Contains(out, "\n420\n") || strings.Contains(out, "\n440\n") {
 		t.Error("420 and 440 should not be written for AC1015")
 	}
-	// AC1018: 420, 430; not 440
-	d.SetVersion(format.R2004)
-	out := writeString(t, d)
-	if !strings.Contains(out, "\n420\n16744448\n430\nRAL CLASSIC$RAL 2003\n") || strings.Contains(out, "\n440\n") {
-		t.Error("AC1018: true color and color name should be written, transparency not")
-	}
-	// AC1024: 440
-	if err := d.SetVersion(format.R2010); err != nil {
+	// AC1018: 420, 430 and 440
+	if err := d.SetVersion(format.R2004); err != nil {
 		t.Fatal(err)
 	}
-	out = writeString(t, d)
+	out := writeString(t, d)
+	if !strings.Contains(out, "\n420\n16744448\n430\nRAL CLASSIC$RAL 2003\n") {
+		t.Error("AC1018: true color and color name should be written")
+	}
 	if !strings.Contains(out, "\n440\n33554560\n") || !strings.Contains(out, "\n440\n16777216\n") {
-		t.Error("AC1024: transparency should be written (0.5 -> alpha 128, BYBLOCK)")
+		t.Error("AC1018: transparency should be written (0.5 -> alpha 128, BYBLOCK)")
 	}
 	if err := d.SetVersion("AC1009"); err == nil {
 		t.Error("unsupported version should be an error")
 	}
 
 	d2 := readPreserve(t, out)
-	if d2.Version() != format.R2010 {
+	if d2.Version() != format.R2004 {
 		t.Errorf("version: %s", d2.Version())
 	}
 	g := d2.Entities()[0].(*entity.Line)
@@ -92,9 +89,9 @@ func TestLayerTrueColorAndTransparency(t *testing.T) {
 		t.Error("writing a read drawing again should give the same output")
 	}
 
-	d.SetVersion(format.R2004)
-	if out := writeString(t, d); strings.Contains(out, "AcCmTransparency\n1071") {
-		t.Error("layer transparency is not written before AC1024")
+	d.SetVersion(format.R2000)
+	if out := writeString(t, d); strings.Contains(out, "AcCmTransparency\n1071") || strings.Contains(out, "\n420\n") {
+		t.Error("layer true color and transparency are not written for AC1015")
 	}
 }
 

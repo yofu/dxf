@@ -85,8 +85,8 @@ func (l *Layer) Format(f format.Formatter) {
 		f.WriteHex(390, l.PlotStyle.Handle())
 	}
 	writeRaw(f, l.Extra)
-	// the transparency of layers is in the extended data (AC1024 or later)
-	if l.transparency != 0 && format.AtLeast(f, format.R2010) {
+	// the transparency of layers is in the extended data (AC1018 or later)
+	if l.transparency != 0 && format.AtLeast(f, format.R2004) {
 		f.WriteString(1001, TransparencyApp)
 		f.WriteInt(1071, l.transparency)
 	}
@@ -285,7 +285,7 @@ func (l *Layer) HasTransparency() bool {
 }
 
 // SetTransparency sets the transparency of the layer (0: opaque, 1: fully
-// transparent; written for AC1024 or later).
+// transparent; written for AC1018 or later).
 func (l *Layer) SetTransparency(t float64) {
 	l.transparency = color.EncodeTransparency(t)
 }

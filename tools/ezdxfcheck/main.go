@@ -171,6 +171,18 @@ func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
 	}
+	// the basic drawing with true colors in each version
+	for _, v := range format.Versions()[1:] {
+		v := v
+		files["basic_"+v] = func() *drawing.Drawing {
+			d := basic()
+			must(0, d.SetVersion(v))
+			l := d.Entities()[0].(*entity.Line)
+			l.SetTrueColor(255, 128, 0)
+			l.SetTransparency(0.25)
+			return d
+		}
+	}
 	for name, f := range files {
 		d := f()
 		d.SetExt()

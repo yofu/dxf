@@ -107,8 +107,12 @@ func checkPreserved(t *testing.T, d *drawing.Drawing) {
 	if v, _ := value(img.Data, "340"); img.TypeName() != "IMAGE" || v != "60" || img.SourceHandle() != "42" {
 		t.Errorf("image: %+v", img.Data)
 	}
-	if len(d.Sections[drawing.CLASSES].(class.Classes)) != 2 {
-		t.Error("CLASSES should be kept")
+	classes := map[string]bool{}
+	for _, c := range d.Sections[drawing.CLASSES].(class.Classes) {
+		classes[c.Name()] = true
+	}
+	if !classes["IMAGE"] || !classes["IMAGEDEF"] {
+		t.Errorf("CLASSES should be kept: %v", classes)
 	}
 	raws := d.RawObjects()
 	if len(raws) != 2 || raws[0].Type != "DICTIONARY" || raws[1].Type != "IMAGEDEF" || raws[1].SourceHandle() != "60" {

@@ -68,7 +68,7 @@ l.SetLineWeight(35)        // 370: 0.35 mm
 l.Thickness = 10           // 39
 l.SetVisible(false)        // 60
 l.SetTrueColor(255, 128, 0) // 420 (AC1018 or later); 62 is set to the nearest color number
-l.SetTransparency(0.5)      // 440 (AC1024 or later); also layers: layer.SetTransparency
+l.SetTransparency(0.5)      // 440 (AC1018 or later); also layers: layer.SetTransparency
 l.SetXData([][2]string{{"1001", "MYAPP"}, {"1000", "data"}}) // APPID is registered when writing
 ```
 
@@ -155,6 +155,11 @@ d.SetVersion(format.R2010) // R2000 (AC1015), R2004, R2007, R2010, R2013, R2018 
 ```
 
 Files of later versions keep their version when read and written again.
+The structure written is that of AC1015 with the additions of later
+versions this package knows (true color and transparency from AC1018,
+BLOCK_RECORD units/explodability from AC1021, class instance counts from
+AC1018); output of each version is validated with ezdxf. Objects and
+entities of later versions read from a file are kept as read.
 
 ### Text encoding
 
