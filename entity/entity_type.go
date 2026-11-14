@@ -24,6 +24,7 @@ const (
 	ATTDEF
 	ATTRIB
 	VIEWPORT
+	LEADER
 )
 
 // EntityTypeString converts EntityType to string.
@@ -68,6 +69,8 @@ func EntityTypeString(t EntityType) string {
 		return "ATTRIB"
 	case VIEWPORT:
 		return "VIEWPORT"
+	case LEADER:
+		return "LEADER"
 	default:
 		return ""
 	}
@@ -115,6 +118,8 @@ func EntityTypeValue(t string) EntityType {
 		return ATTRIB
 	case "VIEWPORT":
 		return VIEWPORT
+	case "LEADER":
+		return LEADER
 	default:
 		return -1
 	}

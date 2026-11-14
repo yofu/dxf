@@ -539,7 +539,9 @@ func (e *entityError) Unwrap() error { return e.err }
 func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, error) {
 	es := entity.New()
 	var poly *entity.Polyline
-	var ins *entity.Insert // INSERT followed by ATTRIB entities
+	var ins *entity.Insert                     // INSERT followed by ATTRIB entities
+	handles := map[string]entity.Entity{}      // original handles (5)
+	annotations := map[*entity.Leader]string{} // LEADER -> annotation handle (340)
 	start := 0
 	flush := func(end int) error {
 		chunk := data[start:end]
@@ -590,6 +592,13 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 			poly = c
 		case *entity.Insert:
 			ins = c
+		case *entity.Leader:
+			if h, ok := value(chunk, "340"); ok {
+				annotations[c] = strings.TrimSpace(h)
+			}
+		}
+		if h, ok := value(chunk, "5"); ok {
+			handles[strings.TrimSpace(h)] = e
 		}
 		es = es.Add(e)
 		return nil
@@ -604,6 +613,11 @@ func parseEntityList(d *drawing.Drawing, data [][2]string) (entity.Entities, err
 	}
 	if err := flush(len(data)); err != nil {
 		return es, err
+	}
+	for l, h := range annotations {
+		if a, ok := handles[h]; ok {
+			l.Annotation = a
+		}
 	}
 	return es, nil
 }
@@ -713,6 +727,8 @@ func ParseEntityFunc(t string) (func(*drawing.Drawing, [][2]string) (entity.Enti
 		return ParseAttrib, nil
 	case "VIEWPORT":
 		return ParseViewportEntity, nil
+	case "LEADER":
+		return ParseLeader, nil
 	default:
 		return nil, fmt.Errorf("%w: %s", ErrUnknownEntity, t)
 	}

@@ -119,6 +119,14 @@ dim.Text = "<> mm"            // "<>" is replaced by the measurement
 d.RegenerateDimension(dim)    // after changing a dimension
 ```
 
+### Leaders
+
+```go
+d.Leader([]float64{0, 0, 0}, []float64{10, 10, 0}) // arrowhead at the first point
+// with an MTEXT annotation after a horizontal hookline (height 0: DIMTXT)
+d.LeaderText("Note", 0.0, []float64{0, 0, 0}, []float64{10, 10, 0})
+```
+
 ### Paper space and viewports
 
 ```go
