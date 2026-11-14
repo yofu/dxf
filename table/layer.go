@@ -143,6 +143,9 @@ func (l *Layer) Name() string {
 
 // SetLineWidth sets line width.
 // As DXF has limitation in line width,
+// LineWidth returns the lineweight of the layer (370; -3 DEFAULT).
+func (l *Layer) LineWidth() int { return l.lineWidth }
+
 // it returns the actual value set to Layer.
 func (l *Layer) SetLineWidth(w int) int {
 	if _, ok := LineWidth[w]; ok {

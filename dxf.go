@@ -15,11 +15,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/yofu/dxf/codepage"
 	"github.com/yofu/dxf/color"
 	"github.com/yofu/dxf/drawing"
+	"github.com/yofu/dxf/entity"
 	"github.com/yofu/dxf/handle"
 	"github.com/yofu/dxf/table"
 )
@@ -80,6 +82,24 @@ func FromReader(r io.Reader) (*drawing.Drawing, error) {
 // (e.g. "ANSI_932" for Shift_JIS) for text if the file has no $DWGCODEPAGE.
 // The code page is kept in Header().CodePage and used when the drawing is written.
 func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, error) {
+	d, _, err := readDXF(r, readOptions{codePage: codePage})
+	return d, err
+}
+
+// readOptions are the options of readDXF.
+type readOptions struct {
+	codePage string
+	// onEntity receives the entities of the ENTITIES section one by one
+	// instead of adding them to the drawing (streaming).
+	onEntity func(*drawing.Drawing, entity.Entity) error
+	// lenient reads damaged files: errors are collected and reading goes on.
+	lenient bool
+}
+
+// readDXF reads a drawing; with lenient, it returns the problems found.
+func readDXF(r io.Reader, o readOptions) (*drawing.Drawing, []error, error) {
+	codePage := o.codePage
+	var problems []error
 	src := newPairSource(r)
 	d := NewDrawing()
 	var code, value string
@@ -127,18 +147,73 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 	}
 	defer finish()
 
+	// entities one by one (streaming, lenient reading)
+	chunked := o.onEntity != nil
+	flushEntities := func() error {
+		if len(data) == 0 {
+			return nil
+		}
+		chunk := data
+		data = make([][2]string, 0)
+		es, err := parseEntityList(d, chunk)
+		if err != nil {
+			if !o.lenient {
+				return fmt.Errorf("line %d: %w", startline, err)
+			}
+			problems = append(problems, fmt.Errorf("line %d: %w", startline, err))
+			if u, ok := parseUnknown(d, chunk); ok {
+				es = entity.Entities{u}
+			}
+		}
+		for _, e := range es {
+			if o.onEntity != nil {
+				if err := o.onEntity(d, e); err != nil {
+					return err
+				}
+			} else {
+				d.AddEntity(e)
+			}
+		}
+		return nil
+	}
+	subEntity := map[string]bool{"VERTEX": true, "SEQEND": true, "ATTRIB": true}
+	// flushOne parses the chunk of one entity (lenient reading)
+	flushOne := func(chunk [][2]string) {
+		es, err := parseEntityList(d, chunk)
+		if err != nil {
+			problems = append(problems, err)
+			if u, ok := parseUnknown(d, chunk); ok {
+				es = entity.Entities{u}
+			}
+		}
+		for _, e := range es {
+			d.AddEntity(e)
+		}
+	}
+
 	for {
 		c, raw, err := src.next()
 		if err == io.EOF {
 			break
 		}
 		if err != nil {
-			return d, err
+			if o.lenient {
+				problems = append(problems, err)
+				break
+			}
+			return d, problems, err
 		}
 		code = c
 		line = src.line()
 		if code == "999" { // comment
+			d.Comments = append(d.Comments, decode(raw))
 			continue
+		}
+		if o.lenient {
+			if _, err := strconv.Atoi(strings.TrimSpace(code)); err != nil {
+				problems = append(problems, fmt.Errorf("line %d: invalid group code %q", line, code))
+				continue
+			}
 		}
 		value = decode(raw)
 		if (code == "5" || code == "105") && section != "HEADER" { // not $HANDSEED
@@ -163,7 +238,12 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 		}
 		if setparser {
 			if code != "2" {
-				return d, fmt.Errorf("line %d: invalid group code: %s", line, code)
+				if o.lenient {
+					problems = append(problems, fmt.Errorf("line %d: section without name", line))
+					setparser = false
+					continue
+				}
+				return d, problems, fmt.Errorf("line %d: invalid group code: %s", line, code)
 			}
 			section = strings.ToUpper(strings.TrimSpace(value))
 			ind := drawing.SectionTypeValue(section)
@@ -184,33 +264,114 @@ func FromReaderWithCodePage(r io.Reader, codePage string) (*drawing.Drawing, err
 		if code == "0" {
 			switch strings.ToUpper(strings.TrimSpace(value)) {
 			case "EOF":
-				return d, nil
+				return d, problems, nil
 			case "SECTION":
 				setparser = true
 				continue
 			case "ENDSEC":
 				if parser == nil {
-					return d, fmt.Errorf("line %d: ENDSEC without SECTION", line)
+					if o.lenient {
+						problems = append(problems, fmt.Errorf("line %d: ENDSEC without SECTION", line))
+						continue
+					}
+					return d, problems, fmt.Errorf("line %d: ENDSEC without SECTION", line)
 				}
-				err := parser(d, startline, data)
+				var err error
+				if section == "ENTITIES" && chunked {
+					err = flushEntities()
+				} else {
+					err = parser(d, startline, data)
+				}
+				if err != nil && o.lenient && section == "ENTITIES" {
+					// entity by entity: those that cannot be parsed are kept as read
+					err = lenientEntities(data, flushOne)
+				}
 				if err != nil {
-					return d, err
+					if !o.lenient {
+						return d, problems, err
+					}
+					problems = append(problems, err)
 				}
+				parser = nil
 				data = make([][2]string, 0)
 				startline = line + 1
 				section = ""
 				continue
 			}
 		}
+		if section == "ENTITIES" && chunked && code == "0" && !subEntity[strings.ToUpper(strings.TrimSpace(value))] {
+			if err := flushEntities(); err != nil {
+				return d, problems, err
+			}
+			startline = line
+		}
 		data = append(data, [2]string{code, value})
 	}
 	if len(data) > 0 && parser != nil {
-		err := parser(d, startline, data)
+		var err error
+		if section == "ENTITIES" && chunked {
+			err = flushEntities()
+		} else {
+			err = parser(d, startline, data)
+		}
+		if err != nil && o.lenient && section == "ENTITIES" {
+			err = lenientEntities(data, flushOne)
+		}
 		if err != nil {
-			return d, err
+			if !o.lenient {
+				return d, problems, err
+			}
+			problems = append(problems, err)
 		}
 	}
-	return d, nil
+	if o.lenient && section != "" {
+		problems = append(problems, fmt.Errorf("section %s not closed (no ENDSEC)", section))
+	}
+	return d, problems, nil
+}
+
+// lenientEntities parses the ENTITIES section entity by entity.
+func lenientEntities(data [][2]string, one func([][2]string)) error {
+	for _, chunk := range lenientEntitiesSplit(data) {
+		one(chunk)
+	}
+	return nil
+}
+
+// lenientEntitiesSplit splits the ENTITIES section into the chunks of the
+// entities (with their vertices and attributes).
+func lenientEntitiesSplit(data [][2]string) [][][2]string {
+	sub := map[string]bool{"VERTEX": true, "SEQEND": true, "ATTRIB": true}
+	var chunks [][][2]string
+	var cur [][2]string
+	for _, dt := range data {
+		if dt[0] == "0" && !sub[strings.ToUpper(strings.TrimSpace(dt[1]))] && len(cur) > 0 {
+			chunks = append(chunks, cur)
+			cur = nil
+		}
+		cur = append(cur, dt)
+	}
+	if len(cur) > 0 {
+		chunks = append(chunks, cur)
+	}
+	return chunks
+}
+
+// IterEntities reads a DXF file and calls f with each entity of the
+// ENTITIES section in turn, without keeping them in the drawing (as
+// ezdxf's iterdxf): for large files. The drawing passed to f has the
+// header, tables and blocks read before the entities.
+func IterEntities(r io.Reader, f func(*drawing.Drawing, entity.Entity) error) error {
+	_, _, err := readDXF(r, readOptions{onEntity: f})
+	return err
+}
+
+// Recover reads a damaged DXF file as far as possible (as ezdxf's recover):
+// invalid group codes are skipped, entities that cannot be parsed are kept
+// as read (entity.Unknown), sections with errors keep what was read, and a
+// missing ENDSEC or EOF is accepted. It returns the problems found.
+func Recover(r io.Reader) (*drawing.Drawing, []error, error) {
+	return readDXF(r, readOptions{lenient: true})
 }
 
 // Open is deprecated, please use FromFile

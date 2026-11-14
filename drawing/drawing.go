@@ -24,7 +24,10 @@ import (
 
 // Drawing contains DXF drawing data.
 type Drawing struct {
-	FileName     string
+	FileName string
+	// Comments are written as 999 groups at the start of ASCII files (the
+	// comments read are collected here).
+	Comments     []string
 	Layers       map[string]*table.Layer
 	Groups       map[string]*object.Group
 	Styles       map[string]*table.Style
@@ -669,6 +672,11 @@ func (d *Drawing) WriteTo(w io.Writer) (n int64, err error) {
 		}
 	}
 	d.formatter.Reset()
+	if !perValue { // binary DXF has no comments
+		for _, c := range d.Comments {
+			d.formatter.WriteString(999, c)
+		}
+	}
 	for _, s := range d.Sections {
 		s.Format(d.formatter)
 	}

@@ -12,7 +12,7 @@ Validation of this package with [ezdxf](https://ezdxf.mozman.at/).
 python -m venv venv
 venv/bin/pip install ezdxf        # venv\Scripts\pip on Windows
 
-# 1. files written by this package (ASCII, binary, Shift_JIS)
+# 1. files written by this package (ASCII, binary, Shift_JIS, R12)
 go run ./tools/ezdxfcheck generate out/gen
 venv/bin/python tools/ezdxfcheck/audit.py out/gen
 

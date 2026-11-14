@@ -1,5 +1,5 @@
 // Command ezdxfcheck creates DXF files for validation with ezdxf
-// (see README.md):
+// (see README.md); generate also writes each sample as R12 (SaveAsR12):
 //
 //	go run ./tools/ezdxfcheck generate <dir>        sample files written by this package
 //	go run ./tools/ezdxfcheck roundtrip <in> <out>  read files and write them back
@@ -149,6 +149,17 @@ func phaseC() *drawing.Drawing {
 // phaseD uses the creation APIs: dimensions, MTEXT columns, patterns,
 // associative hatch, polygon mesh, splines, arrows, linetypes, XDATA and
 // a revision cloud (AC1032).
+// phaseF: comments, entities imported from another drawing and an
+// external reference
+func phaseF() *drawing.Drawing {
+	src := phaseD()
+	d := dxf.NewDrawing()
+	d.Comments = []string{"phase F sample"}
+	must(dxf.ImportEntities(d, src, src.Entities()...))
+	must(dxf.AttachXref(d, "XPLAN", "basic.dxf", []float64{100, 0, 0}, false))
+	return d
+}
+
 func phaseD() *drawing.Drawing {
 	d := dxf.NewDrawing()
 	must(0, d.SetVersion(format.R2018))
@@ -447,6 +458,7 @@ func generate(out string) {
 	files := map[string]func() *drawing.Drawing{
 		"basic": basic, "blocks": blocks, "hatchdims": hatchDims, "layouts": layouts, "edited": edited, "colors": colors,
 		"linetypes": linetypes, "underlays": underlays, "images": images, "more": more, "phaseb": phaseB, "phasec": phaseC, "phased": phaseD,
+		"phasef": phaseF,
 	}
 	// the basic drawing with true colors in each version
 	for _, v := range format.Versions()[1:] {
@@ -474,6 +486,11 @@ func generate(out string) {
 		d.Header().CodePage = codepage.Japanese
 		if err := d.SaveAs(filepath.Join(out, name+"_sjis.dxf")); err != nil {
 			panic(err)
+		}
+		if !strings.HasPrefix(name, "basic_") {
+			if err := dxf.SaveAsR12(f(), filepath.Join(out, name+"_r12.dxf")); err != nil {
+				panic(err)
+			}
 		}
 	}
 	fmt.Println("generated in", out)

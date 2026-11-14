@@ -21,6 +21,9 @@ DXF (Drawing Exchange Format by Autodesk, Inc.) library for Go.
 - Blocks with attributes, groups, layouts and viewports, extended data,
   text in code pages (e.g. Shift_JIS for Japanese), and editing (query,
   remove, move, rotate, scale, copy, explode).
+- Files: R12 export, DWG through the ODA File Converter, streaming read,
+  recovery of damaged files, audit, import between drawings, external
+  references, proxy graphics of custom entities.
 - Validated with [ezdxf](https://ezdxf.mozman.at/) (see
   [tools/ezdxfcheck](tools/ezdxfcheck/README.md)).
 
@@ -356,9 +359,68 @@ entries (`Extra`), the CLASSES section and the objects of the OBJECTS
 section (`RawObjects()`). Groups (`Groups`) and layouts (`Layouts()`) are
 read from the OBJECTS section.
 
-Not kept: the plot settings and other values of LAYOUT objects (they are
-written by this package). Files of versions older than AC1015 (e.g. R12)
-are written as AC1015.
+Files of versions older than AC1015 (e.g. R12) are written as AC1015
+(see `WriteR12` below for R12 output). Comments (999 groups) of ASCII
+files are read into `d.Comments` and written at the start of the file.
+
+### R12
+
+```go
+err := dxf.SaveAsR12(d, "r12.dxf") // or dxf.WriteR12(d, w)
+```
+
+Entities R12 does not have are converted: LWPOLYLINE, ELLIPSE, SPLINE,
+HELIX, MLINE and LEADER to POLYLINE, MTEXT to TEXT lines, HATCH and
+MPOLYGON to their boundaries, MESH to a polyface mesh, MULTILEADER,
+ACAD_TABLE and arc/large radial dimensions to their graphics. Lineweights,
+true colors, objects and layouts other than model and paper space are not
+written.
+
+### DWG
+
+DWG files are read and written with the
+[ODA File Converter](https://www.opendesign.com/guestfiles/oda_file_converter)
+(free, installed separately; found in PATH or the default install folder,
+or set `dxf.ODAFileConverter`):
+
+```go
+d, err := dxf.ReadDWG("in.dwg")
+err = dxf.SaveAsDWG(d, "out.dwg")                  // version of the drawing
+err = dxf.ConvertDWG("in.dwg", "out.dxf", "R2000") // DWG/DXF to DWG/DXF
+```
+
+### Large and damaged files
+
+```go
+// stream the entities without keeping them
+err := dxf.IterEntities(r, func(d *drawing.Drawing, e entity.Entity) error { ...; return nil })
+// read what can be read; problems are returned
+d, problems, err := dxf.Recover(r)
+// check (and repair) a drawing: undefined blocks, invalid values, ...
+for _, p := range dxf.Audit(d, true) { fmt.Println(p) }
+```
+
+### Import and external references
+
+```go
+copies, err := dxf.ImportEntities(dst, src, src.Entities()...) // with layers, styles, blocks, ...
+ins, err := dxf.AttachXref(d, "PLAN", "plan.dxf", []float64{0, 0, 0}, false)
+err = dxf.BindXref(d, "PLAN", dxf.FromFile) // the xref becomes a normal block
+```
+
+### Proxy graphics
+
+Entities of applications that are not available (ACAD_PROXY_ENTITY and
+custom entities, read as `entity.Unknown`) are kept as read; their proxy
+graphics can be decoded into entities:
+
+```go
+es, err := dxf.ProxyGraphics(d, e) // also via dxf.VirtualEntities
+```
+
+Package `proxygraphic` decodes the commands for circles, arcs, polylines,
+polygons, meshes, shells, text, xlines and rays with their colors, layers,
+linetypes, lineweights and transformations.
 
 ## Compatibility notes
 
@@ -391,6 +453,8 @@ or output:
 | `format/` | ASCII and binary formatters, DXF versions |
 | `color/`, `codepage/`, `handle/`, `insunit/`, `geometry/` | color numbers and true colors, code pages, handles, units, geometry |
 | `path/` | paths of entities (lines and Bezier curves) |
+| `proxygraphic/` | decoding of proxy graphics |
+| `r12.go`, `odafc.go`, `fileio.go`, `proxy.go` | R12 output, DWG via the ODA File Converter, audit/import/xref, proxy graphics |
 | `testdata/` | expected output of the tests |
 | `example/` | examples |
 | `tools/ezdxfcheck/` | validation with ezdxf |

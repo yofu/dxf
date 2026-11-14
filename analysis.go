@@ -25,6 +25,8 @@ var ErrNoVirtualEntities = errors.New("entity has no virtual entities")
 // meshes (3DFACEs).
 func VirtualEntities(d *drawing.Drawing, e entity.Entity) (entity.Entities, error) {
 	switch x := e.(type) {
+	case *entity.Unknown:
+		return ProxyGraphics(d, x)
 	case *entity.Insert:
 		return insertEntities(d, x)
 	case *entity.Dimension:
